@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vaateta — Lapsen vaatteet, ilman selaustuntia</title>
+<meta name="description" content="Kerro mitä lapsi tarvitsee. Vaateta hakee parhaat löydöt pohjoismaisista verkkokaupoista ja näyttää, miksi juuri ne sopivat.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EDEAE2;
+    --paper-raised: #F6F4EE;
+    --ink: #23262B;
+    --ink-soft: #55585F;
+    --mustard: #C98A2B;
+    --berry: #A83D34;
+    --sage: #57654C;
+    --blue: #33505C;
+    --line: rgba(35,38,43,0.16);
+    --radius: 2px;
+  }
+
+  *{ box-sizing: border-box; }
+  html{ scroll-behavior: smooth; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.5;
+  }
+
+  .wrap{
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 28px;
+  }
+
+  a{ color: inherit; }
+
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- HEADER ---------- */
+  header{
+    padding: 28px 0 0;
+  }
+  header .wrap{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+  }
+  .logo{
+    font-family:'Fraunces', serif;
+    font-weight: 600;
+    font-size: 22px;
+    letter-spacing: -0.01em;
+  }
+  .logo .dot{ color: var(--berry); }
+  .header-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+    padding: 5px 10px;
+    border-radius: var(--radius);
+  }
+
+  /* ---------- HERO ---------- */
+  .hero{
+    padding: 72px 0 96px;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .hero h1{
+    font-family:'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(34px, 4.6vw, 54px);
+    line-height: 1.06;
+    letter-spacing: -0.01em;
+    margin: 18px 0 22px;
+  }
+  .hero h1 em{
+    font-style: italic;
+    color: var(--berry);
+  }
+  .hero p.lede{
+    font-size: 17px;
+    color: var(--ink-soft);
+    max-width: 46ch;
+    margin: 0 0 30px;
+  }
+  .hero-actions{
+    display:flex;
+    gap: 14px;
+    align-items:center;
+    flex-wrap: wrap;
+  }
+
+  .btn{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight: 500;
+    font-size: 15px;
+    padding: 13px 22px;
+    border-radius: var(--radius);
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper-raised);
+    text-decoration: none;
+    display: inline-block;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .btn:hover{ background: var(--berry); border-color: var(--berry); transform: translateY(-1px); }
+  .btn.ghost{
+    background: transparent;
+    color: var(--ink);
+  }
+  .btn.ghost:hover{ background: rgba(35,38,43,0.06); transform:none; }
+
+  /* ---------- CARE LABEL (signature element) ---------- */
+  .label-stage{
+    position: relative;
+    display:flex;
+    justify-content:center;
+  }
+  .care-label{
+    background: var(--paper-raised);
+    border: 1.5px dashed var(--ink);
+    border-radius: 6px;
+    width: 100%;
+    max-width: 340px;
+    padding: 26px 24px 22px;
+    position: relative;
+    transform: rotate(2.5deg);
+    box-shadow: 0 18px 40px -22px rgba(35,38,43,0.45);
+  }
+  .care-label::before{
+    content:"";
+    position:absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px; height: 16px;
+    background: var(--paper);
+    border: 1.5px dashed var(--ink);
+    border-radius: 50%;
+  }
+  .care-label .cl-head{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    display:flex;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+  }
+  .cl-query{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink);
+    background: rgba(87,101,76,0.09);
+    border-left: 3px solid var(--sage);
+    padding: 10px 12px;
+    margin-bottom: 16px;
+  }
+  .cl-result{
+    display:flex;
+    justify-content: space-between;
+    align-items:flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px dotted var(--line);
+    font-size: 13.5px;
+  }
+  .cl-result:last-of-type{ border-bottom: none; }
+  .cl-result .name{ font-weight: 500; }
+  .cl-result .why{ display:block; font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
+  .cl-result .price{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--blue);
+    white-space: nowrap;
+  }
+
+  @media (prefers-reduced-motion: no-preference){
+    .care-label{ animation: settle 900ms cubic-bezier(.2,.8,.2,1) both; }
+  }
+  @keyframes settle{
+    from{ transform: rotate(2.5deg) translateY(14px); opacity: 0; }
+    to{ transform: rotate(2.5deg) translateY(0); opacity: 1; }
+  }
+
+  /* ---------- HOW IT WORKS ---------- */
+  .steps{
+    padding: 20px 0 88px;
+    border-top: 1px solid var(--line);
+  }
+  .steps h2{
+    font-family:'Fraunces', serif;
+    font-weight: 500;
+    font-size: 28px;
+    margin: 28px 0 34px;
+  }
+  .step-row{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 22px;
+  }
+  .step{
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 22px 20px;
+    position: relative;
+  }
+  .step .num{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px;
+    color: var(--mustard);
+    display:block;
+    margin-bottom: 10px;
+  }
+  .step h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 16.5px;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+  .step p{
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+
+  /* ---------- MARKETS ---------- */
+  .markets{
+    padding: 0 0 88px;
+  }
+  .markets .row{
+    display:flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .swatch{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    letter-spacing: 0.04em;
+    border: 1px solid var(--ink);
+    padding: 8px 14px;
+    border-radius: 999px;
+  }
+  .swatch.fi{ background: var(--sage); color: var(--paper-raised); border-color: var(--sage); }
+
+  /* ---------- CTA ---------- */
+  .cta{
+    background: var(--ink);
+    color: var(--paper-raised);
+    padding: 64px 0;
+  }
+  .cta .wrap{
+    display:grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 40px;
+    align-items:center;
+  }
+  .cta h2{
+    font-family:'Fraunces', serif;
+    font-weight: 500;
+    font-size: 30px;
+    margin: 0 0 12px;
+  }
+  .cta p{
+    color: rgba(246,244,238,0.72);
+    margin: 0;
+    max-width: 44ch;
+  }
+  .cta-form{
+    display:flex;
+    gap: 10px;
+  }
+  .cta .btn{
+    background: var(--mustard);
+    border-color: var(--mustard);
+    color: var(--ink);
+  }
+  .cta .btn:hover{ background: #E0A548; border-color:#E0A548; }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    padding: 34px 0 44px;
+  }
+  footer .wrap{
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-top: 1px solid var(--line);
+    padding-top: 20px;
+  }
+  footer p{
+    font-size: 12.5px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  footer .links{
+    display:flex;
+    gap: 18px;
+    font-size: 12.5px;
+  }
+  footer .links a{ text-decoration: none; color: var(--ink-soft); }
+  footer .links a:hover{ color: var(--ink); }
+
+  @media (max-width: 860px){
+    .hero{ grid-template-columns: 1fr; padding-top: 44px; }
+    .step-row{ grid-template-columns: 1fr; }
+    .cta .wrap{ grid-template-columns: 1fr; }
+    .care-label{ transform: rotate(1deg); }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">vaateta<span class="dot">.</span></div>
+    <div class="header-tag">TESTIVERSIO — FI · SE · NO · DK</div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="wrap" style="display:contents;">
+    <div>
+      <span class="eyebrow">Suositusagentti lastenvaatteille</span>
+      <h1>Lapsen vaatteet,<br>ilman <em>iltakymmenen</em><br>selaustuntia.</h1>
+      <p class="lede">Kerro yhdellä lauseella mitä tarvitset — koko, budjetti, sään­kestävyys. Vaateta hakee useista pohjoismaisista verkkokaupoista ja näyttää parhaat löydöt perusteluineen. Sinä päätät, minne klikkaat.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#kiinnostus">Ilmoita kiinnostuksesi</a>
+        <a class="btn ghost" href="#miten-toimii">Miten se toimii</a>
+      </div>
+    </div>
+
+    <div class="label-stage">
+      <div class="care-label">
+        <div class="cl-head"><span>Haku #0114</span><span>110 cm</span></div>
+        <div class="cl-query">"Talvihaalari 5-vuotiaalle tytölle, max 120 €"</div>
+        <div class="cl-result">
+          <div>
+            <span class="name">Reima Tepastella</span>
+            <span class="why">Vedenpitävä, hyvä arvio, oma koko saatavilla</span>
+          </div>
+          <div class="price">109 €</div>
+        </div>
+        <div class="cl-result">
+          <div>
+            <span class="name">Didriksons Rio</span>
+            <span class="why">Edullisin, toimitus 2 pv</span>
+          </div>
+          <div class="price">89 €</div>
+        </div>
+        <div class="cl-result">
+          <div>
+            <span class="name">Polarn O. Pyret</span>
+            <span class="why">Paras arvostelu, hieman yli budjetin</span>
+          </div>
+          <div class="price">128 €</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="steps" id="miten-toimii">
+  <div class="wrap">
+    <h2>Kolme askelta, ei lomaketta</h2>
+    <div class="step-row">
+      <div class="step">
+        <span class="num">01</span>
+        <h3>Kerro tarve</h3>
+        <p>Kirjoita tai puhu vapaasti: koko, tyyppi, budjetti, brändit joita et halua. Ei pakollisia kenttiä.</p>
+      </div>
+      <div class="step">
+        <span class="num">02</span>
+        <h3>Agentti hakee ja karsii</h3>
+        <p>Haku useista pohjoismaisista kaupoista, koot normalisoitu, tarjoukset ja varastotilanne huomioitu.</p>
+      </div>
+      <div class="step">
+        <span class="num">03</span>
+        <h3>Sinä valitset</h3>
+        <p>Näet parhaat löydöt ja miksi ne valittiin. Klikkaat suoraan kauppaan — ei automaattista ostoa.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="markets">
+  <div class="wrap">
+    <span class="eyebrow">Käytössä (tulossa)</span>
+    <div class="row" style="margin-top:14px;">
+      <span class="swatch fi">Suomi</span>
+      <span class="swatch">Ruotsi</span>
+      <span class="swatch">Norja</span>
+      <span class="swatch">Tanska</span>
+    </div>
+  </div>
+</section>
+
+<section class="cta" id="kiinnostus">
+  <div class="wrap">
+    <div>
+      <h2>Ole ensimmäisten joukossa.</h2>
+      <p>Rakennamme parhaillaan ensimmäistä versiota. Jätä sähköpostisi, niin saat viestin kun pääset kokeilemaan.</p>
+    </div>
+    <div>
+      <a class="btn" href="mailto:hei@vaateta.com?subject=Kiinnostunut%20Vaatetasta">Ilmoita kiinnostuksesi →</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>&copy; 2026 Vaateta. Testiversio — palvelu ei vielä välitä ostoksia.</p>
+    <div class="links">
+      <a href="#">Tietosuoja</a>
+      <a href="mailto:hei@vaateta.com">Ota yhteyttä</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
