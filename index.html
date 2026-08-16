@@ -203,6 +203,18 @@
     to{ transform: rotate(2.5deg) translateY(0); opacity: 1; }
   }
 
+  .label-stage{ flex-direction: column; gap: 16px; }
+  .demo-switch{
+    display:flex; gap: 8px; align-items:center; justify-content:center;
+  }
+  .demo-dot{
+    width: 8px; height: 8px; border-radius: 50%;
+    background: transparent; border: 1.5px solid var(--ink-soft);
+    cursor: pointer; padding: 0;
+  }
+  .demo-dot.active{ background: var(--berry); border-color: var(--berry); }
+  .demo-dot:hover{ border-color: var(--ink); }
+
   /* ---------- HOW IT WORKS ---------- */
   .steps{
     padding: 20px 0 88px;
@@ -264,6 +276,55 @@
     border-radius: 999px;
   }
   .swatch.fi{ background: var(--sage); color: var(--paper-raised); border-color: var(--sage); }
+
+  /* ---------- ABOUT ---------- */
+  .about{
+    padding: 0 0 88px;
+    border-top: 1px solid var(--line);
+  }
+  .about h2{
+    font-family:'Fraunces', serif;
+    font-weight: 500;
+    font-size: 28px;
+    margin: 28px 0 26px;
+  }
+  .about-grid{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 26px;
+  }
+  .about-grid p{
+    font-size: 14.5px;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  @media (max-width: 860px){
+    .about-grid{ grid-template-columns: 1fr; }
+  }
+
+  /* ---------- PHOTO BAND ----------
+     PÄIVITÄ TÄSSÄ: kun sinulla on lopullinen kuvatiedosto (esim. hero-family.jpg),
+     lataa se samaan repoon kansioon "images/" ja korvaa alla oleva
+     linear-gradient(...) rivillä:
+     background: url('images/hero-family.jpg') center/cover no-repeat;
+  ------------------------------------ */
+  .photo-band{
+    position: relative;
+    height: 420px;
+    background: linear-gradient(135deg, #6B7D5E 0%, #C98A2B 45%, #A83D34 100%);
+    background-size: cover;
+    background-position: center;
+    display:flex;
+    align-items:flex-end;
+  }
+  .photo-overlay{
+    position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(35,38,43,0) 40%, rgba(35,38,43,0.65) 100%);
+  }
+  .photo-caption{
+    position: relative;
+    padding-bottom: 28px;
+  }
 
   /* ---------- CTA ---------- */
   .cta{
@@ -351,34 +412,20 @@
       <div class="hero-actions">
         <a class="btn" href="#kiinnostus">Ilmoita kiinnostuksesi</a>
         <a class="btn ghost" href="#miten-toimii">Miten se toimii</a>
+        <a class="btn ghost" href="#meista">Meistä</a>
       </div>
     </div>
 
     <div class="label-stage">
-      <div class="care-label">
-        <div class="cl-head"><span>Haku #0114</span><span>110 cm</span></div>
-        <div class="cl-query">"Talvihaalari 5-vuotiaalle tytölle, max 120 €"</div>
-        <div class="cl-result">
-          <div>
-            <span class="name">Reima Tepastella</span>
-            <span class="why">Vedenpitävä, hyvä arvio, oma koko saatavilla</span>
-          </div>
-          <div class="price">109 €</div>
-        </div>
-        <div class="cl-result">
-          <div>
-            <span class="name">Didriksons Rio</span>
-            <span class="why">Edullisin, toimitus 2 pv</span>
-          </div>
-          <div class="price">89 €</div>
-        </div>
-        <div class="cl-result">
-          <div>
-            <span class="name">Polarn O. Pyret</span>
-            <span class="why">Paras arvostelu, hieman yli budjetin</span>
-          </div>
-          <div class="price">128 €</div>
-        </div>
+      <div class="care-label" id="careLabel">
+        <div class="cl-head"><span id="clSearchId">Haku #0114</span><span id="clSize">110 cm</span></div>
+        <div class="cl-query" id="clQuery">"Talvihaalari 5-vuotiaalle tytölle, max 120 €"</div>
+        <div id="clResults"></div>
+      </div>
+      <div class="demo-switch" role="group" aria-label="Vaihda esimerkkihaku">
+        <button class="demo-dot active" data-demo="0" aria-label="Esimerkki 1"></button>
+        <button class="demo-dot" data-demo="1" aria-label="Esimerkki 2"></button>
+        <button class="demo-dot" data-demo="2" aria-label="Esimerkki 3"></button>
       </div>
     </div>
   </div>
@@ -419,6 +466,31 @@
   </div>
 </section>
 
+<section class="about" id="meista">
+  <div class="wrap">
+    <span class="eyebrow">Meistä</span>
+    <h2>Miksi rakennamme Vaatetaa</h2>
+    <div class="about-grid">
+      <p>
+        Pohjoismainen vanhempi käyttää keskimäärin useita tunteja kuukaudessa lastenvaatteiden selailuun eri verkkokaupoissa — koot vaihtelevat brändeittäin, tarjoukset ovat hajallaan, ja "oikean" tuotteen löytäminen vaatii kymmenien välilehtien auki pitämistä.
+      </p>
+      <p>
+        Vaateta rakentaa suositusagenttia, joka poistaa tämän selaustyön: vanhempi kertoo yhdellä lauseella tarpeen, ja agentti hakee, normalisoi koot ja pisteyttää löydöt useista kaupoista — päätös ja klikkaus jäävät aina vanhemmalle itselleen.
+      </p>
+      <p>
+        Tuote rakennetaan alusta asti kumppanuuspohjaisesti virallisten affiliate-rajapintojen (mm. Awin) kautta, ilman sivustojen scrapingia — tämä pitää palvelun sekä kauppojen että käyttäjien kannalta luotettavalla pohjalla pitkällä aikavälillä.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="photo-band" id="photoBand">
+  <div class="photo-overlay"></div>
+  <div class="wrap photo-caption">
+    <span class="eyebrow" style="color:rgba(246,244,238,0.75)">Turvallinen koulutie, hyvin varustettuna</span>
+  </div>
+</section>
+
 <section class="cta" id="kiinnostus">
   <div class="wrap">
     <div>
@@ -440,6 +512,65 @@
     </div>
   </div>
 </footer>
+
+<script>
+  var demos = [
+    {
+      id: "Haku #0114",
+      size: "110 cm",
+      query: "\"Talvihaalari 5-vuotiaalle tytölle, max 120 €\"",
+      results: [
+        { name: "Reima Tepastella", why: "Vedenpitävä, hyvä arvio, oma koko saatavilla", price: "109 €" },
+        { name: "Didriksons Rio", why: "Edullisin, toimitus 2 pv", price: "89 €" },
+        { name: "Polarn O. Pyret", why: "Paras arvostelu, hieman yli budjetin", price: "128 €" }
+      ]
+    },
+    {
+      id: "Haku #0287",
+      size: "110 cm",
+      query: "\"Farkut ja pari t-paitaa pojalle, edullisin vaihtoehto kelpaa\"",
+      results: [
+        { name: "Lindex Farkut + 2-pack", why: "Edullisin yhdistelmä, varastossa", price: "34 €" },
+        { name: "Kappahl Basic-setti", why: "Sama koko molemmissa, nopea toimitus", price: "39 €" },
+        { name: "Zalando Essentials", why: "Halvin yksittäin, eri kaupasta", price: "42 €" }
+      ]
+    },
+    {
+      id: "Haku #0342",
+      size: "92 cm",
+      query: "\"Kurahousut 2-vuotiaalle, täytyy olla vedenpitävät, hinnalla ei väliä\"",
+      results: [
+        { name: "Reima Kittilä", why: "Testivoittaja vedenpitävyydessä", price: "59 €" },
+        { name: "Didriksons Rain", why: "Kevyempi malli, hyvä liikkuvuus", price: "49 €" },
+        { name: "Molo Waterproof", why: "Premium-materiaali, pisin takuu", price: "72 €" }
+      ]
+    }
+  ];
+
+  function renderDemo(i){
+    var d = demos[i];
+    document.getElementById('clSearchId').textContent = d.id;
+    document.getElementById('clSize').textContent = d.size;
+    document.getElementById('clQuery').textContent = d.query;
+    var html = '';
+    d.results.forEach(function(r){
+      html += '<div class="cl-result"><div><span class="name">' + r.name +
+        '</span><span class="why">' + r.why + '</span></div><div class="price">' + r.price + '</div></div>';
+    });
+    document.getElementById('clResults').innerHTML = html;
+    document.querySelectorAll('.demo-dot').forEach(function(dot){
+      dot.classList.toggle('active', dot.dataset.demo === String(i));
+    });
+  }
+
+  document.querySelectorAll('.demo-dot').forEach(function(dot){
+    dot.addEventListener('click', function(){
+      renderDemo(parseInt(dot.dataset.demo, 10));
+    });
+  });
+
+  renderDemo(0);
+</script>
 
 </body>
 </html>
