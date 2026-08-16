@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tietosuojaseloste — Vaateta</title>
+<meta name="description" content="Vaateta.com — tietosuojaseloste / Privacy Notice">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #EDEAE2;
+    --paper-raised: #F6F4EE;
+    --ink: #23262B;
+    --ink-soft: #55585F;
+    --mustard: #C98A2B;
+    --berry: #A83D34;
+    --sage: #57654C;
+    --blue: #33505C;
+    --line: rgba(35,38,43,0.16);
+    --radius: 2px;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Space Grotesk', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1.6;
+  }
+  .wrap{ max-width: 760px; margin: 0 auto; padding: 0 28px 100px; }
+  a{ color: var(--blue); }
+
+  header{ padding: 28px 0 0; }
+  header .inner{
+    max-width: 760px; margin: 0 auto; padding: 0 28px;
+    display:flex; align-items:center; justify-content: space-between;
+  }
+  .logo{
+    font-family:'Fraunces', serif; font-weight: 600; font-size: 22px;
+    text-decoration:none; color: var(--ink); letter-spacing: -0.01em;
+  }
+  .logo .dot{ color: var(--berry); }
+  .back{
+    font-family:'IBM Plex Mono', monospace; font-size: 12px;
+    text-decoration:none; color: var(--ink-soft); border: 1px solid var(--line);
+    padding: 6px 12px; border-radius: var(--radius);
+  }
+  .back:hover{ color: var(--ink); border-color: var(--ink); }
+
+  .title-block{ padding: 56px 0 8px; }
+  .eyebrow{
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--ink-soft);
+  }
+  h1{
+    font-family:'Fraunces', serif; font-weight: 500; font-size: clamp(30px, 4vw, 40px);
+    margin: 14px 0 6px; letter-spacing: -0.01em;
+  }
+  .updated{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-soft); }
+
+  .lang-toggle{
+    display:flex; gap: 8px; margin: 26px 0 40px;
+  }
+  .lang-btn{
+    font-family:'IBM Plex Mono', monospace; font-size: 12.5px; letter-spacing: 0.04em;
+    padding: 8px 16px; border-radius: 999px; border: 1px solid var(--ink);
+    background: transparent; color: var(--ink); cursor: pointer;
+  }
+  .lang-btn.active{ background: var(--ink); color: var(--paper-raised); }
+
+  .lang-section{ display:none; }
+  .lang-section.active{ display:block; }
+
+  h2{
+    font-family:'Space Grotesk', sans-serif; font-weight: 700; font-size: 18px;
+    margin: 40px 0 12px; padding-top: 16px; border-top: 1px solid var(--line);
+  }
+  .lang-section > h2:first-of-type{ border-top: none; padding-top: 0; margin-top: 0; }
+  p{ margin: 0 0 14px; color: var(--ink); }
+  ul{ margin: 0 0 14px; padding-left: 20px; }
+  li{ margin-bottom: 6px; }
+
+  .note{
+    background: var(--paper-raised);
+    border-left: 3px solid var(--mustard);
+    padding: 14px 16px;
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 18px 0 26px;
+  }
+
+  .fill{
+    background: rgba(168,61,52,0.12);
+    color: var(--berry);
+    padding: 1px 6px;
+    border-radius: 2px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.92em;
+  }
+
+  footer{
+    padding: 40px 0 0; border-top: 1px solid var(--line); margin-top: 40px;
+  }
+  footer p{ font-size: 12px; color: var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <a class="logo" href="index.html">vaateta<span class="dot">.</span></a>
+    <a class="back" href="index.html">← Etusivulle / Home</a>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="title-block">
+    <span class="eyebrow">Legal</span>
+    <h1>Tietosuojaseloste / Privacy Notice</h1>
+    <div class="updated">Päivitetty / Last updated: 16.8.2026</div>
+  </div>
+
+  <div class="lang-toggle">
+    <button class="lang-btn active" data-lang="fi" onclick="setLang('fi')">Suomeksi</button>
+    <button class="lang-btn" data-lang="en" onclick="setLang('en')">In English</button>
+  </div>
+
+  <!-- ============ SUOMI ============ -->
+  <section class="lang-section active" id="lang-fi">
+
+    <div class="note">
+      Tämä seloste kuvaa, mitä tietoja vaateta.com-sivusto tällä hetkellä käsittelee. Sivusto on tällä hetkellä testivaiheessa: se ei sisällä lomakkeita, kirjautumista, analytiikkaa eikä evästeitä. Selostetta päivitetään, kun sivustolle lisätään toiminnallisuutta (esim. sähköpostilistan kerääminen tai varsinainen hakupalvelu).
+    </div>
+
+    <h2>1. Rekisterinpitäjä</h2>
+    <p>
+      <span class="fill">[Täytä: nimesi tai yrityksesi virallinen nimi]</span><br>
+      <span class="fill">[Täytä: yhteystiedot — sähköposti riittää tässä vaiheessa]</span><br>
+      Domain: vaateta.com
+    </p>
+
+    <h2>2. Mitä tietoja käsittelemme</h2>
+    <p>Sivustolla ei ole tällä hetkellä lomakkeita eikä automaattista tiedonkeruuta. Käsittelemme henkilötietoja vain seuraavissa tilanteissa:</p>
+    <ul>
+      <li><strong>Kun lähetät meille sähköpostia</strong> ("Ilmoita kiinnostuksesi" tai "Ota yhteyttä" -linkit avaavat oman sähköpostiohjelmasi). Näemme tällöin sähköpostiosoitteesi ja viestisi sisällön, koska lähetät ne itse meille suoraan.</li>
+      <li><strong>Palvelimen lokitiedot:</strong> sivuston hostauspalvelu (Vercel Inc.) käsittelee teknisesti kävijän IP-osoitteen ja selaintiedot palvelun toimittamiseksi ja tietoturvan varmistamiseksi. Emme itse näe tai tallenna näitä tietoja erikseen.</li>
+      <li><strong>Fonttien lataus:</strong> sivu lataa kirjasintyypit Google Fontsin kautta (Google Ireland Ltd. / Google LLC). Tämä lähettää kävijän IP-osoitteen Googlelle sivua ladattaessa. Kyse on teknisestä toiminnosta ulkoasun toteuttamiseksi, ei seurannasta.</li>
+    </ul>
+
+    <h2>3. Käsittelyn tarkoitus ja oikeusperuste</h2>
+    <p>Yhteydenottoihin vastaaminen perustuu oikeutettuun etuun vastata meille vapaaehtoisesti lähetettyihin viesteihin. Teknisten lokitietojen käsittely perustuu oikeutettuun etuun (palvelun toimivuus ja tietoturva).</p>
+
+    <h2>4. Kenelle tietoja luovutetaan</h2>
+    <ul>
+      <li><strong>Vercel Inc.</strong> — sivuston hostauspalvelu (tekniset lokit).</li>
+      <li><strong>Google Ireland Ltd. / Google LLC</strong> — kirjasintiedostojen toimitus (Google Fonts).</li>
+      <li>Tietoja ei myydä eikä luovuteta markkinointitarkoituksiin kolmansille osapuolille.</li>
+    </ul>
+
+    <h2>5. Kansainväliset tiedonsiirrot</h2>
+    <p>Vercel ja Google saattavat käsitellä tietoja EU/ETA-alueen ulkopuolella (esim. Yhdysvalloissa). Tällöin siirto perustuu kyseisten palveluntarjoajien EU:n komission hyväksymiin vakiosopimuslausekkeisiin (Standard Contractual Clauses) tai vastaavaan suojamekanismiin.</p>
+
+    <h2>6. Säilytysaika</h2>
+    <p>Sähköpostitse lähetetyt viestit säilytetään niin kauan kuin on tarpeen yhteydenottoon vastaamiseksi, minkä jälkeen ne poistetaan kohtuullisessa ajassa. Palvelimen tekniset lokit säilyvät hostauspalvelun oman käytännön mukaisesti.</p>
+
+    <h2>7. Lapsia koskevat tiedot</h2>
+    <p>Tämä testisivusto ei kerää eikä tallenna tietoa lapsista. Palvelun tuleva tarkoitus on auttaa vanhempia löytämään lastenvaatteita — tässä vaiheessa sivusto ei kuitenkaan käsittele lapsen kokoa, nimeä tai muita tietoja missään muodossa. Kun varsinainen hakutoiminto julkaistaan, tätä selostetta päivitetään kuvaamaan tarkasti, miten vanhemman antamaa, lasta koskevaa tietoa (esim. vaatekoko) käsitellään, minimoiden kerättävän tiedon määrän.</p>
+
+    <h2>8. Oikeutesi</h2>
+    <p>Sinulla on oikeus:</p>
+    <ul>
+      <li>saada tietää, mitä tietoja sinusta on tallennettu</li>
+      <li>pyytää tietojen oikaisua tai poistamista</li>
+      <li>vastustaa käsittelyä tai pyytää sen rajoittamista</li>
+      <li>tehdä valitus valvontaviranomaiselle</li>
+    </ul>
+    <p>Suomessa valvontaviranomainen on <a href="https://tietosuoja.fi" target="_blank" rel="noopener">Tietosuojavaltuutetun toimisto</a> (tietosuoja.fi).</p>
+
+    <h2>9. Yhteydenotot</h2>
+    <p>Tietosuojaan liittyvissä kysymyksissä voit ottaa yhteyttä: <a href="mailto:hei@vaateta.com">hei@vaateta.com</a></p>
+
+    <h2>10. Muutokset selosteeseen</h2>
+    <p>Tätä selostetta päivitetään sitä mukaa kun sivuston ja palvelun toiminnallisuus laajenee. Viimeisin päivitys näkyy sivun yläreunassa.</p>
+
+  </section>
+
+  <!-- ============ ENGLISH ============ -->
+  <section class="lang-section" id="lang-en">
+
+    <div class="note">
+      This notice describes what data vaateta.com currently processes. The site is presently a test version: it has no forms, no login, no analytics, and no cookies. This notice will be updated as functionality is added (e.g. an email signup list or the actual search service).
+    </div>
+
+    <h2>1. Data Controller</h2>
+    <p>
+      <span class="fill">Mikko Savola</span><br>
+      <span class="fill">savomik@gmail.com</span><br>
+      Domain: vaateta.com
+    </p>
+
+    <h2>2. What data we process</h2>
+    <p>The site currently has no forms and no automatic data collection. We process personal data only in the following situations:</p>
+    <ul>
+      <li><strong>When you email us</strong> (the "Ilmoita kiinnostuksesi" / "Ota yhteyttä" links open your own email client). We then see your email address and message content, because you send it to us directly and voluntarily.</li>
+      <li><strong>Server logs:</strong> our hosting provider (Vercel Inc.) technically processes visitor IP addresses and browser information to deliver the service and maintain security. We do not separately view or store this data ourselves.</li>
+      <li><strong>Font loading:</strong> the page loads typefaces via Google Fonts (Google Ireland Ltd. / Google LLC), which sends the visitor's IP address to Google when the page loads. This is a technical function for rendering the design, not tracking.</li>
+    </ul>
+
+    <h2>3. Purpose and legal basis</h2>
+    <p>Responding to inquiries is based on our legitimate interest in replying to messages you send us voluntarily. Processing of technical log data is based on legitimate interest (service functionality and security).</p>
+
+    <h2>4. Who we share data with</h2>
+    <ul>
+      <li><strong>Vercel Inc.</strong> — website hosting (technical logs).</li>
+      <li><strong>Google Ireland Ltd. / Google LLC</strong> — font file delivery (Google Fonts).</li>
+      <li>We do not sell data or share it with third parties for marketing purposes.</li>
+    </ul>
+
+    <h2>5. International data transfers</h2>
+    <p>Vercel and Google may process data outside the EU/EEA (e.g. in the United States). Such transfers rely on those providers' EU Commission-approved Standard Contractual Clauses or an equivalent safeguard.</p>
+
+    <h2>6. Retention period</h2>
+    <p>Emails sent to us are retained only as long as necessary to respond to your inquiry, then deleted within a reasonable time. Technical server logs are retained according to our hosting provider's own policy.</p>
+
+    <h2>7. Data relating to children</h2>
+    <p>This test site does not collect or store any data about children. The service's future purpose is to help parents find children's clothing — at this stage, however, the site does not process a child's size, name, or any other information in any form. When the actual search feature launches, this notice will be updated to describe precisely how parent-provided, child-related information (e.g. clothing size) is processed, minimizing the data collected.</p>
+
+    <h2>8. Your rights</h2>
+    <p>You have the right to:</p>
+    <ul>
+      <li>find out what data we hold about you</li>
+      <li>request correction or deletion of your data</li>
+      <li>object to processing or request that it be restricted</li>
+      <li>lodge a complaint with a supervisory authority</li>
+    </ul>
+    <p>In Finland, the supervisory authority is the <a href="https://tietosuoja.fi/en" target="_blank" rel="noopener">Office of the Data Protection Ombudsman</a> (tietosuoja.fi). If you are located elsewhere in the EU/EEA, you may also contact your local data protection authority.</p>
+
+    <h2>9. Contact</h2>
+    <p>For privacy-related questions, contact: <a href="mailto:hei@vaateta.com">hei@vaateta.com</a></p>
+
+    <h2>10. Changes to this notice</h2>
+    <p>This notice will be updated as the site and service functionality expands. The most recent update date is shown at the top of the page.</p>
+
+  </section>
+
+  <footer>
+    <p>Vaateta — <span class="fill">[Täytä/Fill in legal entity once established]</span></p>
+  </footer>
+</div>
+
+<script>
+  function setLang(lang){
+    document.querySelectorAll('.lang-section').forEach(function(el){
+      el.classList.toggle('active', el.id === 'lang-' + lang);
+    });
+    document.querySelectorAll('.lang-btn').forEach(function(btn){
+      btn.classList.toggle('active', btn.dataset.lang === lang);
+    });
+  }
+</script>
+
+</body>
+</html>
