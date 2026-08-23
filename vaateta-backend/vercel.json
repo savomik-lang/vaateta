@@ -1,5 +1,0 @@
-{
-  "crons": [
-    { "path": "/api/cron/import-boozt", "schedule": "0 3 * * *" }
-  ]
-}
