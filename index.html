@@ -275,6 +275,102 @@
     margin: 0;
   }
 
+  /* ---------- LIVE SEARCH ---------- */
+  .live-search{
+    padding: 20px 0 88px;
+    border-top: 1px solid var(--line);
+  }
+  .live-search h2{
+    font-family:'Fraunces', serif;
+    font-weight: 500;
+    font-size: 28px;
+    margin: 12px 0 8px;
+  }
+  .live-search-hint{
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0 0 22px;
+  }
+  .live-search-form{
+    display:flex;
+    gap: 10px;
+    max-width: 560px;
+    margin-bottom: 14px;
+  }
+  .live-search-form input{
+    flex: 1;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    padding: 12px 16px;
+    border: 1px solid var(--ink);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    color: var(--ink);
+  }
+  .live-search-form input:focus{
+    outline: 2px solid var(--sage);
+    outline-offset: 1px;
+  }
+  .live-search-status{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    color: var(--ink-soft);
+    min-height: 20px;
+    margin-bottom: 10px;
+  }
+  .live-search-status.error{ color: var(--berry); }
+
+  .filmstrips{ display:flex; flex-direction: column; gap: 34px; margin-top: 24px; }
+  .filmstrip h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 12px;
+  }
+  .filmstrip-row{
+    display:flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scroll-snap-type: x proximity;
+  }
+  .result-card{
+    flex: 0 0 220px;
+    scroll-snap-align: start;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 14px;
+    display:flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .result-card .rc-img{
+    width: 100%; height: 130px; object-fit: cover;
+    border-radius: 2px; background: var(--paper);
+    margin-bottom: 4px;
+  }
+  .result-card .rc-brand{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--ink-soft);
+  }
+  .result-card .rc-title{ font-size: 14px; font-weight: 500; line-height: 1.3; }
+  .result-card .rc-price{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 14px; color: var(--blue); margin-top: 2px;
+  }
+  .result-card .rc-price .original{
+    text-decoration: line-through; color: var(--ink-soft); font-size: 12px; margin-right: 6px;
+  }
+  .result-card .rc-link{
+    margin-top: 6px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 13px; font-weight: 500;
+    color: var(--berry); text-decoration: none;
+  }
+  .result-card .rc-link:hover{ text-decoration: underline; }
+
   /* ---------- MARKETS ---------- */
   .markets{
     padding: 0 0 88px;
@@ -447,6 +543,41 @@
   </div>
 </section>
 
+<section class="live-search" id="kokeile">
+  <div class="wrap">
+    <span class="eyebrow">Kokeile (testiversio)</span>
+    <h2>Hae oikeasti Boozt-katalogista</h2>
+    <p class="live-search-hint">Esim. "kurahousut 2-vuotiaalle, vedenpitävät, max 60€". Data päivittyy kerran vuorokaudessa.</p>
+
+    <form id="liveSearchForm" class="live-search-form">
+      <input
+        type="text"
+        id="liveSearchInput"
+        placeholder="Kerro mitä tarvitset..."
+        autocomplete="off"
+      >
+      <button type="submit" class="btn">Hae</button>
+    </form>
+
+    <div id="liveSearchStatus" class="live-search-status" aria-live="polite"></div>
+
+    <div id="liveSearchResults" class="filmstrips" hidden>
+      <div class="filmstrip">
+        <h3>Halvimmat</h3>
+        <div class="filmstrip-row" id="filmstripCheapest"></div>
+      </div>
+      <div class="filmstrip">
+        <h3>Paras hinta-laatu</h3>
+        <div class="filmstrip-row" id="filmstripBestValue"></div>
+      </div>
+      <div class="filmstrip" id="filmstripLovedWrap" hidden>
+        <h3>Näistä ihmiset pitivät eniten</h3>
+        <div class="filmstrip-row" id="filmstripLoved"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="markets">
   <div class="wrap">
     <span class="eyebrow">Käytössä (tulossa)</span>
@@ -556,6 +687,80 @@
   });
 
   renderDemo(0);
+
+  // ---------- OIKEA HAKU (kutsuu /api/search) ----------
+  var searchForm = document.getElementById('liveSearchForm');
+  var searchInput = document.getElementById('liveSearchInput');
+  var statusEl = document.getElementById('liveSearchStatus');
+  var resultsEl = document.getElementById('liveSearchResults');
+
+  function moneyLabel(m){
+    if (!m) return '';
+    return m.amount + ' ' + (m.currency === 'EUR' ? '€' : m.currency);
+  }
+
+  function renderCard(product){
+    var original = product.original_price
+      ? '<span class="original">' + moneyLabel(product.original_price) + '</span>'
+      : '';
+    var img = product.image_url
+      ? '<img class="rc-img" src="' + product.image_url + '" alt="" loading="lazy">'
+      : '';
+    return (
+      '<div class="result-card">' +
+        img +
+        '<span class="rc-brand">' + (product.brand || '') + '</span>' +
+        '<span class="rc-title">' + (product.title || '') + '</span>' +
+        '<span class="rc-price">' + original + moneyLabel(product.price) + '</span>' +
+        '<a class="rc-link" href="' + product.url_affiliate + '" target="_blank" rel="noopener">Kauppaan →</a>' +
+      '</div>'
+    );
+  }
+
+  function renderFilmstrip(containerId, products){
+    var el = document.getElementById(containerId);
+    el.innerHTML = products.map(renderCard).join('');
+  }
+
+  searchForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var q = searchInput.value.trim();
+    if (!q) return;
+
+    statusEl.textContent = 'Haetaan...';
+    statusEl.classList.remove('error');
+    resultsEl.hidden = true;
+
+    fetch('/api/search?q=' + encodeURIComponent(q))
+      .then(function(r){
+        if (!r.ok) throw new Error('Haku epäonnistui (' + r.status + ')');
+        return r.json();
+      })
+      .then(function(data){
+        if (data.total_matches === 0) {
+          statusEl.textContent = 'Ei tuloksia tällä haulla. Kokeile toista muotoilua.';
+          return;
+        }
+        statusEl.textContent = data.total_matches + ' tulosta löytyi.';
+
+        renderFilmstrip('filmstripCheapest', data.results.cheapest);
+        renderFilmstrip('filmstripBestValue', data.results.bestValue);
+
+        var lovedWrap = document.getElementById('filmstripLovedWrap');
+        if (data.results.mostLoved && data.results.mostLoved.length > 0) {
+          renderFilmstrip('filmstripLoved', data.results.mostLoved);
+          lovedWrap.hidden = false;
+        } else {
+          lovedWrap.hidden = true;
+        }
+
+        resultsEl.hidden = false;
+      })
+      .catch(function(err){
+        statusEl.textContent = 'Virhe: ' + err.message;
+        statusEl.classList.add('error');
+      });
+  });
 </script>
 
 </body>
