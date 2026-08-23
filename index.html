@@ -96,11 +96,8 @@
     position: relative;
     z-index: 2;
     margin-top: auto;
-    padding: 40px 0 56px;
-    display: grid;
-    grid-template-columns: 1.15fr 0.85fr;
-    gap: 40px;
-    align-items: end;
+    padding: 40px 0 96px;
+    max-width: 640px;
   }
   .hero-content h1{
     font-family:'Fraunces', serif;
@@ -151,37 +148,29 @@
   }
   .btn.ghost:hover{ background: rgba(246,244,238,0.14); transform:none; }
 
-  /* ---------- CARE LABEL (signature element, floats over photo) ---------- */
-  .label-stage{
+  /* ---------- CARE LABEL (signature element) ----------
+     Floats centered, overlapping only the very bottom edge of the
+     hero photo (ground/path area) so it never sits over either child. */
+  .demo-float{
     position: relative;
+    z-index: 3;
     display:flex;
     flex-direction: column;
-    gap: 14px;
     align-items:center;
-    justify-content:center;
+    gap: 14px;
+    margin-top: -86px;
+    padding: 0 28px;
   }
   .care-label{
-    background: rgba(246,244,238,0.94);
+    background: rgba(246,244,238,0.97);
     backdrop-filter: blur(6px);
     border: 1.5px dashed var(--ink);
     border-radius: 6px;
     width: 100%;
-    max-width: 320px;
-    padding: 24px 22px 20px;
+    max-width: 360px;
+    padding: 22px 22px 6px;
     position: relative;
-    transform: rotate(2deg);
-    box-shadow: 0 24px 48px -20px rgba(0,0,0,0.55);
-  }
-  .care-label::before{
-    content:"";
-    position:absolute;
-    top: -13px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 16px; height: 16px;
-    background: var(--paper-raised);
-    border: 1.5px dashed var(--ink);
-    border-radius: 50%;
+    box-shadow: 0 20px 44px -18px rgba(0,0,0,0.4);
   }
   .care-label .cl-head{
     font-family:'IBM Plex Mono', monospace;
@@ -222,29 +211,31 @@
     color: var(--blue);
     white-space: nowrap;
   }
-
-  @media (prefers-reduced-motion: no-preference){
-    .care-label{ animation: settle 900ms cubic-bezier(.2,.8,.2,1) both; }
-  }
-  @keyframes settle{
-    from{ transform: rotate(2deg) translateY(14px); opacity: 0; }
-    to{ transform: rotate(2deg) translateY(0); opacity: 1; }
-  }
-
   .demo-switch{
     display:flex; gap: 8px; align-items:center; justify-content:center;
+    padding: 12px 0 16px;
+    border-top: 1px solid var(--line);
+    margin-top: 4px;
   }
   .demo-dot{
     width: 8px; height: 8px; border-radius: 50%;
-    background: transparent; border: 1.5px solid rgba(246,244,238,0.7);
+    background: transparent; border: 1.5px solid var(--ink-soft);
     cursor: pointer; padding: 0;
   }
-  .demo-dot.active{ background: #E7A94A; border-color: #E7A94A; }
-  .demo-dot:hover{ border-color: var(--paper-raised); }
+  .demo-dot.active{ background: var(--berry); border-color: var(--berry); }
+  .demo-dot:hover{ border-color: var(--ink); }
+
+  @media (prefers-reduced-motion: no-preference){
+    .demo-float{ animation: settle 700ms cubic-bezier(.2,.8,.2,1) both; }
+  }
+  @keyframes settle{
+    from{ transform: translateY(18px); opacity: 0; }
+    to{ transform: translateY(0); opacity: 1; }
+  }
 
   /* ---------- HOW IT WORKS ---------- */
   .steps{
-    padding: 20px 0 88px;
+    padding: 28px 0 88px;
     border-top: 1px solid var(--line);
   }
   .steps h2{
@@ -409,31 +400,29 @@
   </header>
 
   <div class="wrap hero-content">
-    <div>
-      <span class="eyebrow">Suositusagentti lastenvaatteille</span>
-      <h1>Lapsen vaatteet,<br>ilman <em>iltakymmenen</em><br>selaustuntia.</h1>
-      <p class="lede">Kerro yhdellä lauseella mitä tarvitset — koko, budjetti, sään­kestävyys. Vaateta hakee useista pohjoismaisista verkkokaupoista ja näyttää parhaat löydöt perusteluineen. Sinä päätät, minne klikkaat.</p>
-      <div class="hero-actions">
-        <a class="btn" href="#kiinnostus">Ilmoita kiinnostuksesi</a>
-        <a class="btn ghost" href="#miten-toimii">Miten se toimii</a>
-        <a class="btn ghost" href="#meista">Meistä</a>
-      </div>
-    </div>
-
-    <div class="label-stage">
-      <div class="care-label" id="careLabel">
-        <div class="cl-head"><span id="clSearchId">Haku #0114</span><span id="clSize">110 cm</span></div>
-        <div class="cl-query" id="clQuery">"Talvihaalari 5-vuotiaalle tytölle, max 120 €"</div>
-        <div id="clResults"></div>
-      </div>
-      <div class="demo-switch" role="group" aria-label="Vaihda esimerkkihaku">
-        <button class="demo-dot active" data-demo="0" aria-label="Esimerkki 1"></button>
-        <button class="demo-dot" data-demo="1" aria-label="Esimerkki 2"></button>
-        <button class="demo-dot" data-demo="2" aria-label="Esimerkki 3"></button>
-      </div>
+    <span class="eyebrow">Suositusagentti lastenvaatteille</span>
+    <h1>Lapsen vaatteet,<br>ilman <em>iltakymmenen</em><br>selaustuntia.</h1>
+    <p class="lede">Kerro yhdellä lauseella mitä tarvitset — koko, budjetti, sään­kestävyys. Vaateta hakee useista pohjoismaisista verkkokaupoista ja näyttää parhaat löydöt perusteluineen. Sinä päätät, minne klikkaat.</p>
+    <div class="hero-actions">
+      <a class="btn" href="#kiinnostus">Ilmoita kiinnostuksesi</a>
+      <a class="btn ghost" href="#miten-toimii">Miten se toimii</a>
+      <a class="btn ghost" href="#meista">Meistä</a>
     </div>
   </div>
 </section>
+
+<div class="demo-float">
+  <div class="care-label" id="careLabel">
+    <div class="cl-head"><span id="clSearchId">Haku #0114</span><span id="clSize">110 cm</span></div>
+    <div class="cl-query" id="clQuery">"Talvihaalari 5-vuotiaalle tytölle, max 120 €"</div>
+    <div id="clResults"></div>
+    <div class="demo-switch" role="group" aria-label="Vaihda esimerkkihaku">
+      <button class="demo-dot active" data-demo="0" aria-label="Esimerkki 1"></button>
+      <button class="demo-dot" data-demo="1" aria-label="Esimerkki 2"></button>
+      <button class="demo-dot" data-demo="2" aria-label="Esimerkki 3"></button>
+    </div>
+  </div>
+</div>
 
 <section class="steps" id="miten-toimii">
   <div class="wrap">
