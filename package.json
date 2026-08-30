@@ -5,7 +5,6 @@
   "description": "Boozt/Awin-adapteri ja ranking-moduuli lastenvaateagentille",
   "scripts": {
     "import:boozt": "ts-node src/adapters/boozt-feed-importer.ts",
-    "build": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
