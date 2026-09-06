@@ -5,7 +5,7 @@
   "description": "Boozt/Babyshop-adapteri, tekstintulkinta ja ranking-moduuli lastenvaateagentille",
   "scripts": {
     "import:boozt": "ts-node src/adapters/boozt-feed-importer.ts",
-    "test": "node --require ts-node/register --test src/nlu/parse-query.test.ts src/pipeline.test.ts",
+    "test": "node --require ts-node/register --test src/nlu/parse-query.test.ts src/pipeline.test.ts src/ranking/brand-tiers.test.ts src/ranking/quality-signals.test.ts src/ranking/rank.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
