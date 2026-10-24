@@ -163,6 +163,10 @@ export interface ImportResult {
   // mapGoogleRow-sarakeoletukset voi tarkistaa ilman paikallista CSV:n
   // avaamista.
   sampleRowKeys?: string[];
+  // Väliaikainen diagnostiikka Redis-kirjoitus/luku-epäjohdonmukaisuuden
+  // selvittämiseksi (ks. importAwinStore).
+  verifiedCount?: number;
+  redisBackend?: string;
 }
 
 export async function importAwinStore(store: StoreDefinition & { feedId: string }): Promise<ImportResult> {
@@ -212,6 +216,13 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
   const productStore = new RedisProductStore(store.storeKey);
   await productStore.replaceAll(deduped);
 
+  // DIAGNOSTIIKKA: luetaan juuri kirjoitettu data VÄLITTÖMÄSTI takaisin
+  // samalla kutsulla, jotta nähdään kirjoittuuko tuonti todella samaan
+  // Rediksen avaimeen/kantaan mistä haku (search.ts, multi-store-adapter.ts)
+  // lukee. Jos verifiedCount ei täsmää deduped.length:iin, kirjoitus ja
+  // luku käyttävät eri Redis-yhteyttä tai -kantaa.
+  const verification = await productStore.loadAll();
+
   return {
     storeKey: store.storeKey,
     displayName: store.displayName,
@@ -219,6 +230,10 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
     importedProducts: deduped.length,
     skippedRows: skipped + (products.length - deduped.length),
     sampleRowKeys: products.length === 0 && rows.length > 0 ? Object.keys(rows[0]) : undefined,
+    verifiedCount: verification.length,
+    redisBackend: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL
+      ? "rest(upstash)"
+      : (process.env.KV_REDIS_URL || process.env.REDIS_URL) ? "tcp(redis)" : "none",
   };
 }
 
