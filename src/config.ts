@@ -9,6 +9,11 @@ function required(name: string): string {
 export const config = {
   awin: {
     datafeedApiKey: () => required("AWIN_DATAFEED_API_KEY"),
+    // "google"-formaatin kaupoille (Darwin-lataus) tarvitaan nämä kaksi -
+    // löytyvät Awinista Toolbox > Datafeeds > "Feed List Download" -laatikon
+    // esimerkki-URL:sta: .../publisher/{AWIN_PUBLISHER_ID}/{AWIN_FEEDLIST_TOKEN}/1/feedList
+    publisherId: () => required("AWIN_PUBLISHER_ID"),
+    feedListToken: () => required("AWIN_FEEDLIST_TOKEN"),
   },
   ai: {
     apiKey: () => required("ANTHROPIC_API_KEY"),

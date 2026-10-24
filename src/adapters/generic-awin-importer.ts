@@ -1,3 +1,4 @@
+import { gunzipSync } from "zlib";
 import { parse } from "csv-parse/sync";
 import { config } from "../config";
 import { Product, Currency } from "../types";
@@ -25,13 +26,67 @@ const COLUMNS = [
   "product_type", "last_updated", "currency", "size", "gender", "age_group",
 ].join(",");
 
-function buildFeedUrl(feedId: string): string {
+function buildClassicFeedUrl(feedId: string): string {
   const apiKey = config.awin.datafeedApiKey();
   return (
     `https://productdata.awin.com/datafeed/download/apikey/${apiKey}` +
     `/language/any/fid/${feedId}/columns/${COLUMNS}` +
     `/format/csv/delimiter/%2C/compression/gzip/adultcontent/1/`
   );
+}
+
+// "Darwin"-latauspalvelu: julkaisijakohtainen token (ei apikey-parametri),
+// feedId voi sisältää kirjaimia (esim. "F3671"), tiedosto on aina .csv.gz.
+function buildGoogleFeedUrl(feedId: string): string {
+  const publisherId = config.awin.publisherId();
+  const token = config.awin.feedListToken();
+  return `https://ui.awin.com/productdata-darwin-download/publisher/${publisherId}/${token}/1/feed/${feedId}.csv.gz`;
+}
+
+// Google Shopping -skeeman rivi (ks. https://support.google.com/merchants/answer/7052112)
+interface GoogleFeedRow {
+  id?: string; title?: string; description?: string; link?: string;
+  image_link?: string; price?: string; sale_price?: string;
+  availability?: string; brand?: string; product_type?: string;
+  google_product_category?: string; color?: string; size?: string;
+  gender?: string; age_group?: string; shipping?: string; condition?: string;
+}
+
+function mapGoogleRow(row: GoogleFeedRow, storeKey: string): Product | null {
+  if (!row.id || !row.title || !row.link) return null;
+  // price-kenttä on usein muotoa "199.00 EUR"
+  const priceParts = (row.price || "").trim().split(/\s+/);
+  const salePriceParts = (row.sale_price || "").trim().split(/\s+/);
+  const currency = (priceParts[1] || salePriceParts[1] || "EUR") as Currency;
+  const listPrice = parseMoney(priceParts[0], currency);
+  const saleP = row.sale_price ? parseMoney(salePriceParts[0], currency) : null;
+  const effectivePrice = saleP || listPrice;
+  if (!effectivePrice) return null;
+  const originalPrice = saleP ? listPrice : null;
+  const discountPercent = originalPrice && originalPrice.amount > effectivePrice.amount
+    ? Math.round((1 - effectivePrice.amount / originalPrice.amount) * 100) : null;
+
+  return {
+    id: `${storeKey}:${row.id}`,
+    source: storeKey,
+    title: row.title,
+    brand: row.brand || "Tuntematon",
+    garment_type: guessGarmentType(row.google_product_category, row.product_type, row.title),
+    price: effectivePrice, original_price: originalPrice, discount_percent: discountPercent,
+    size_available: row.size ? [row.size] : [],
+    size_normalized: null,
+    material: null,
+    waterproof: guessWaterproof(row.description, row.title),
+    color: row.color || null,
+    gender: guessGender(row.gender),
+    url_affiliate: row.link,
+    image_url: row.image_link || "",
+    in_stock: (row.availability || "").toLowerCase() === "in stock" || (row.availability || "").toLowerCase() === "in_stock",
+    shipping_cost_from: null,
+    free_shipping_threshold: null,
+    rating: null, rating_count: null,
+    last_updated: new Date().toISOString(),
+  };
 }
 
 interface RawFeedRow {
@@ -103,24 +158,41 @@ export interface ImportResult {
   fetchedRows: number;
   importedProducts: number;
   skippedRows: number;
+  // Vain diagnostiikkaa varten: jos tuonti palautti 0 tuotetta vaikka rivejä
+  // löytyi, tämä näyttää ensimmäisen rivin sarakenimet, jotta mapRow/
+  // mapGoogleRow-sarakeoletukset voi tarkistaa ilman paikallista CSV:n
+  // avaamista.
+  sampleRowKeys?: string[];
 }
 
 export async function importAwinStore(store: StoreDefinition & { feedId: string }): Promise<ImportResult> {
-  const url = buildFeedUrl(store.feedId);
+  const url = store.format === "google" ? buildGoogleFeedUrl(store.feedId) : buildClassicFeedUrl(store.feedId);
   const response = await fetch(url);
   if (!response.ok) {
     throw new Error(
       `${store.displayName}: Awin-feedin lataus epäonnistui (${response.status} ${response.statusText}). ` +
-      `Tarkista AWIN_DATAFEED_API_KEY ja ${store.feedIdEnvVar}.`
+      `Tarkista AWIN_DATAFEED_API_KEY/AWIN_PUBLISHER_ID/AWIN_FEEDLIST_TOKEN ja ${store.feedIdEnvVar}.`
     );
   }
-  const csvText = await response.text();
-  const rows: RawFeedRow[] = parse(csvText, { columns: true, skip_empty_lines: true, relax_column_count: true });
+
+  let csvText: string;
+  if (store.format === "google") {
+    // Darwin-lataus palauttaa aina gzip-pakatun tavuvirran riippumatta
+    // vastauksen Content-Encoding-otsikosta, joten puretaan se aina itse.
+    const buf = Buffer.from(await response.arrayBuffer());
+    csvText = gunzipSync(buf).toString("utf-8");
+  } else {
+    csvText = await response.text();
+  }
+
+  const rows: Record<string, string>[] = parse(csvText, { columns: true, skip_empty_lines: true, relax_column_count: true });
 
   const products: Product[] = [];
   let skipped = 0;
   for (const row of rows) {
-    const product = mapRow(row, store.storeKey);
+    const product = store.format === "google"
+      ? mapGoogleRow(row as GoogleFeedRow, store.storeKey)
+      : mapRow(row as RawFeedRow, store.storeKey);
     if (product) products.push(product); else skipped++;
   }
 
@@ -133,5 +205,6 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
     fetchedRows: rows.length,
     importedProducts: products.length,
     skippedRows: skipped,
+    sampleRowKeys: products.length === 0 && rows.length > 0 ? Object.keys(rows[0]) : undefined,
   };
 }
