@@ -177,10 +177,16 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
 
   let csvText: string;
   if (store.format === "google") {
-    // Darwin-lataus palauttaa aina gzip-pakatun tavuvirran riippumatta
-    // vastauksen Content-Encoding-otsikosta, joten puretaan se aina itse.
+    // Node/undici saattaa purkaa gzip-pakkauksen itse Content-Encoding-
+    // otsikon perusteella, jolloin tavuvirta EI enää ole gzipattu meille
+    // asti - toisinaan taas ei. Yritetään ensin gunzip, ja jos se epäonnistuu
+    // (data ei olekaan gzip-muodossa), tulkitaan tavuvirta suoraan UTF-8:ksi.
     const buf = Buffer.from(await response.arrayBuffer());
-    csvText = gunzipSync(buf).toString("utf-8");
+    try {
+      csvText = gunzipSync(buf).toString("utf-8");
+    } catch {
+      csvText = buf.toString("utf-8");
+    }
   } else {
     csvText = await response.text();
   }
