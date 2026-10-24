@@ -22,9 +22,21 @@ import { AWIN_STORES, getConfiguredStores } from "../stores-registry";
 // hauille - tämä sääntö koskee vain RELEVANSSIA lapsisignaalin hauissa
 // (esim. "talvitakki pojalle" ei saa näyttää naisten takkeja, vaikka ne
 // olisivat täysin asiallisia sinänsä).
-const ADULT_GENDER_MARKER_REGEX = /\b(women'?s|men'?s|ladies'?|woman'?s|man'?s)\b/i;
-const ADULT_SIZE_TOKEN = "(?:xxs|xs|s|m|l|xl|xxl|xxxl|xxxxl|xxxxxl|[2-5]xl)";
+// HUOM: "'s"-pääte jätetään kokonaan pois vaatimuksesta - \b-sanaraja
+// yksinään riittää tunnistamaan sekä paljaan "Women"/"Men" (esim. "For
+// Women", "Men And Women All Match") ETTÄ omistusmuodon ("Women's",
+// "Men's") riippumatta käytetäänkö ASCII-heittomerkkiä (') tai Unicode-
+// kaarevaa heittomerkkiä (’) - molemmissa tapauksissa heittomerkki on
+// ei-sana-merkki, joten \b laukeaa juuri perussanan jälkeen joka tapauksessa.
+const ADULT_GENDER_MARKER_REGEX = /\b(women|men|woman|man|ladies|lady)\b/i;
+// [2-9]xl kattaa 6XL/7XL/jne, ei vain 5XL:ään asti.
+const ADULT_SIZE_TOKEN = "(?:xxs|xs|s|m|l|xl|xxl|xxxl|xxxxl|xxxxxl|[2-9]xl)";
 const ADULT_SIZE_RANGE_REGEX = new RegExp(`\\b${ADULT_SIZE_TOKEN}\\s*[-–]\\s*${ADULT_SIZE_TOKEN}\\b`, "i");
+// TUNNETTU RAJOITUS: bare "man"/"men" voi osua yhdysmerkillä kirjoitettuun
+// lisensoituun hahmonimeen ("Spider-Man", "He-Man") lapsituotteen otsikossa,
+// koska yhdysmerkki on ei-sana-merkki ja luo sanarajan. Hyväksytty riski -
+// Voghionin kaltaisessa yleismarkkinapaikassa tällaisia tuotteita on
+// harvoin, ja aikuisvaatteiden suodattaminen oikein painaa enemmän.
 
 function hasChildSignal(c: SearchCriteria): boolean {
   return Boolean(c.child_gender_pref) || Boolean(c.size_raw);

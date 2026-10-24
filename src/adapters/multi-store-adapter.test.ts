@@ -64,6 +64,25 @@ test("lapsisignaalin yhteydessä hylätään tuote jonka otsikossa on aikuisten 
   assert.equal(results.length, 0);
 });
 
+test("hylkää paljaan 'Women'/'Men'-sanan otsikossa vaikka omistusmuotoa ('s) ei olisi", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "bare-women:1", garment_type: "takki", in_stock: true, title: "Street Hip Hop Zipper Jacket Women 2022 Harajuku Style" }),
+    makeProduct({ id: "bare-men:1", garment_type: "takki", in_stock: true, title: "New Spring Oversize Men Long Jacket" }),
+  ]);
+  const adapter = new MultiStoreAdapter([store]);
+  const results = await adapter.search({ garment_type: "takki", child_gender_pref: "poika" });
+  assert.equal(results.length, 0);
+});
+
+test("hylkää tuotteen jonka kokoväli ulottuu 6XL:ään asti", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "size6xl:1", garment_type: "housut", in_stock: true, title: "Straight Leg Pants In Light Blue, Black & More (XS-6XL)" }),
+  ]);
+  const adapter = new MultiStoreAdapter([store]);
+  const results = await adapter.search({ garment_type: "housut", size_raw: "92" });
+  assert.equal(results.length, 0);
+});
+
 test("ilman lapsisignaalia aikuismerkintää ei suodateta pois (relevanssisääntö koskee vain lapsihakuja)", async () => {
   const store = new InMemoryProductStore([
     makeProduct({ id: "adult:3", garment_type: "takki", in_stock: true, title: "Women's Classic Wool Coat" }),
