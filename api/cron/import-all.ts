@@ -26,7 +26,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       results.push({ ...result, status: "ok" });
     } catch (err: any) {
       console.error(`${store.displayName}: tuonti epäonnistui:`, err);
-      results.push({ storeKey: store.storeKey, displayName: store.displayName, status: "error", error: err.message });
+      // Node/undici "fetch failed" -virheen todellinen syy (DNS, TLS, timeout,
+      // connection reset) on käärittynä err.cause-kenttään, jota pelkkä
+      // err.message ei näytä - poimitaan se mukaan diagnostiikkaa varten.
+      const cause = err?.cause ? String(err.cause?.message || err.cause) : undefined;
+      results.push({
+        storeKey: store.storeKey,
+        displayName: store.displayName,
+        status: "error",
+        error: err.message,
+        cause,
+      });
     }
   }
 

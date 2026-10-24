@@ -167,7 +167,12 @@ export interface ImportResult {
 
 export async function importAwinStore(store: StoreDefinition & { feedId: string }): Promise<ImportResult> {
   const url = store.format === "google" ? buildGoogleFeedUrl(store.feedId) : buildClassicFeedUrl(store.feedId);
-  const response = await fetch(url);
+  // Osa CDN:istä (mm. Awinin CloudFront) hylkää pyynnöt ilman User-Agentia -
+  // Noden oma fetch ei lähetä sitä oletuksena, mikä voi näkyä geneerisenä
+  // "fetch failed" -virheenä ilman HTTP-statuskoodia.
+  const response = await fetch(url, {
+    headers: { "User-Agent": "Vaateta/1.0 (+https://vaateta.com)", Accept: "text/csv,*/*" },
+  });
   if (!response.ok) {
     throw new Error(
       `${store.displayName}: Awin-feedin lataus epäonnistui (${response.status} ${response.statusText}). ` +
