@@ -17,15 +17,48 @@ interface RedisLike {
   get(key: string): Promise<unknown>;
 }
 
+// Vercelin Storage-integraatiot tarjoavat kahdenlaisia Redis-tunnuksia
+// riippuen siitä minkä palveluntarjoajan kautta tietokanta on luotu:
+//  1) Upstashin REST API (KV_REST_API_URL + KV_REST_API_TOKEN, tai
+//     UPSTASH_REDIS_REST_URL/TOKEN) - käyttää @upstash/redis-pakettia,
+//     joka serialisoi/deserialisoi JSON:n automaattisesti.
+//  2) Perinteinen Redis-protokolla yhdellä URL:lla (KV_REDIS_URL tai
+//     REDIS_URL, muotoa redis://user:pass@host:port) - esim. Redis Cloud
+//     -integraatio. Tähän käytetään "redis"-pakettia (node-redis), joka
+//     EI serialisoi JSON:ia itse, joten se tehdään tässä käsin.
 async function getRedisClient(cache: { client: RedisLike | null }): Promise<RedisLike> {
-  if (!cache.client) {
+  if (cache.client) return cache.client;
+
+  const restUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+  const restToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (restUrl && restToken) {
     const { Redis } = await import("@upstash/redis");
-    cache.client = new Redis({
-      url: (process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL)!,
-      token: (process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN)!,
-    }) as unknown as RedisLike;
+    cache.client = new Redis({ url: restUrl, token: restToken }) as unknown as RedisLike;
+    return cache.client;
   }
-  return cache.client;
+
+  const tcpUrl = process.env.KV_REDIS_URL || process.env.REDIS_URL;
+  if (tcpUrl) {
+    const { createClient } = await import("redis");
+    const client = createClient({ url: tcpUrl });
+    client.on("error", (err) => console.error("Redis-yhteysvirhe:", err));
+    await client.connect();
+    cache.client = {
+      async set(key: string, value: unknown) {
+        return client.set(key, JSON.stringify(value));
+      },
+      async get(key: string) {
+        const raw = await client.get(key);
+        return raw ? JSON.parse(raw) : null;
+      },
+    };
+    return cache.client;
+  }
+
+  throw new Error(
+    "Redis-yhteystietoja ei löytynyt. Tarkista että projektissa on joko " +
+    "KV_REST_API_URL+KV_REST_API_TOKEN tai KV_REDIS_URL/REDIS_URL asetettu."
+  );
 }
 
 // ---------------------------------------------------------------------------
