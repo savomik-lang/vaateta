@@ -224,17 +224,22 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
 
 // ---------------------------------------------------------------------------
 // Monet feedit (erityisesti Google Shopping -skeema) listaavat saman tuotteen
-// kerran JOKAISTA kokoa/väriä kohden omalla rivillään, mutta samalla
-// affiliate-linkillä ja lähes identtisellä nimellä/hinnalla. Ilman siivousta
-// nämä täyttävät koko "Halvimmat"/"Paras hinta-laatu" -Top5-listan samalla
-// tuotteella. Ryhmitellään url_affiliate:n mukaan (sama tuotesivu = sama
-// tuote), valitaan edustajaksi halvin variantti, ja kerätään kaikkien
-// varianttien koot yhteen size_available-listaan.
+// kerran JOKAISTA kokoa/väriä kohden omalla rivillään. Kokeiltiin aluksi
+// ryhmittelyä url_affiliate:n mukaan, MUTTA Voghionin feedissä jokaisella
+// koko/värivariantilla on oma UNIIKKI tuotelinkki (eri product_id URLissa),
+// vaikka nimi, brändi ja hinta ovat identtiset - url_affiliate ei siis
+// tunnista näitä samaksi tuotteeksi. Ryhmitellään sen sijaan ensisijaisesti
+// nimen+brändin+hinnan mukaan (sama tuote eri koossa/värissä = sama nimi ja
+// hinta), ja vain jos nimi puuttuu käytetään url_affiliate:ia varalla.
+// Edustajaksi valitaan halvin variantti, ja kerätään kaikkien varianttien
+// koot yhteen size_available-listaan.
 // ---------------------------------------------------------------------------
 function dedupeVariants(products: Product[]): Product[] {
   const groups = new Map<string, Product[]>();
   for (const p of products) {
-    const key = p.url_affiliate || `${p.title}::${p.brand}::${p.price.amount}`;
+    const key = p.title
+      ? `${p.title}::${p.brand}::${p.price.amount}`
+      : p.url_affiliate || `${p.brand}::${p.price.amount}::${p.id}`;
     const list = groups.get(key);
     if (list) list.push(p); else groups.set(key, [p]);
   }
