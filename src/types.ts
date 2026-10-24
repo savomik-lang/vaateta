@@ -1,7 +1,3 @@
-// Yhtenäinen tuoteskeema kaikille kauppa-adaptereille.
-// Pohjautuu: lastenvaate-agentti-speksi.md kohta 6.1
-// Laajennettu: hakukokemus-ja-jarjestys-speksi.md kohta 3.3 (hinnoittelukentät)
-
 export type Currency = "EUR" | "SEK" | "NOK" | "DKK";
 
 export interface Money {
@@ -9,13 +5,7 @@ export interface Money {
   currency: Currency;
 }
 
-export type GarmentType =
-  | "takki"
-  | "housut"
-  | "kengät"
-  | "paita"
-  | "haalari"
-  | "muu";
+export type GarmentType = "takki" | "housut" | "kengät" | "paita" | "haalari" | "muu";
 
 export interface Product {
   id: string;
@@ -49,7 +39,6 @@ export interface Product {
   last_updated: string;
 }
 
-// Hakukriteerit (NLU/slot-filling-kerroksen tuottama strukturoitu pyyntö)
 export interface SearchCriteria {
   garment_type?: GarmentType;
   size_cm?: number;

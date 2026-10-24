@@ -1,5 +1,5 @@
 {
   "crons": [
-    { "path": "/api/cron/import-boozt", "schedule": "0 3 * * *" }
+    { "path": "/api/cron/import-all", "schedule": "0 3 * * *" }
   ]
 }
