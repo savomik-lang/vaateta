@@ -76,6 +76,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // --- 2. Omat kaupat eivät löytäneet mitään -> AI-web-hakuvarapolku ---
+    // Jos ANTHROPIC_API_KEY ei ole konfiguroitu, tämä polku ei voi toimia
+    // mitenkään (searchWebForProducts heittäisi poikkeuksen) - palautetaan
+    // silloin siisti "ei tuloksia" sen sijaan että kaadutaan 500-virheeseen,
+    // joka paljastaisi sisäisen konfiguraatiovirheen käyttäjälle.
+    if (!process.env.ANTHROPIC_API_KEY) {
+      res.status(200).json({
+        query: q,
+        source: "catalog",
+        parsed_criteria: criteria,
+        total_matches: 0,
+        results: EMPTY_RESULTS,
+      });
+      return;
+    }
+
     const kv = new RedisKeyValueStore();
 
     const cached = await getCachedResults(kv, q);
