@@ -5,6 +5,7 @@ import { Product, Currency } from "../types";
 import { RedisProductStore } from "../store/product-store";
 import { guessGarmentType } from "../nlu/garment-keywords";
 import { StoreDefinition } from "../stores-registry";
+import { isChildSafeProductForStore } from "../safety/child-safety-filter";
 
 // ---------------------------------------------------------------------------
 // YLEISKÄYTTÖINEN Awin-feed-importeri, joka toimii MILLE TAHANSA Awin-
@@ -31,7 +32,10 @@ function buildClassicFeedUrl(feedId: string): string {
   return (
     `https://productdata.awin.com/datafeed/download/apikey/${apiKey}` +
     `/language/any/fid/${feedId}/columns/${COLUMNS}` +
-    `/format/csv/delimiter/%2C/compression/gzip/adultcontent/1/`
+    // LAPSITURVALLISUUS: adultcontent/0 = EI aikuissisältöä feedissä.
+    // (ks. src/safety/child-safety-filter.ts kommentit - tämä on silti
+    // vain yksi puolustuskerros monesta, ei ainoa suoja.)
+    `/format/csv/delimiter/%2C/compression/gzip/adultcontent/0/`
   );
 }
 
@@ -54,6 +58,16 @@ interface GoogleFeedRow {
 
 function mapGoogleRow(row: GoogleFeedRow, storeKey: string): Product | null {
   if (!row.id || !row.title || !row.link) return null;
+  // LAPSITURVALLISUUS (korkea prioriteetti): hylätään aikuis-/seksuaali-
+  // sisältöiset tai muuten epävarmat tuotteet ennen kuin niitä käsitellään
+  // tai tallennetaan lainkaan. Ks. src/safety/child-safety-filter.ts.
+  const safety = isChildSafeProductForStore(storeKey, {
+    title: row.title,
+    category: row.google_product_category || row.product_type,
+    description: row.description,
+    ageGroup: row.age_group,
+  });
+  if (!safety.safe) return null;
   // price-kenttä on usein muotoa "199.00 EUR"
   const priceParts = (row.price || "").trim().split(/\s+/);
   const salePriceParts = (row.sale_price || "").trim().split(/\s+/);
@@ -123,6 +137,17 @@ function parseMoney(raw: string | undefined, currency: string | undefined) {
 
 function mapRow(row: RawFeedRow, storeKey: string): Product | null {
   if (!row.aw_product_id || !row.product_name || !row.aw_deep_link) return null;
+  // LAPSITURVALLISUUS (korkea prioriteetti) - ks. mapGoogleRow yllä ja
+  // src/safety/child-safety-filter.ts. Classic-feedissä ei ole erillistä
+  // age_group-sarakkeen vastinetta COLUMNS-listassa, joten tarkistus
+  // perustuu tässä otsikkoon/kategoriaan.
+  const safety = isChildSafeProductForStore(storeKey, {
+    title: row.product_name,
+    category: row.merchant_category || row.product_type,
+    description: row.description,
+    ageGroup: row.age_group,
+  });
+  if (!safety.safe) return null;
   const price = parseMoney(row.search_price, row.currency);
   const originalPrice = parseMoney(row.store_price, row.currency);
   if (!price) return null;
