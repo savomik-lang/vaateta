@@ -38,6 +38,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     // --- 1. Omat Awin-kaupat ensin (Outnorth SE/FI, Voghion Global, ...) ---
     const criteria = parseCriteriaFromText(q);
+
+    // RELEVANSSIKORJAUS: jos parseCriteriaFromText ei tunnistanut MITÄÄN
+    // vaatetyyppiä tekstistä, haku ei saa pudota koko katalogin läpi -
+    // sellainen haku ("mekko tytölle" ennen mekko-tyypin lisäämistä,
+    // tai mikä tahansa tyyppi jota garment-keywords.ts ei tunne) palautti
+    // aiemmin KAIKKI 300+ tuotetta (näytönsuojia, latureita, koruja...)
+    // koska mikään suodatin ei osunut. Nyt tunnistamaton vaatetyyppi
+    // palauttaa suoraan "ei tuloksia" sen sijaan että näyttää satunnaista
+    // irrelevanttia sisältöä.
+    if (!criteria.garment_type) {
+      res.status(200).json({
+        query: q,
+        source: "catalog",
+        parsed_criteria: criteria,
+        total_matches: 0,
+        results: EMPTY_RESULTS,
+      });
+      return;
+    }
+
     const adapter = new MultiStoreAdapter();
     const rawCatalogMatches = await adapter.search(criteria);
     // LAPSITURVALLISUUS (korkea prioriteetti): viimeinen varmistus ennen

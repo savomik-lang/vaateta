@@ -83,6 +83,18 @@ test("epävarma tuote hyväksytään kaikille kaupoille identtisesti (ei kauppak
   assert.equal(result.safe, true);
 });
 
+test("'striped' (raidallinen) ei osu 'strip'-estolistasanaan", () => {
+  assert.equal(hasBlockedKeywords({ title: "Striped cotton t-shirt for boys", category: null }), false);
+});
+
+test("'zebra' ei osu 'bra'-estolistasanaan", () => {
+  assert.equal(hasBlockedKeywords({ title: "Zebra print winter hat", category: null }), false);
+});
+
+test("'bra' sanana yksinään hylätään edelleen", () => {
+  assert.equal(hasBlockedKeywords({ title: "Women's lace bra set", category: null }), true);
+});
+
 test("tavallinen talvitakki hyväksytään", () => {
   const result = isChildSafeProduct({
     title: "Kid's warm winter jacket with hood",

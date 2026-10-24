@@ -26,12 +26,15 @@
 // aiheuttajia lastenvaatteissa. Sisältää aikuisten alusvaatteet yleisesti
 // (ei vain "sexy"-merkittyjä), koska alusvaatteet eivät kuulu lasten-
 // vaatevalikoimaan ylipäätään.
+// HUOM: näitä verrataan KOKO SANAN tarkkuudella (\b...\b), ei osamerkki-
+// jonohakuna - "strip" ei siis osu "striped" (raidallinen) -sanaan, eikä
+// "bra" osu "zebra"-sanaan. Ks. containsWholeWord/matchesBlocklist alla.
 const HARD_BLOCKLIST_KEYWORDS = [
   "lingerie", "underwear", "sexy", "seductive", "erotic", "fetish",
-  "bikini", "thong", "g-string", "panties", "panty", "bra ", "bras ",
-  "boxer brief", "boxer shorts", "intimate apparel", "adult content",
-  "nsfw", "porn", "nude", "strip", "crotchless", "fishnet body",
-  "harness lingerie", "kinky", "camisole set",
+  "bikini", "thong", "thongs", "g-string", "panties", "panty",
+  "bra", "bras", "boxer brief", "boxer shorts", "intimate apparel",
+  "adult content", "nsfw", "porn", "nude", "strip", "strips",
+  "crotchless", "fishnet body", "harness lingerie", "kinky", "camisole set",
   // suomeksi/ruotsiksi yleisimmät
   "alusvaatteet", "alusasu", "eroottinen", "seksikäs",
 ];
@@ -64,12 +67,31 @@ export interface SafetyCheckResult {
   reason?: string;
 }
 
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Vertaa KOKO SANAN/FRAASIN tarkkuudella \b-sanarajoilla, jotta lyhyet
+// avainsanat (esim. "bra", "strip") eivät osu pidempien sanojen SISÄLLE
+// ("zebra", "striped"). Haystack tulee olla jo pienaakkosin.
+const boundaryRegexCache = new Map<string, RegExp>();
+function containsWholeWord(haystack: string, phrase: string): boolean {
+  let re = boundaryRegexCache.get(phrase);
+  if (!re) {
+    re = new RegExp(`\\b${escapeRegExp(phrase)}\\b`, "i");
+    boundaryRegexCache.set(phrase, re);
+  }
+  return re.test(haystack);
+}
+
 function matchesBlocklist(haystack: string): string | null {
   for (const kw of HARD_BLOCKLIST_KEYWORDS) {
-    if (haystack.includes(kw)) return `hard-blocklist:${kw}`;
+    if (containsWholeWord(haystack, kw)) return `hard-blocklist:${kw}`;
   }
   for (const [a, b] of CONTEXTUAL_BLOCKLIST_PAIRS) {
-    if (haystack.includes(a) && haystack.includes(b)) return `contextual-blocklist:${a}+${b}`;
+    if (containsWholeWord(haystack, a) && containsWholeWord(haystack, b)) {
+      return `contextual-blocklist:${a}+${b}`;
+    }
   }
   return null;
 }

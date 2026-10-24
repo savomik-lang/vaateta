@@ -5,7 +5,10 @@ export interface Money {
   currency: Currency;
 }
 
-export type GarmentType = "takki" | "housut" | "kengät" | "paita" | "haalari" | "muu";
+export type GarmentType =
+  | "takki" | "housut" | "kengät" | "paita" | "haalari"
+  | "mekko" | "body" | "uimapuku" | "pyjama" | "sukat" | "pipo" | "lapaset"
+  | "muu";
 
 export interface Product {
   id: string;

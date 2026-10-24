@@ -13,8 +13,30 @@ import { AWIN_STORES, getConfiguredStores } from "../stores-registry";
 // kanssa - ei muutettu, koska sitä ei ole syytä muuttaa kaupan vaihtuessa.
 // ---------------------------------------------------------------------------
 
+// Kun hakukriteereissä on LAPSISIGNAALI (iästä/koosta johdettu size_raw,
+// tai tytölle/pojalle/unisex-sukupuolipreferenssi), hylätään tuotteet jotka
+// otsikkonsa perusteella on selkeästi merkitty AIKUISTEN vaatteeksi -
+// "Women's"/"Men's"/"Ladies'"-merkinnät tai aikuisten kokoväli (esim.
+// "S-5XL", "XS-XXXL") otsikossa. Tämä on ERI asia kuin lapsiturvasuodatin
+// (child-safety-filter.ts), joka estää aikuis-/seksuaalisisältöä kaikille
+// hauille - tämä sääntö koskee vain RELEVANSSIA lapsisignaalin hauissa
+// (esim. "talvitakki pojalle" ei saa näyttää naisten takkeja, vaikka ne
+// olisivat täysin asiallisia sinänsä).
+const ADULT_GENDER_MARKER_REGEX = /\b(women'?s|men'?s|ladies'?|woman'?s|man'?s)\b/i;
+const ADULT_SIZE_TOKEN = "(?:xxs|xs|s|m|l|xl|xxl|xxxl|xxxxl|xxxxxl|[2-5]xl)";
+const ADULT_SIZE_RANGE_REGEX = new RegExp(`\\b${ADULT_SIZE_TOKEN}\\s*[-–]\\s*${ADULT_SIZE_TOKEN}\\b`, "i");
+
+function hasChildSignal(c: SearchCriteria): boolean {
+  return Boolean(c.child_gender_pref) || Boolean(c.size_raw);
+}
+
+function looksLikeAdultProduct(title: string): boolean {
+  return ADULT_GENDER_MARKER_REGEX.test(title) || ADULT_SIZE_RANGE_REGEX.test(title);
+}
+
 export function matchesCriteria(p: Product, c: SearchCriteria): boolean {
   if (!p.in_stock) return false;
+  if (hasChildSignal(c) && looksLikeAdultProduct(p.title)) return false;
   if (c.garment_type && p.garment_type !== c.garment_type) return false;
   if (c.max_price && p.price.currency === c.max_price.currency) {
     if (p.price.amount > c.max_price.amount) return false;

@@ -37,3 +37,9 @@ test("tunnistaa brändin poissulkemisen karkeasti", () => {
   const result = parseCriteriaFromText("Takki, ei Reimaa");
   assert.ok(result.brand_deny && result.brand_deny.includes("reimaa"));
 });
+test("tunnistaa uudet vaatetyypit: mekko, body, uimapuku, pyjama", () => {
+  assert.equal(parseCriteriaFromText("Mekko tytölle").garment_type, "mekko");
+  assert.equal(parseCriteriaFromText("Body vauvalle").garment_type, "body");
+  assert.equal(parseCriteriaFromText("Uimapuku tytölle").garment_type, "uimapuku");
+  assert.equal(parseCriteriaFromText("Pyjama 4-vuotiaalle").garment_type, "pyjama");
+});

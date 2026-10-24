@@ -43,6 +43,36 @@ test("tyhjät kaupat eivät kaada hakua, palauttaa tyhjän listan", async () => 
   assert.deepEqual(results, []);
 });
 
+test("lapsisignaalin yhteydessä hylätään selkeästi aikuisille merkitty tuote otsikon perusteella", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "adult:1", garment_type: "takki", in_stock: true, title: "Women's Classic Wool Coat" }),
+    makeProduct({ id: "kids:1", garment_type: "takki", in_stock: true, title: "Kid's Warm Winter Jacket" }),
+  ]);
+  const adapter = new MultiStoreAdapter([store]);
+  const results = await adapter.search({ garment_type: "takki", child_gender_pref: "poika" });
+  const ids = results.map((p) => p.id);
+  assert.ok(!ids.includes("adult:1"), "naisten takki ei saa näkyä pojalle-haussa");
+  assert.ok(ids.includes("kids:1"));
+});
+
+test("lapsisignaalin yhteydessä hylätään tuote jonka otsikossa on aikuisten kokoväli (S-5XL)", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "adult:2", garment_type: "takki", in_stock: true, title: "Vintage Wool Blend Coat (Navy/Beige, S-5XL)" }),
+  ]);
+  const adapter = new MultiStoreAdapter([store]);
+  const results = await adapter.search({ garment_type: "takki", size_raw: "110" });
+  assert.equal(results.length, 0);
+});
+
+test("ilman lapsisignaalia aikuismerkintää ei suodateta pois (relevanssisääntö koskee vain lapsihakuja)", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "adult:3", garment_type: "takki", in_stock: true, title: "Women's Classic Wool Coat" }),
+  ]);
+  const adapter = new MultiStoreAdapter([store]);
+  const results = await adapter.search({ garment_type: "takki" });
+  assert.equal(results.length, 1);
+});
+
 test("lastImportedAt palauttaa vanhimman päivitysajan kauppojen joukosta", async () => {
   const older = new InMemoryProductStore([makeProduct({ id: "x" })]);
   const newer = new InMemoryProductStore([makeProduct({ id: "y" })]);
