@@ -1,4 +1,5 @@
 import { Product } from "../types";
+import { getRedisConnection } from "./redis-connection";
 
 export interface StoredPayload {
   updated_at: string;
@@ -12,54 +13,9 @@ export interface IProductStore {
   lastUpdated(): Promise<string | null>;
 }
 
-interface RedisLike {
-  set(key: string, value: unknown): Promise<unknown>;
-  get(key: string): Promise<unknown>;
-}
-
-// Vercelin Storage-integraatiot tarjoavat kahdenlaisia Redis-tunnuksia
-// riippuen siitä minkä palveluntarjoajan kautta tietokanta on luotu:
-//  1) Upstashin REST API (KV_REST_API_URL + KV_REST_API_TOKEN, tai
-//     UPSTASH_REDIS_REST_URL/TOKEN) - käyttää @upstash/redis-pakettia,
-//     joka serialisoi/deserialisoi JSON:n automaattisesti.
-//  2) Perinteinen Redis-protokolla yhdellä URL:lla (KV_REDIS_URL tai
-//     REDIS_URL, muotoa redis://user:pass@host:port) - esim. Redis Cloud
-//     -integraatio. Tähän käytetään "redis"-pakettia (node-redis), joka
-//     EI serialisoi JSON:ia itse, joten se tehdään tässä käsin.
-async function getRedisClient(cache: { client: RedisLike | null }): Promise<RedisLike> {
-  if (cache.client) return cache.client;
-
-  const restUrl = process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
-  const restToken = process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (restUrl && restToken) {
-    const { Redis } = await import("@upstash/redis");
-    cache.client = new Redis({ url: restUrl, token: restToken }) as unknown as RedisLike;
-    return cache.client;
-  }
-
-  const tcpUrl = process.env.KV_REDIS_URL || process.env.REDIS_URL;
-  if (tcpUrl) {
-    const { createClient } = await import("redis");
-    const client = createClient({ url: tcpUrl });
-    client.on("error", (err) => console.error("Redis-yhteysvirhe:", err));
-    await client.connect();
-    cache.client = {
-      async set(key: string, value: unknown) {
-        return client.set(key, JSON.stringify(value));
-      },
-      async get(key: string) {
-        const raw = await client.get(key);
-        return raw ? JSON.parse(raw) : null;
-      },
-    };
-    return cache.client;
-  }
-
-  throw new Error(
-    "Redis-yhteystietoja ei löytynyt. Tarkista että projektissa on joko " +
-    "KV_REST_API_URL+KV_REST_API_TOKEN tai KV_REDIS_URL/REDIS_URL asetettu."
-  );
-}
+// Yhteys ja REST/TCP-valinta on keskitetty redis-connection.ts:ään (jaettu
+// kv-store.ts:n kanssa) - tämä tiedosto hoitaa vain JSON-serialisoinnin,
+// jota tuotepayload tarvitsee mutta yleiskäyttöinen avain-arvo-yhteys ei.
 
 // ---------------------------------------------------------------------------
 // MUUTOS (moni-kauppa-tuki): Redis-avain on nyt parametroitu kaupan
@@ -69,7 +25,6 @@ async function getRedisClient(cache: { client: RedisLike | null }): Promise<Redi
 // "ProductStore"-nimi säilyy taaksepäin yhteensopivana aliaksena Boozt:lle.
 // ---------------------------------------------------------------------------
 export class RedisProductStore implements IProductStore {
-  private cache: { client: RedisLike | null } = { client: null };
   private key: string;
 
   constructor(storeKey: string = "boozt") {
@@ -77,18 +32,20 @@ export class RedisProductStore implements IProductStore {
   }
 
   async replaceAll(products: Product[]): Promise<void> {
-    const redis = await getRedisClient(this.cache);
+    const redis = await getRedisConnection();
     const payload: StoredPayload = { updated_at: new Date().toISOString(), count: products.length, products };
-    await redis.set(this.key, payload);
+    await redis.set(this.key, JSON.stringify(payload));
   }
   async loadAll(): Promise<Product[]> {
-    const redis = await getRedisClient(this.cache);
-    const payload = (await redis.get(this.key)) as StoredPayload | null;
+    const redis = await getRedisConnection();
+    const raw = await redis.get(this.key);
+    const payload = raw ? (JSON.parse(raw) as StoredPayload) : null;
     return payload?.products ?? [];
   }
   async lastUpdated(): Promise<string | null> {
-    const redis = await getRedisClient(this.cache);
-    const payload = (await redis.get(this.key)) as StoredPayload | null;
+    const redis = await getRedisConnection();
+    const raw = await redis.get(this.key);
+    const payload = raw ? (JSON.parse(raw) as StoredPayload) : null;
     return payload?.updated_at ?? null;
   }
 }
