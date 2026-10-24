@@ -1,11 +1,16 @@
 // ---------------------------------------------------------------------------
 // LAPSITURVALLISUUSSUODATIN - korkean prioriteetin suodatin, joka estää
-// aikuis-/seksuaalisisältöisten tai muuten lapsille sopimattomien tuotteiden
-// pääsyn kuluttajien nähtäville. Tämä on tarkoituksella TIUKKA ("oletus:
-// hylkää, jos epävarma") - erityisesti Voghion Globalin kaltaiset yleiset
-// markkinapaikkafeedit sisältävät sekoituksena mitä tahansa (alusvaatteita,
-// koruja, elektroniikkaa), eikä yksittäisen tuotteen lapsisopivuutta voi
-// luottavaisesti päätellä otsikosta yksin.
+// aikuis-/seksuaalisisältöisten tuotteiden pääsyn kuluttajien nähtäville.
+//
+// HISTORIA: suodatin oli alun perin TIUKKA ("oletus: hylkää, jos epävarma"
+// age_group-kentän perusteella). Käytännössä tämä hylkäsi Voghion Globalilta
+// lähes KAIKKI tuotteet (8605/8605), koska yleinen markkinapaikkafeed ei
+// tue age_group-kenttää luotettavasti. Tuotteen omistajan päätöksellä
+// linjaa kevennettiin: oletus on nyt HYVÄKSY, ja vain SELKEÄT aikuis-/
+// seksuaalisisältösignaalit (avainsanat, kategoria, tai nimenomainen
+// age_group:adult) hylätään. Tämä on tietoinen kompromissi katalogin
+// kattavuuden ja turvallisuuden välillä - vastuu päätöksestä on tuotteen
+// omistajalla, ei tällä koodilla.
 //
 // Käytetään KAHDESSA kohdassa puolustuksen syvyyden (defense in depth)
 // vuoksi:
@@ -18,12 +23,15 @@
 
 // Nämä avainsanat tunnistavat luotettavasti aikuis-/seksuaalisisältöisen
 // tuotteen riippumatta kontekstista - ei tunnettuja väärän positiivisen
-// aiheuttajia lastenvaatteissa.
+// aiheuttajia lastenvaatteissa. Sisältää aikuisten alusvaatteet yleisesti
+// (ei vain "sexy"-merkittyjä), koska alusvaatteet eivät kuulu lasten-
+// vaatevalikoimaan ylipäätään.
 const HARD_BLOCKLIST_KEYWORDS = [
   "lingerie", "underwear", "sexy", "seductive", "erotic", "fetish",
   "bikini", "thong", "g-string", "panties", "panty", "bra ", "bras ",
-  "intimate apparel", "adult content", "nsfw", "porn", "nude", "strip",
-  "crotchless", "fishnet body", "harness lingerie", "kinky",
+  "boxer brief", "boxer shorts", "intimate apparel", "adult content",
+  "nsfw", "porn", "nude", "strip", "crotchless", "fishnet body",
+  "harness lingerie", "kinky", "camisole set",
   // suomeksi/ruotsiksi yleisimmät
   "alusvaatteet", "alusasu", "eroottinen", "seksikäs",
 ];
@@ -39,7 +47,7 @@ const CONTEXTUAL_BLOCKLIST_PAIRS: [string, string][] = [
   ["jumpsuit", "men's"],
 ];
 
-// Google Shopping -skeeman age_group-kentän hyväksytyt arvot lapsille.
+// Google Shopping -skeeman age_group-kentän arvot.
 // (ks. https://support.google.com/merchants/answer/6324463)
 const CHILD_AGE_GROUPS = new Set(["newborn", "infant", "toddler", "kids", "youth"]);
 const ADULT_AGE_GROUPS = new Set(["adult"]);
@@ -56,80 +64,49 @@ export interface SafetyCheckResult {
   reason?: string;
 }
 
-// Kevyt versio: tarkistaa VAIN estolistat (ei age_group-vaatimusta). Tätä
-// käytetään viimeisenä puolustuskerroksena api/search.ts:ssä KAIKILLE
-// tuloksille (myös AI-web-haulle ja tuonnissa jo kerran hyväksytyille
-// tuotteille), koska Product-tyypissä ei kulje age_group-tietoa eteenpäin
-// tuonnin jälkeen - siksi "hylkää jos epävarma" -linjaa ei voi soveltaa
-// tässä vaiheessa, vain selkeät estolistaosumat.
-export function hasBlockedKeywords(input: Pick<SafetyCheckInput, "title" | "category" | "description">): boolean {
-  const haystack = [input.title, input.category, input.description]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+function matchesBlocklist(haystack: string): string | null {
   for (const kw of HARD_BLOCKLIST_KEYWORDS) {
-    if (haystack.includes(kw)) return true;
+    if (haystack.includes(kw)) return `hard-blocklist:${kw}`;
   }
   for (const [a, b] of CONTEXTUAL_BLOCKLIST_PAIRS) {
-    if (haystack.includes(a) && haystack.includes(b)) return true;
+    if (haystack.includes(a) && haystack.includes(b)) return `contextual-blocklist:${a}+${b}`;
   }
-  return false;
+  return null;
+}
+
+// Kevyt versio: tarkistaa VAIN estolistat. Tätä käytetään viimeisenä
+// puolustuskerroksena api/search.ts:ssä KAIKILLE tuloksille (myös AI-web-
+// haulle ja tuonnissa jo kerran hyväksytyille tuotteille), koska Product-
+// tyyppi ei kuljeta age_group-tietoa tuonnin jälkeen.
+export function hasBlockedKeywords(input: Pick<SafetyCheckInput, "title" | "category" | "description">): boolean {
+  const haystack = [input.title, input.category, input.description].filter(Boolean).join(" ").toLowerCase();
+  return matchesBlocklist(haystack) !== null;
 }
 
 export function isChildSafeProduct(input: SafetyCheckInput): SafetyCheckResult {
-  const haystack = [input.title, input.category, input.description]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  const haystack = [input.title, input.category, input.description].filter(Boolean).join(" ").toLowerCase();
 
-  for (const kw of HARD_BLOCKLIST_KEYWORDS) {
-    if (haystack.includes(kw)) {
-      return { safe: false, reason: `hard-blocklist:${kw}` };
-    }
-  }
-
-  for (const [a, b] of CONTEXTUAL_BLOCKLIST_PAIRS) {
-    if (haystack.includes(a) && haystack.includes(b)) {
-      return { safe: false, reason: `contextual-blocklist:${a}+${b}` };
-    }
-  }
+  const blocked = matchesBlocklist(haystack);
+  if (blocked) return { safe: false, reason: blocked };
 
   const ageGroup = (input.ageGroup || "").trim().toLowerCase();
-  if (ageGroup) {
-    if (ADULT_AGE_GROUPS.has(ageGroup)) {
-      return { safe: false, reason: "age_group:adult" };
-    }
-    if (CHILD_AGE_GROUPS.has(ageGroup)) {
-      return { safe: true };
-    }
-    // age_group on asetettu mutta tuntematon arvo - käsitellään epävarmana.
+  if (ageGroup && ADULT_AGE_GROUPS.has(ageGroup)) {
+    return { safe: false, reason: "age_group:adult" };
+  }
+  if (ageGroup && CHILD_AGE_GROUPS.has(ageGroup)) {
+    return { safe: true, reason: "age_group:child" };
   }
 
-  // EPÄVARMA TAPAUS: age_group puuttuu tai on tunnistamaton, eikä estolista
-  // osunut. Oletus on HYLKÄÄ ("reject if uncertain"), paitsi kun kauppa on
-  // nimenomaisesti merkitty luotetuksi lastenvaatekaupaksi (trustedChildStore
-  // -parametri alla), jolloin koko kaupan valikoima on jo kuratoitu.
-  return { safe: false, reason: "uncertain:no_reliable_age_signal" };
+  // Ei estolistaosumaa eikä nimenomaista age_group:adult-merkintää ->
+  // hyväksytään. (Tietoinen kompromissi, ks. tiedoston alun kommentti.)
+  return { safe: true, reason: "uncertain:accepted_by_default" };
 }
 
-// ---------------------------------------------------------------------------
-// Kaupat, jotka ON TARKISTETTU myyvän NIMENOMAAN lasten/perheiden vaatteita
-// (esim. Outnorth on pohjoismainen ulkoiluvaatekauppa, ei yleismarkkinapaikka).
-// Näille kaupoille "epävarma" age_group EI johda automaattiseen hylkäykseen -
-// vain estolistan osumat hylätään. Yleiset markkinapaikat (kuten Voghion)
-// EIVÄT ole tällä listalla, joten niille sovelletaan täyttä "hylkää jos
-// epävarma" -linjaa.
-// ---------------------------------------------------------------------------
-const TRUSTED_CHILD_FOCUSED_STORES = new Set<string>([
-  // Outnorth SE/FI lisätään tähän kun niiden datafeed aktivoituu ja
-  // tuotekatalogi on tarkistettu - EI lisätä automaattisesti.
-]);
-
-export function isChildSafeProductForStore(storeKey: string, input: SafetyCheckInput): SafetyCheckResult {
-  const result = isChildSafeProduct(input);
-  if (result.safe) return result;
-  if (result.reason?.startsWith("uncertain:") && TRUSTED_CHILD_FOCUSED_STORES.has(storeKey)) {
-    return { safe: true };
-  }
-  return result;
+// isChildSafeProductForStore säilytetään erillisenä rajapintana siltä
+// varalta että jokin TULEVA kauppa osoittautuu niin epäluotettavaksi
+// (esim. paljon aikuissisältöä estolistan ohi) että sille halutaan
+// tiukempi, kauppakohtainen linja - tällä hetkellä käytös on kaikille
+// kaupoille identtinen isChildSafeProduct:n kanssa.
+export function isChildSafeProductForStore(_storeKey: string, input: SafetyCheckInput): SafetyCheckResult {
+  return isChildSafeProduct(input);
 }
