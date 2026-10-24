@@ -207,15 +207,48 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
     if (product) products.push(product); else skipped++;
   }
 
+  const deduped = dedupeVariants(products);
+
   const productStore = new RedisProductStore(store.storeKey);
-  await productStore.replaceAll(products);
+  await productStore.replaceAll(deduped);
 
   return {
     storeKey: store.storeKey,
     displayName: store.displayName,
     fetchedRows: rows.length,
-    importedProducts: products.length,
-    skippedRows: skipped,
+    importedProducts: deduped.length,
+    skippedRows: skipped + (products.length - deduped.length),
     sampleRowKeys: products.length === 0 && rows.length > 0 ? Object.keys(rows[0]) : undefined,
   };
+}
+
+// ---------------------------------------------------------------------------
+// Monet feedit (erityisesti Google Shopping -skeema) listaavat saman tuotteen
+// kerran JOKAISTA kokoa/väriä kohden omalla rivillään, mutta samalla
+// affiliate-linkillä ja lähes identtisellä nimellä/hinnalla. Ilman siivousta
+// nämä täyttävät koko "Halvimmat"/"Paras hinta-laatu" -Top5-listan samalla
+// tuotteella. Ryhmitellään url_affiliate:n mukaan (sama tuotesivu = sama
+// tuote), valitaan edustajaksi halvin variantti, ja kerätään kaikkien
+// varianttien koot yhteen size_available-listaan.
+// ---------------------------------------------------------------------------
+function dedupeVariants(products: Product[]): Product[] {
+  const groups = new Map<string, Product[]>();
+  for (const p of products) {
+    const key = p.url_affiliate || `${p.title}::${p.brand}::${p.price.amount}`;
+    const list = groups.get(key);
+    if (list) list.push(p); else groups.set(key, [p]);
+  }
+
+  const result: Product[] = [];
+  for (const variants of groups.values()) {
+    if (variants.length === 1) {
+      result.push(variants[0]);
+      continue;
+    }
+    const cheapest = variants.reduce((min, p) => (p.price.amount < min.price.amount ? p : min));
+    const allSizes = Array.from(new Set(variants.flatMap((p) => p.size_available)));
+    const anyInStock = variants.some((p) => p.in_stock);
+    result.push({ ...cheapest, size_available: allSizes, in_stock: anyInStock });
+  }
+  return result;
 }
