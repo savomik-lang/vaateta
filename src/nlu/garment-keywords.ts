@@ -8,6 +8,8 @@ export const GARMENT_KEYWORDS: Record<GarmentType, string[]> = {
   kurahousut: ["kurahousut", "sadehousut", "rain pants", "rainpants", "rain trousers", "waterproof pants", "waterproof trousers"],
   toppahousut: ["toppahousut", "talvihousut", "snow pants", "snowpants", "ski pants", "salopette", "snow trousers", "ski trousers"],
   housut: ["housut", "pants", "trousers", "farkut", "jeans", "verkkarit", "collegehousut", "leggingsit"],
+  // sukat ennen kenkiä: sukkien kategoriassa/otsikossa esiintyy usein sana "shoes"
+  sukat: ["sukat", "socks", "strumpor", "sukkahousut"],
   kengät: ["kengät", "shoes", "boots", "saappaat", "tennarit", "nilkkurit"],
   paita: ["paita", "shirt", "t-paita", "tpaita", "tröja", "collegepaita", "hupparipaita", "huppari", "pusero"],
   haalari: ["haalari", "overall", "jumpsuit", "kokohaalari", "ulkoiluhaalari", "talvihaalari"],
@@ -15,7 +17,6 @@ export const GARMENT_KEYWORDS: Record<GarmentType, string[]> = {
   body: ["body", "bodysuit", "vauvanbody", "potkupuku"],
   uimapuku: ["uimapuku", "swimsuit", "swimwear", "uikkari", "uima-asu"],
   pyjama: ["pyjama", "pyjamat", "yöpuku", "pajamas", "nukkumapuku"],
-  sukat: ["sukat", "socks", "strumpor", "sukkahousut"],
   pipo: ["pipo", "beanie", "myssy"],
   lapaset: ["lapaset", "mittens", "vantar", "sormikkaat", "käsineet"],
   muu: [],

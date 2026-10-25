@@ -12,3 +12,6 @@ test("kurahousut ja toppahousut luokitellaan omiin tyyppeihinsä ennen yleistä 
   assert.equal(guessGarmentType("Children snow pants winter"), "toppahousut");
   assert.equal(guessGarmentType("Slim fit jeans"), "housut");
 });
+test("sukat luokitellaan sukiksi vaikka tekstissä olisi myös sana shoes", () => {
+  assert.equal(guessGarmentType("Non Slip Soccer Socks With Grip Pads", "Apparel > Shoes & Socks"), "sukat");
+});
