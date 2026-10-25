@@ -11,7 +11,7 @@ test("tunnistaa vaatetyypin ja hinnan", () => {
 });
 test("tunnistaa kurahousut, vedenpitävyyden ja koon cm:ssä", () => {
   const result = parseCriteriaFromText("Kurahousut 92 cm, täytyy olla vedenpitävät");
-  assert.equal(result.garment_type, "housut");
+  assert.equal(result.garment_type, "kurahousut");
   assert.equal(result.waterproof, true);
   assert.equal(result.size_raw, "92");
 });
@@ -42,4 +42,15 @@ test("tunnistaa uudet vaatetyypit: mekko, body, uimapuku, pyjama", () => {
   assert.equal(parseCriteriaFromText("Body vauvalle").garment_type, "body");
   assert.equal(parseCriteriaFromText("Uimapuku tytölle").garment_type, "uimapuku");
   assert.equal(parseCriteriaFromText("Pyjama 4-vuotiaalle").garment_type, "pyjama");
+});
+test("toppahousut ja kurahousut ovat omia tyyppejään, ei yleistä housut-tyyppiä", () => {
+  assert.equal(parseCriteriaFromText("Toppahousut 110 cm").garment_type, "toppahousut");
+  assert.equal(parseCriteriaFromText("Kurahousut lapselle").garment_type, "kurahousut");
+  assert.equal(parseCriteriaFromText("Farkut pojalle").garment_type, "housut");
+});
+test("lapselle/lapsen/lapsille/vauvalle/vauvan/taaperolle aktivoivat child_signal-lipun", () => {
+  for (const q of ["kurahousut lapselle", "lapsen takki", "pipo lapsille", "body vauvalle", "vauvan haalari", "kengät taaperolle"]) {
+    assert.equal(parseCriteriaFromText(q).child_signal, true, q);
+  }
+  assert.equal(parseCriteriaFromText("kurahousut").child_signal, undefined);
 });

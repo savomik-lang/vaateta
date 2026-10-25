@@ -6,7 +6,7 @@ export interface Money {
 }
 
 export type GarmentType =
-  | "takki" | "housut" | "kengät" | "paita" | "haalari"
+  | "takki" | "kurahousut" | "toppahousut" | "housut" | "kengät" | "paita" | "haalari"
   | "mekko" | "body" | "uimapuku" | "pyjama" | "sukat" | "pipo" | "lapaset"
   | "muu";
 
@@ -47,6 +47,9 @@ export interface SearchCriteria {
   size_cm?: number;
   size_raw?: string;
   child_gender_pref?: "tyttö" | "poika" | "unisex";
+  // Kuvaileeko haku lasta ("lapselle", "vauvalle", "taaperolle"...) vaikka
+  // ikää, kokoa tai sukupuolta ei mainittaisi. Aktivoi aikuissuodatuksen.
+  child_signal?: boolean;
   max_price?: Money;
   brand_allow?: string[];
   brand_deny?: string[];

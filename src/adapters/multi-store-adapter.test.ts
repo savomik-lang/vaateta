@@ -83,6 +83,16 @@ test("hylkää tuotteen jonka kokoväli ulottuu 6XL:ään asti", async () => {
   assert.equal(results.length, 0);
 });
 
+test("pelkkä child_signal ('lapselle') riittää aktivoimaan aikuissuodatuksen", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "a:1", garment_type: "kurahousut", in_stock: true, title: "Rain Pants For Women" }),
+    makeProduct({ id: "a:2", garment_type: "kurahousut", in_stock: true, title: "Kids Waterproof Rain Pants" }),
+  ]);
+  const adapter = new MultiStoreAdapter([store]);
+  const results = await adapter.search({ garment_type: "kurahousut", child_signal: true });
+  assert.deepEqual(results.map((p) => p.id), ["a:2"]);
+});
+
 test("ilman lapsisignaalia aikuismerkintää ei suodateta pois (relevanssisääntö koskee vain lapsihakuja)", async () => {
   const store = new InMemoryProductStore([
     makeProduct({ id: "adult:3", garment_type: "takki", in_stock: true, title: "Women's Classic Wool Coat" }),

@@ -8,6 +8,15 @@ const GENDER_KEYWORDS: Record<"tyttö" | "poika" | "unisex", string[]> = {
   poika: ["pojalle", "pojan", "poikien"],
   unisex: ["unisex", "sukupuolineutraali"],
 };
+// Sanat jotka kertovat että haku koskee lasta, vaikka ikää/kokoa/sukupuolta
+// ei mainittaisi ("kurahousut lapselle"). Käytetään aikuistuotteiden
+// suodatuksen aktivointiin (ks. multi-store-adapter.ts).
+const CHILD_SIGNAL_KEYWORDS = [
+  "lapselle", "lapsen", "lapsille", "lapsi", "lapsia", "lasten",
+  "vauvalle", "vauvan", "vauva", "vauvoille",
+  "taaperolle", "taaperon", "taapero",
+  "pikkulapsi", "pikkulapselle", "tytölle", "pojalle",
+];
 const COLOR_KEYWORDS = ["musta", "sininen", "punainen", "vihreä", "keltainen", "vaaleanpunainen", "harmaa", "valkoinen", "ruskea", "oranssi"];
 const AGE_TO_CM: Record<number, number> = { 1: 86, 2: 92, 3: 98, 4: 104, 5: 110, 6: 116, 7: 122, 8: 128, 9: 134, 10: 140, 11: 146, 12: 152 };
 
@@ -54,6 +63,7 @@ export function parseCriteriaFromText(rawText: string): SearchCriteria {
   if (materialMatches.length > 0) criteria.material_keywords = materialMatches;
   const gender = findGender(text);
   if (gender) criteria.child_gender_pref = gender;
+  if (CHILD_SIGNAL_KEYWORDS.some((kw) => text.includes(kw))) criteria.child_signal = true;
   const color = COLOR_KEYWORDS.find((c) => text.includes(c));
   if (color) criteria.color = color;
   const { size_raw } = findSize(text);

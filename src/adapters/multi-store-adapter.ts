@@ -39,7 +39,7 @@ const ADULT_SIZE_RANGE_REGEX = new RegExp(`\\b${ADULT_SIZE_TOKEN}\\s*[-–]\\s*$
 // harvoin, ja aikuisvaatteiden suodattaminen oikein painaa enemmän.
 
 function hasChildSignal(c: SearchCriteria): boolean {
-  return Boolean(c.child_gender_pref) || Boolean(c.size_raw);
+  return Boolean(c.child_signal) || Boolean(c.child_gender_pref) || Boolean(c.size_raw);
 }
 
 function looksLikeAdultProduct(title: string): boolean {
