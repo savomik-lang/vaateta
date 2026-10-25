@@ -23,7 +23,10 @@
   }
 
   *{ box-sizing: border-box; }
+  /* hidden-attribuutti voittaa aina display-säännöt (esim. .filmstrips{display:flex}) */
+  [hidden]{ display: none !important; }
   html{ scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior: auto; } }
   body{
     margin:0;
     background: var(--paper);
@@ -158,6 +161,108 @@
   .search-form input:focus{ outline: none; }
   .search-form input::placeholder{ color: #7A7D84; }
   .search-form .btn{ border-radius: 4px; padding: 12px 22px; white-space: nowrap; }
+
+  /* ---------- MIKROFONI ---------- */
+  .mic-btn{
+    flex: none;
+    width: 46px;
+    margin-right: 6px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .mic-btn[hidden]{ display:none; }
+  .mic-btn:hover{ background: rgba(35,38,43,0.07); }
+  .mic-btn:focus-visible{ outline: 2px solid var(--sage); outline-offset: 1px; }
+  .mic-btn svg{ width: 22px; height: 22px; }
+  .mic-btn.listening{ background: var(--berry); color: #fff; }
+  @media (prefers-reduced-motion: no-preference){
+    .mic-btn.listening{ animation: micpulse 1.2s ease-in-out infinite; }
+  }
+  @keyframes micpulse{
+    0%,100%{ box-shadow: 0 0 0 0 rgba(168,61,52,0.55); }
+    50%{ box-shadow: 0 0 0 7px rgba(168,61,52,0); }
+  }
+  .voice-hint{
+    margin: 10px 0 0;
+    min-height: 0;
+    font-size: 14px;
+    color: #F3D9A8;
+  }
+  .voice-hint:empty{ display:none; }
+
+  /* ---------- ESIMERKKISIRUT ---------- */
+  .chips-label{
+    display:block;
+    margin: 18px 0 8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(246,244,238,0.75);
+  }
+  .chips{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0; padding: 0; list-style: none;
+  }
+  .chip{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    padding: 9px 14px;
+    min-height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(246,244,238,0.5);
+    background: rgba(35,38,43,0.38);
+    color: var(--paper-raised);
+    cursor: pointer;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+  }
+  .chip:hover{ background: rgba(246,244,238,0.18); }
+  .chip:focus-visible{ outline: 2px solid #E7A94A; outline-offset: 2px; }
+  .chips.on-paper .chip{
+    background: var(--paper-raised);
+    color: var(--ink);
+    border-color: var(--ink);
+    backdrop-filter: none;
+  }
+  .chips.on-paper .chip:hover{ background: var(--ink); color: var(--paper-raised); }
+  @media (max-width: 560px){
+    /* Mobiilissa yksi vieritettävä rivi, ettei hero veny liian pitkäksi */
+    .hero-content .chips{
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      margin-right: -18px;
+      padding-right: 18px;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .hero-content .chips::-webkit-scrollbar{ display:none; }
+  }
+
+  /* ---------- TYHJÄ TULOS ---------- */
+  .empty-state{
+    max-width: 620px;
+    background: var(--paper-raised);
+    border: 1px dashed var(--ink);
+    border-radius: 6px;
+    padding: 20px 22px;
+    margin-top: 8px;
+  }
+  .empty-state[hidden]{ display:none; }
+  .empty-state h3{
+    font-family:'Fraunces', serif;
+    font-weight: 500;
+    font-size: 21px;
+    margin: 0 0 6px;
+  }
+  .empty-state p{ margin: 0 0 14px; font-size: 14.5px; color: var(--ink-soft); }
   .search-meta{
     margin: 12px 0 0;
     font-size: 13.5px;
@@ -577,8 +682,14 @@
         autocomplete="off"
         enterkeyhint="search"
       >
+      <button type="button" class="mic-btn" id="micBtn" aria-label="Sano haku ääneen" aria-pressed="false" title="Sano haku ääneen" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+      </button>
       <button type="submit" class="btn">Hae</button>
     </form>
+    <p class="voice-hint" id="voiceHint" aria-live="polite"></p>
+    <span class="chips-label" id="heroChipsLabel">Esimerkiksi</span>
+    <ul class="chips" id="heroChips" aria-labelledby="heroChipsLabel"></ul>
     <p class="search-meta"><a href="#miten-toimii">Miten se toimii</a> · <a href="#meista">Meistä</a></p>
   </div>
 </section>
@@ -639,6 +750,12 @@
     <p class="live-search-hint">Testivaiheessa haku kattaa rajatun joukon pohjoismaisia verkkokauppoja. Tuotetiedot päivittyvät kerran vuorokaudessa.</p>
 
     <div id="liveSearchStatus" class="live-search-status" aria-live="polite"></div>
+
+    <div class="empty-state" id="emptyState" hidden>
+      <h3>Emme löytäneet tähän sopivia tuotteita vielä</h3>
+      <p>Testivaiheessa mukana on vasta muutama kauppa, joten valikoima on suppea. Kokeile toista hakua tai jotain näistä:</p>
+      <ul class="chips on-paper" id="emptyChips" aria-label="Ehdotettuja hakuja"></ul>
+    </div>
 
     <div id="liveSearchResults" class="filmstrips" hidden>
       <div class="filmstrip">
@@ -772,6 +889,8 @@
   var statusEl = document.getElementById('liveSearchStatus');
   var resultsEl = document.getElementById('liveSearchResults');
   var searchInputs = document.querySelectorAll('[data-search-form] input');
+  var emptyEl = document.getElementById('emptyState');
+  var voiceHint = document.getElementById('voiceHint');
 
   // Kauppojen syötteistä tuleva teksti käsitellään aina tekstinä, ei HTML:nä.
   function esc(s){
@@ -836,8 +955,10 @@
     statusEl.textContent = 'Haetaan...';
     statusEl.classList.remove('error');
     resultsEl.hidden = true;
+    emptyEl.hidden = true;
+    voiceHint.textContent = '';
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    searchSection.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    searchSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
 
     fetch('/api/search?q=' + encodeURIComponent(q))
       .then(function(r){
@@ -845,11 +966,17 @@
         return r.json();
       })
       .then(function(data){
-        if (data.total_matches === 0) {
-          statusEl.textContent = 'Ei tuloksia tällä haulla. Kokeile toista muotoilua.';
+        if (!data.total_matches) {
+          statusEl.textContent = 'Ei tuloksia haulla "' + q + '".';
+          renderChips('emptyChips', seasonalChips().filter(function(c){
+            return c.toLowerCase() !== q.toLowerCase();
+          }).slice(0, 4));
+          emptyEl.hidden = false;
           return;
         }
-        statusEl.textContent = data.total_matches + ' tulosta löytyi.';
+        statusEl.textContent = data.total_matches === 1
+          ? '1 tulos löytyi.'
+          : data.total_matches + ' tulosta löytyi.';
 
         renderFilmstrip('filmstripCheapest', data.results.cheapest);
         renderFilmstrip('filmstripBestValue', data.results.bestValue);
@@ -868,6 +995,94 @@
         statusEl.textContent = 'Virhe: ' + err.message;
         statusEl.classList.add('error');
       });
+  }
+
+  // ---------- ESIMERKKISIRUT (vaihtuvat vuodenajan mukaan) ----------
+  // Jokaisessa on ikä, koko tai tytölle/pojalle, jotta haku tunnistaa
+  // lapsihaun ja rajaa aikuisten tuotteet pois.
+  var CHIPS_BY_SEASON = {
+    autumn: ['Talvihaalari 110 cm', 'Kurahousut 2-vuotiaalle', 'Pipo 4-vuotiaalle', 'Villasukat 6-vuotiaalle', 'Välikausitakki pojalle', 'Mekko tytölle'],
+    winter: ['Talvihaalari 104 cm', 'Lapaset 3-vuotiaalle', 'Villakerrasto 6-vuotiaalle', 'Talvisaappaat 5-vuotiaalle', 'Kypärämyssy 2-vuotiaalle', 'Mekko tytölle'],
+    spring: ['Kurahousut 3-vuotiaalle', 'Välikausihaalari 98 cm', 'Sadetakki tytölle', 'Kevättakki pojalle', 'Kumisaappaat 4-vuotiaalle', 'Mekko tytölle'],
+    summer: ['Uimapuku tytölle', 'Shortsit pojalle', 'Aurinkohattu 2-vuotiaalle', 'Sandaalit 5-vuotiaalle', 'Kesämekko 6-vuotiaalle', 'T-paita pojalle']
+  };
+  function seasonalChips(date){
+    var m = (date || new Date()).getMonth() + 1;
+    var season = m >= 12 || m <= 2 ? 'winter' : m <= 5 ? 'spring' : m <= 8 ? 'summer' : 'autumn';
+    return CHIPS_BY_SEASON[season];
+  }
+  function renderChips(listId, items){
+    var ul = document.getElementById(listId);
+    ul.innerHTML = items.map(function(t){
+      return '<li><button type="button" class="chip" data-chip="' + esc(t) + '">' + esc(t) + '</button></li>';
+    }).join('');
+  }
+  document.addEventListener('click', function(e){
+    var chip = e.target.closest && e.target.closest('[data-chip]');
+    if (chip) runSearch(chip.getAttribute('data-chip'));
+  });
+  renderChips('heroChips', seasonalChips().slice(0, 5));
+
+  // ---------- MIKROFONI (selaimen puheentunnistus, suomi) ----------
+  // Puhe muuttuu ensin tekstiksi kenttään. Haku käynnistyy vasta, kun
+  // käyttäjä on tarkistanut tekstin ja painaa Hae.
+  var micBtn = document.getElementById('micBtn');
+  var heroInput = document.getElementById('heroSearchInput');
+  var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var recognizer = null, listening = false, heard = '';
+
+  function setListening(on){
+    listening = on;
+    micBtn.classList.toggle('listening', on);
+    micBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    micBtn.setAttribute('aria-label', on ? 'Lopeta kuuntelu' : 'Sano haku ääneen');
+    micBtn.title = micBtn.getAttribute('aria-label');
+    heroInput.placeholder = on ? 'Kuuntelen…' : heroInput.getAttribute('data-placeholder');
+  }
+
+  if (Recognition) {
+    micBtn.hidden = false;
+    heroInput.setAttribute('data-placeholder', heroInput.placeholder);
+    micBtn.addEventListener('click', function(){
+      if (listening && recognizer) { recognizer.stop(); return; }
+      heard = '';
+      voiceHint.textContent = '';
+      recognizer = new Recognition();
+      recognizer.lang = 'fi-FI';
+      recognizer.interimResults = true;
+      recognizer.maxAlternatives = 1;
+      recognizer.onresult = function(ev){
+        var text = '';
+        for (var i = 0; i < ev.results.length; i++) text += ev.results[i][0].transcript;
+        heard = text.trim();
+        heroInput.value = heard;
+      };
+      recognizer.onerror = function(ev){
+        var messages = {
+          'not-allowed': 'Mikrofonin käyttö on estetty. Voit sallia sen selaimen asetuksista tai kirjoittaa haun.',
+          'service-not-allowed': 'Puheentunnistus ei ole käytettävissä tässä selaimessa. Kirjoita haku kenttään.',
+          'no-speech': 'En kuullut puhetta. Paina mikrofonia ja kokeile uudelleen.',
+          'audio-capture': 'Mikrofonia ei löytynyt. Kirjoita haku kenttään.',
+          'network': 'Puheentunnistus ei saanut yhteyttä. Kirjoita haku kenttään.',
+          'language-not-supported': 'Selain ei tunnista suomea puheesta. Kirjoita haku kenttään.'
+        };
+        if (messages[ev.error]) voiceHint.textContent = messages[ev.error];
+      };
+      recognizer.onend = function(){
+        setListening(false);
+        if (heard) {
+          voiceHint.textContent = 'Tarkista teksti ja paina Hae.';
+          heroInput.focus();
+        }
+      };
+      try {
+        recognizer.start();
+        setListening(true);
+      } catch (err) {
+        setListening(false);
+        voiceHint.textContent = 'Puheentunnistusta ei voitu käynnistää. Kirjoita haku kenttään.';
+      }
+    });
   }
 
   // ---------- KIINNITTYVÄ HAKUPALKKI ----------
