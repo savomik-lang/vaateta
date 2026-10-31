@@ -20,3 +20,11 @@ test("kuvauksen talvimerkintä riittää vain jos otsikossa ei ole kieltomerkki�
   assert.equal(guessWinter("Kids' Shell Jacket", null, "Fits over winter layers"), false);
   assert.equal(guessWinter("Kids' Jacket", null, "Nice jacket"), null);
 });
+
+test("guessWinter: otsikon negatiivinen vihje voittaa kategorian ja kuvauksen", () => {
+  assert.equal(guessWinter("Reima Kids' Atlantti Sunproof Overall Sparkly Blue", "Snow Suits", "ski and snow"), false);
+  assert.equal(guessWinter("Tretorn Kids' Drizzle Jacket Black", "Ski Jackets"), false);
+  assert.equal(guessWinter("Kids' Padded Rain Jacket"), true);
+  assert.equal(guessWinter("Kids' Jacket Pilvi", "Snow Jackets"), true);
+});
+
