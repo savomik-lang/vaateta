@@ -62,3 +62,12 @@ test("kenkien pienet EU-koot (19-33) eivät sovi 14-vuotiaalle, 41 sopii", () =>
   assert.equal(productSizeFit(["19", "20", "33", "35"], 164, true), null);
   assert.equal(productSizeFit(["41"], 164, true), "exact");
 });
+
+test("parseSizeToken: puolikoot ja värietuliitteiset koot", () => {
+  assert.deepEqual(parseSizeToken("28.5"), { kind: "eu", lo: 28, hi: 29 });
+  assert.deepEqual(parseSizeToken("Black/Multi 28"), { kind: "eu", lo: 28, hi: 28 });
+  assert.deepEqual(parseSizeToken("Black/Multi 164"), { kind: "cm", lo: 164, hi: 164 });
+  assert.equal(productSizeFit(["28.5"], 164, true), null);
+  assert.equal(productSizeFit(["Black/Multi 28", "Black/Multi 30"], 164, true), null);
+  assert.equal(productSizeFit(["Navy 40"], 164, true), "exact");
+});

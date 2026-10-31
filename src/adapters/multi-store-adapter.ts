@@ -158,7 +158,15 @@ export class MultiStoreAdapter {
   async loadAllProducts(): Promise<Product[]> {
     if (!this.cache) {
       const allResults = await Promise.all(this.stores.map((s) => s.loadAll()));
-      this.cache = allResults.flat();
+      // Suojaverkko vanhalle datalle: alkuperäinen hinta kelpaa vain jos se on
+      // korkeampi kuin nykyinen (vanhat FI-importit käyttivät ALVitonta base_pricea).
+      this.cache = allResults.flat().map((p) => {
+        const o = p.original_price;
+        if (o && o.currency === p.price.currency && o.amount <= p.price.amount) {
+          return { ...p, original_price: null, discount_percent: null };
+        }
+        return p;
+      });
     }
     return this.cache;
   }

@@ -32,8 +32,22 @@ const LETTER_RE = /^(xxxs|xxs|xs|s|m|l|xl|xxl|xxxl|[2-9]xl)$/;
 const AGE_UNIT = "(?:y|yr|yrs|year|years|år|v|vuotta|vuotiaat)";
 
 export function parseSizeToken(raw: string): SizeToken {
-  const t = raw.trim().toLowerCase();
+  let t = raw.trim().toLowerCase();
   if (!t) return { kind: "unknown" };
+
+  // Värietuliite: "Black/Multi 28" -> "28" (Outnorth liittää värin kokoon).
+  const colorPrefixed = t.match(/^[^\d]*[a-zåäö][^\d]*\s(\d{2,3}(?:[.,]5)?(?:\s*[\/-]\s*\d{2,3})?)$/);
+  if (colorPrefixed && !/^(?:eu|uk|us)\b/.test(t)) t = colorPrefixed[1];
+
+  // Puolikoot: "28.5", "40,5" -> pyöristetään alas-ylös ([n, n+1]).
+  const half = t.match(/^(?:eu\s*)?(\d{2})[.,]5$/);
+  if (half) {
+    const n = parseInt(half[1], 10);
+    if (n >= 15 && n <= 47) return { kind: "eu", lo: n, hi: n + 1 };
+  }
+  // "40 2/3", "38 1/2" -> perusluku
+  const frac = t.match(/^(\d{2})\s+\d\/\d$/);
+  if (frac) t = frac[1];
 
   // Kuukausikoot (vauvat), esim. "9-12 months", "0-6 m", "12 kk": karkea pituus.
   const months = t.match(/\b(\d{1,2})\s*(?:-|–|\/)?\s*(\d{1,2})?\s*(?:m|mo|mos|months?|mån|kk)\b/);
