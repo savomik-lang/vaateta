@@ -1333,7 +1333,7 @@
   var NO_GARMENT_BUTTONS = ['Talvitakki', 'Kurahousut', 'Toppahousut', 'Haalari', 'Kengät', 'Pipo', 'Lapaset'];
   var CM_TO_AGE = [[86,1],[92,2],[98,3],[104,4],[110,5],[116,6],[122,7],[128,8],[134,9],[140,10],[146,11],[152,12],[158,13],[164,14],[170,15],[176,16]];
   var DROP_LABELS = { size: 'kokoa', max_price: 'hintarajaa', price: 'hintarajaa', gender: 'sukupuolta', child_gender_pref: 'sukupuolta', waterproof: 'vedenpitävyyttä', color: 'väriä', material: 'materiaalia', material_keywords: 'materiaalia', season: 'vuodenaikaa', winter: 'vuodenaikaa' };
-  var DROP_TO_KEY = { size: 'size', size_cm: 'size', size_raw: 'size', max_price: 'max_price', price: 'max_price', gender: 'gender', child_gender_pref: 'gender', waterproof: 'waterproof', color: 'color' };
+  var DROP_TO_KEY = { size: 'size', size_cm: 'size', size_raw: 'size', max_price: 'max_price', price: 'max_price', gender: 'gender', child_gender_pref: 'gender', waterproof: 'waterproof', color: 'color', season: 'season', winter: 'season' };
 
   function cap(s){ s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
 
@@ -1388,6 +1388,7 @@
     if (!c || typeof c !== 'object') return out;
     var g = garmentWord(c, q);
     if (g) out.push({ key: 'garment', label: cap(g) });
+    if (c.season === 'winter') out.push({ key: 'season', label: 'talvi' });
     var genderLabels = { 'tyttö': 'tyttö', poika: 'poika', unisex: 'unisex' };
     if (genderLabels[c.child_gender_pref]) out.push({ key: 'gender', label: genderLabels[c.child_gender_pref] });
     var s = sizeInfo(c);
@@ -1409,6 +1410,14 @@
     (removeKeys || []).forEach(function(k){ rm[k] = true; });
     var words = [], tail = [];
     var g = garmentWord(c, q);
+    var winterRe = /^(talvi|untuva|toppa)/;
+    if (g && !rm.garment && rm.season) {
+      // "talvitakki" ilman talvirajausta -> "takki" (toppahousut on oma tyyppinsä, säilyy)
+      var plain = c.garment_type === 'toppahousut' ? g : g.replace(winterRe, '');
+      g = plain.length >= 3 ? plain : GARMENT_LABELS[c.garment_type].toLowerCase();
+    }
+    var winterInWord = g && !rm.garment && /talvi|untuva|vinter|winter/.test(g);
+    if (c.season === 'winter' && !rm.season && !winterInWord) words.push('talvi');
     if (g && !rm.garment) words.push(g);
     if (c.waterproof && !rm.waterproof) words.push('vedenpitävä');
     if (c.color && !rm.color) words.push(String(c.color));
