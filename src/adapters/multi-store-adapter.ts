@@ -1,7 +1,8 @@
 import { Product, SearchCriteria } from "../types";
 import { RedisProductStore, InMemoryProductStore, IProductStore } from "../store/product-store";
 import { toEur } from "../currency";
-import { productSizeFit } from "../size";
+import { productSizeFit, inferSizeFromTitle } from "../size";
+import { hasChildMarkers } from "../safety/child-safety-filter";
 import { guessWinter, SEASON_FILTERED_GARMENTS } from "../season";
 import { AWIN_STORES, getConfiguredStores } from "../stores-registry";
 
@@ -120,7 +121,16 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
   }
   const targetCm = targetSizeCm(c);
   if (targetCm !== undefined) {
-    const fit = productSizeFit(p.size_available, targetCm, p.garment_type === "kengät");
+    let sizes = p.size_available;
+    if (sizes.length === 0) {
+      // Ei kokotietoa (esim. Voghion): päätellään ikäväli otsikosta, tai
+      // hyväksytään vain jos otsikko kertoo tuotteen olevan lapsille.
+      // Muuten (esim. "Y2K Unisex Puffer Jacket") sopivuutta ei voi tietää.
+      const inferred = inferSizeFromTitle(p.title);
+      if (inferred.length > 0) sizes = inferred;
+      else if (!hasChildMarkers(p.title)) return false;
+    }
+    const fit = productSizeFit(sizes, targetCm, p.garment_type === "kengät");
     if (fit === null) return false;
     if (fit === "smaller" && !opts.allowSmaller) return false;
   }

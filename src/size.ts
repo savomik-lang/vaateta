@@ -127,3 +127,13 @@ export function sizeRangeCm(sizeLists: string[][]): { min: number; max: number }
   }
   return min === Infinity ? null : { min, max };
 }
+
+// Kokotiedoton tuotteen (esim. Voghion) ikäväli otsikosta: "Ages 4-11",
+// "for 3-8 years", "6-8Y". Palauttaa kokomerkinnän tai null.
+export function inferSizeFromTitle(title: string): string[] {
+  const m1 = title.match(/\bages?\s*(\d{1,2})\s*(?:-|–|to)\s*(\d{1,2})\b/i);
+  if (m1) return [`${m1[1]}-${m1[2]} yr`];
+  const m2 = title.match(new RegExp(`\\b(\\d{1,2})\\s*(?:-|–|to)\\s*(\\d{1,2})\\s*${AGE_UNIT}\\b`, "i"));
+  if (m2) return [`${m2[1]}-${m2[2]} yr`];
+  return [];
+}

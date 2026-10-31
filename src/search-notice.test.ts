@@ -77,3 +77,14 @@ test("buildQuery tuottaa lauseen jonka parseri tulkitsee samoiksi kriteereiksi",
   assert.equal(again.child_gender_pref, "tyttö");
   assert.deepEqual(again.max_price, { amount: 120, currency: "EUR" });
 });
+
+test("kokotiedoton tuote: ikäväli otsikosta ratkaisee, ilman lapsimerkkiä hylätään kokohaussa", () => {
+  const c = parseCriteriaFromText("talvitakki 5-vuotiaalle tytölle");
+  const noMarker = makeProduct({ id: "y2k", source: "voghion-global", garment_type: "takki", title: "Y2K Unisex Puffer Jacket Winter Coat" });
+  const ages = makeProduct({ id: "ages", source: "voghion-global", garment_type: "takki", title: "Cotton-padded Winter Coat For Kids Warm Jacket For Ages 4-11" });
+  const tooOld = makeProduct({ id: "old", source: "voghion-global", garment_type: "takki", title: "Kids Winter Coat for Ages 12-16" });
+  const kidsOnly = makeProduct({ id: "kids", source: "voghion-global", garment_type: "takki", title: "Kids Winter Padded Coat" });
+  assert.deepEqual([noMarker, ages, tooOld, kidsOnly].filter((p) => matchesCriteria(p, c)).map((p) => p.id), ["ages", "kids"]);
+  // ilman kokorajausta kokotiedoton tuote ei karsiudu tämän säännön takia
+  assert.equal(matchesCriteria(noMarker, parseCriteriaFromText("talvitakki pojalle")), true);
+});
