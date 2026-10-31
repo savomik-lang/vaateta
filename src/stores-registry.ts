@@ -33,6 +33,10 @@ export interface StoreDefinition {
   // niin kuin Awinin Datafeeds.csv:n URL-sarake ne listaa. Kaikilla
   // mainostajilla ei ole samoja sarakkeita (esim. Outnorthilla ei ole
   // age_group/gender/size, vaan Fashion:suitable_for ja Fashion:size).
+  // true = luotettu kauppa, jonka aikuisten kokoja (XS/S) saa näyttää
+  // nuorille (13+ v) - sukupuolta kunnioittaen. Yleiset markkinapaikat
+  // (Voghion) pidetään tiukalla aikuissuodatuksella myös nuorille.
+  trustedForTeen?: boolean;
   classicColumns?: string[];
   classicLanguage?: string;
 }
@@ -58,8 +62,8 @@ const OUTNORTH_FI_COLUMNS = [
 ];
 
 export const AWIN_STORES: StoreDefinition[] = [
-  { storeKey: "outnorth-se", displayName: "Outnorth SE", feedIdEnvVar: "AWIN_OUTNORTH_SE_FEED_ID", format: "classic", childOnly: true, classicColumns: OUTNORTH_SE_COLUMNS, classicLanguage: "sv" },
-  { storeKey: "outnorth-fi", displayName: "Outnorth FI", feedIdEnvVar: "AWIN_OUTNORTH_FI_FEED_ID", format: "classic", childOnly: true, classicColumns: OUTNORTH_FI_COLUMNS, classicLanguage: "fi" },
+  { storeKey: "outnorth-se", displayName: "Outnorth SE", feedIdEnvVar: "AWIN_OUTNORTH_SE_FEED_ID", format: "classic", childOnly: true, trustedForTeen: true, classicColumns: OUTNORTH_SE_COLUMNS, classicLanguage: "sv" },
+  { storeKey: "outnorth-fi", displayName: "Outnorth FI", feedIdEnvVar: "AWIN_OUTNORTH_FI_FEED_ID", format: "classic", childOnly: true, trustedForTeen: true, classicColumns: OUTNORTH_FI_COLUMNS, classicLanguage: "fi" },
   { storeKey: "voghion-global", displayName: "Voghion Global", feedIdEnvVar: "AWIN_VOGHION_GLOBAL_FEED_ID", format: "google" },
   // PÄIVITÄ TÄHÄN uusi rivi kun Babyshop/Boozt tms. joskus hyväksyy:
   // { storeKey: "babyshop-fi", displayName: "Babyshop FI", feedIdEnvVar: "AWIN_BABYSHOP_FI_FEED_ID", format: "classic" },

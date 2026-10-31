@@ -1,5 +1,7 @@
 import { SearchCriteria, GarmentType } from "../types";
 import { GARMENT_KEYWORDS } from "./garment-keywords";
+import { AGE_TO_CM } from "../size";
+import { isKnownBrandWord } from "../ranking/brand-tiers";
 
 const WATERPROOF_KEYWORDS = ["vedenpitäv", "vedenkestäv", "sadeasu", "sadetakki", "sadehousut"];
 const MATERIAL_KEYWORDS = ["luomupuuvilla", "gots", "villaa", "merinovilla", "fleece", "softshell"];
@@ -18,7 +20,10 @@ const CHILD_SIGNAL_KEYWORDS = [
   "pikkulapsi", "pikkulapselle", "tytölle", "pojalle",
 ];
 const COLOR_KEYWORDS = ["musta", "sininen", "punainen", "vihreä", "keltainen", "vaaleanpunainen", "harmaa", "valkoinen", "ruskea", "oranssi"];
-const AGE_TO_CM: Record<number, number> = { 1: 86, 2: 92, 3: 98, 4: 104, 5: 110, 6: 116, 7: 122, 8: 128, 9: 134, 10: 140, 11: 146, 12: 152 };
+const SEASON_WINTER_REGEX = /talvi|untuva|vinter|winter/;
+const SEASON_TOPPA_GARMENTS = new Set<GarmentType>(["takki", "haalari", "kengät"]);
+// Sanat jotka "ei ..." -rakenteessa eivät ole brändejä ("ei liian kallis").
+const NOT_BRAND_WORDS = new Set(["liian", "kovin", "kovinkaan", "yhtään", "mitään", "mikään", "ollenkaan", "paljon", "tosi", "hirveän", "mitenkään", "välttämättä", "ihan", "aivan", "vielä", "tarvitse", "pakko", "vain", "vaan", "sitä", "sen", "tämä", "nämä", "joku", "jokin", "kallis", "kallista", "halpa", "iso", "pieni"]);
 
 function findGarmentType(text: string): GarmentType | undefined {
   for (const [type, keywords] of Object.entries(GARMENT_KEYWORDS) as [GarmentType, string[]][]) {
@@ -36,19 +41,28 @@ function findMaxPrice(text: string) {
   const match = text.match(/(?:max|alle|korkeintaan|enintään)\s*(\d+)\s*(?:€|eur|euroa|e\b)/);
   return match ? { amount: parseInt(match[1], 10), currency: "EUR" as const } : undefined;
 }
-function findSize(text: string): { size_raw?: string } {
+function findSize(text: string): { size_raw?: string; size_cm?: number; age?: number } {
   const cmMatch = text.match(/(\d{2,3})\s*cm/);
-  if (cmMatch) return { size_raw: cmMatch[1] };
-  const ageMatch = text.match(/(\d{1,2})[\s-]?v(?:uotiaalle|uotta|uotiaan)?\b/);
+  if (cmMatch) return { size_raw: cmMatch[1], size_cm: parseInt(cmMatch[1], 10) };
+  const ageMatch = text.match(/(\d{1,2})[\s-]?v(?:uotiaalle|uotta|uotiaan|uotias|uotiaana)?\b/);
   if (ageMatch) {
     const age = parseInt(ageMatch[1], 10);
-    return { size_raw: AGE_TO_CM[age] ? String(AGE_TO_CM[age]) : ageMatch[1] };
+    // 0 ja yli 17 -vuotiaat eivät ole lapsihaun ikiä - ei tulkita kokona.
+    if (age >= 1 && age <= 17) {
+      const cm = AGE_TO_CM[age];
+      return { size_raw: String(cm), size_cm: cm, age };
+    }
   }
   return {};
 }
-function findBrandDeny(text: string): string[] {
-  const denyMatches = [...text.matchAll(/ei\s+(?:halua\s+)?([a-zäöå]+)/g)];
-  return denyMatches.map((m) => m[1]).filter((w) => w.length > 2 && !["ole", "voi", "saa"].includes(w));
+function findBrandDeny(rawText: string): string[] {
+  const denyMatches = [...rawText.matchAll(/\bei\s+(?:halua\s+)?([A-Za-zäöåÄÖÅ]+)/gi)];
+  return denyMatches
+    .map((m) => m[1])
+    .filter((w) => w.length > 2 && !["ole", "voi", "saa"].includes(w.toLowerCase()) && !NOT_BRAND_WORDS.has(w.toLowerCase()))
+    // Brändi = isolla alkukirjaimella kirjoitettu tai tunnettu brändi.
+    .filter((w) => /^[A-ZÄÖÅ]/.test(w) || isKnownBrandWord(w))
+    .map((w) => w.toLowerCase());
 }
 
 export function parseCriteriaFromText(rawText: string): SearchCriteria {
@@ -66,9 +80,14 @@ export function parseCriteriaFromText(rawText: string): SearchCriteria {
   if (CHILD_SIGNAL_KEYWORDS.some((kw) => text.includes(kw))) criteria.child_signal = true;
   const color = COLOR_KEYWORDS.find((c) => text.includes(c));
   if (color) criteria.color = color;
-  const { size_raw } = findSize(text);
+  const { size_raw, size_cm, age } = findSize(text);
   if (size_raw) criteria.size_raw = size_raw;
-  const brandDeny = findBrandDeny(text);
+  if (size_cm) criteria.size_cm = size_cm;
+  if (age) criteria.age = age;
+  if (SEASON_WINTER_REGEX.test(text) || (text.includes("toppa") && garmentType && SEASON_TOPPA_GARMENTS.has(garmentType))) {
+    criteria.season = "winter";
+  }
+  const brandDeny = findBrandDeny(rawText);
   if (brandDeny.length > 0) criteria.brand_deny = brandDeny;
   return criteria;
 }

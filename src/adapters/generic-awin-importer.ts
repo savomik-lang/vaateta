@@ -4,6 +4,7 @@ import { config } from "../config";
 import { Product, Currency } from "../types";
 import { RedisProductStore } from "../store/product-store";
 import { guessGarmentType } from "../nlu/garment-keywords";
+import { guessWinter } from "../season";
 import { StoreDefinition } from "../stores-registry";
 import { isChildSafeProductForStore, hasChildMarkers } from "../safety/child-safety-filter";
 
@@ -107,6 +108,7 @@ function mapGoogleRow(row: GoogleFeedRow, storeKey: string): Product | null {
     shipping_cost_from: null,
     free_shipping_threshold: null,
     rating: null, rating_count: null,
+    winter: guessWinter(row.title, row.google_product_category || row.product_type, row.description),
     last_updated: new Date().toISOString(),
   };
 }
@@ -193,6 +195,7 @@ function mapRow(row: RawFeedRow, storeKey: string): Product | null {
     shipping_cost_from: parseMoney(row.delivery_cost, row.currency),
     free_shipping_threshold: null,
     rating: null, rating_count: null,
+    winter: guessWinter(row.product_name, category, row.description),
     last_updated: row.last_updated || new Date().toISOString(),
   };
 }

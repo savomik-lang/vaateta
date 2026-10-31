@@ -54,3 +54,25 @@ test("lapselle/lapsen/lapsille/vauvalle/vauvan/taaperolle aktivoivat child_signa
   }
   assert.equal(parseCriteriaFromText("kurahousut").child_signal, undefined);
 });
+
+test("ikä 13-17 muuttuu koolle: 14 v -> 164 cm, age ja size_cm mukana", () => {
+  const r = parseCriteriaFromText("talvitakki 14-vuotiaalle tytölle");
+  assert.equal(r.size_cm, 164);
+  assert.equal(r.age, 14);
+  assert.equal(r.size_raw, "164");
+  assert.equal(parseCriteriaFromText("housut 16 vuotiaalle").size_cm, 176);
+  assert.equal(parseCriteriaFromText("takki 40-vuotiaalle").size_cm, undefined);
+});
+
+test("talvi/untuva/toppa -> season winter (toppa vain takille/haalarille/kengille)", () => {
+  assert.equal(parseCriteriaFromText("talvitakki pojalle").season, "winter");
+  assert.equal(parseCriteriaFromText("untuvatakki").season, "winter");
+  assert.equal(parseCriteriaFromText("toppatakki").season, "winter");
+  assert.equal(parseCriteriaFromText("kurahousut lapselle").season, undefined);
+});
+
+test("brand_deny: 'ei liian kallis' ei ole brändi, 'ei Reimaa' on", () => {
+  assert.equal(parseCriteriaFromText("hyvälaatuinen talvitakki pojalle, ei liian kallis").brand_deny, undefined);
+  assert.deepEqual(parseCriteriaFromText("Takki, ei Reimaa").brand_deny, ["reimaa"]);
+  assert.deepEqual(parseCriteriaFromText("takki ei reimaa").brand_deny, ["reimaa"]);
+});

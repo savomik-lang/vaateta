@@ -1,6 +1,8 @@
 import { Product, SearchCriteria } from "../types";
 import { RedisProductStore, InMemoryProductStore, IProductStore } from "../store/product-store";
 import { toEur } from "../currency";
+import { productSizeFit } from "../size";
+import { guessWinter, SEASON_FILTERED_GARMENTS } from "../season";
 import { AWIN_STORES, getConfiguredStores } from "../stores-registry";
 
 // ---------------------------------------------------------------------------
@@ -42,17 +44,54 @@ const ADULT_SIZE_RANGE_REGEX = new RegExp(`\\b${ADULT_SIZE_TOKEN}\\s*[-–]\\s*$
 const GIRL_TITLE_REGEX = /\b(girl|girls|flicka|flickor)\b/i;
 const BOY_TITLE_REGEX = /\b(boy|boys|pojke|pojkar)\b/i;
 
-function hasChildSignal(c: SearchCriteria): boolean {
-  return Boolean(c.child_signal) || Boolean(c.child_gender_pref) || Boolean(c.size_raw);
+export function hasChildSignal(c: SearchCriteria): boolean {
+  return Boolean(c.child_signal) || Boolean(c.child_gender_pref) || Boolean(c.size_raw) || Boolean(c.size_cm);
 }
+
+// Haettu koko senttimetreinä: size_cm tai (vanhoilta kutsuilta) numeerinen size_raw.
+export function targetSizeCm(c: SearchCriteria): number | undefined {
+  if (c.size_cm) return c.size_cm;
+  const n = c.size_raw ? parseInt(c.size_raw, 10) : NaN;
+  return n >= 44 && n <= 190 ? n : undefined;
+}
+
+// NUORI-TILA: haettu koko >= 152 cm tai ikä >= 12. Silloin luotettujen
+// kauppojen (ks. stores-registry.ts trustedForTeen) aikuisten kokoja (XS/S)
+// saa näyttää, sukupuolta kunnioittaen. Estolista pysyy aina päällä.
+export function isTeenSearch(c: SearchCriteria): boolean {
+  const cm = targetSizeCm(c);
+  return (cm !== undefined && cm >= 152) || (c.age !== undefined && c.age >= 12);
+}
+
+function isTrustedForTeen(source: string): boolean {
+  return AWIN_STORES.some((s) => s.storeKey === source && s.trustedForTeen);
+}
+
+const MENS_TITLE_REGEX = /\b(men|man|mens|herr|miesten|miehet)\b/i;
+const WOMENS_TITLE_REGEX = /\b(women|woman|womens|ladies|lady|dam|naisten|naiset)\b/i;
 
 function looksLikeAdultProduct(title: string): boolean {
   return ADULT_GENDER_MARKER_REGEX.test(title) || ADULT_SIZE_RANGE_REGEX.test(title);
 }
 
-export function matchesCriteria(p: Product, c: SearchCriteria): boolean {
+export interface MatchOptions {
+  // Salli myös hieman (yksi koko) haettua pienemmät koot - käytetään kun
+  // täsmälleen sopivia on vähän (notice partial_size).
+  allowSmaller?: boolean;
+}
+
+export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOptions = {}): boolean {
   if (!p.in_stock) return false;
-  if (hasChildSignal(c) && looksLikeAdultProduct(p.title)) return false;
+  const teenTrusted = isTeenSearch(c) && isTrustedForTeen(p.source);
+  if (hasChildSignal(c) && looksLikeAdultProduct(p.title)) {
+    // Nuorelle luotetusta kaupasta aikuisten tuote sallitaan (koko tarkistetaan
+    // alla), mutta väärälle sukupuolelle merkitty hylätään.
+    if (!teenTrusted) return false;
+  }
+  if (teenTrusted) {
+    if (c.child_gender_pref === "tyttö" && MENS_TITLE_REGEX.test(p.title) && !WOMENS_TITLE_REGEX.test(p.title)) return false;
+    if (c.child_gender_pref === "poika" && WOMENS_TITLE_REGEX.test(p.title) && !MENS_TITLE_REGEX.test(p.title)) return false;
+  }
   if (c.garment_type && p.garment_type !== c.garment_type) return false;
   // Vertailu EUR:ssa, jotta SEK/NOK/DKK-hintaiset tuotteet (Outnorth SE)
   // eivät livahda hintarajan ohi pelkän valuuttaeron vuoksi.
@@ -75,8 +114,15 @@ export function matchesCriteria(p: Product, c: SearchCriteria): boolean {
     const haystack = (p.material || "").toLowerCase();
     if (!c.material_keywords.some((kw) => haystack.includes(kw.toLowerCase()))) return false;
   }
-  if (c.size_raw && p.size_available.length > 0) {
-    if (!p.size_available.some((s) => s.toLowerCase().includes(c.size_raw!.toLowerCase()))) return false;
+  if (c.season === "winter" && p.garment_type && SEASON_FILTERED_GARMENTS.has(p.garment_type)) {
+    const winter = p.winter !== undefined ? p.winter : guessWinter(p.title);
+    if (winter !== true) return false;
+  }
+  const targetCm = targetSizeCm(c);
+  if (targetCm !== undefined) {
+    const fit = productSizeFit(p.size_available, targetCm, p.garment_type === "kengät");
+    if (fit === null) return false;
+    if (fit === "smaller" && !opts.allowSmaller) return false;
   }
   return true;
 }
@@ -91,10 +137,21 @@ export class MultiStoreAdapter {
     this.stores = stores ?? getConfiguredStores().map((s) => new RedisProductStore(s.storeKey));
   }
 
-  async search(criteria: SearchCriteria): Promise<Product[]> {
-    const allResults = await Promise.all(this.stores.map((s) => s.loadAll()));
-    const merged = allResults.flat();
-    return merged.filter((p) => matchesCriteria(p, criteria));
+  private cache: Product[] | null = null;
+
+  // Koko katalogi (ladataan kerran per adapteri-instanssi, jotta rennostettu
+  // haku ja osittainen koko -haku eivät lataa Redisistä uudelleen).
+  async loadAllProducts(): Promise<Product[]> {
+    if (!this.cache) {
+      const allResults = await Promise.all(this.stores.map((s) => s.loadAll()));
+      this.cache = allResults.flat();
+    }
+    return this.cache;
+  }
+
+  async search(criteria: SearchCriteria, opts: MatchOptions = {}): Promise<Product[]> {
+    const all = await this.loadAllProducts();
+    return all.filter((p) => matchesCriteria(p, criteria, opts));
   }
 
   async lastImportedAt(): Promise<string | null> {

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { MultiStoreAdapter } from "../src/adapters/multi-store-adapter";
+import { MultiStoreAdapter, matchesCriteria, targetSizeCm, isTeenSearch } from "../src/adapters/multi-store-adapter";
 import { rankResults, RankedResults } from "../src/ranking/rank";
 import { parseCriteriaFromText } from "../src/nlu/parse-query";
 import { config } from "../src/config";
@@ -9,6 +9,10 @@ import { checkAndIncrementDailyLimit } from "../src/ai/rate-limit";
 import { searchWebForProducts } from "../src/ai/agent-search";
 import { hasBlockedKeywords } from "../src/safety/child-safety-filter";
 import { Product } from "../src/types";
+import {
+  Notice, findRelaxation, buildNoResultsNotice, buildPartialSizeNotice, buildLimitedCoverageNotice,
+  buildNoGarmentNotice, buildRateLimitedNotice,
+} from "../src/search-notice";
 
 const EMPTY_RESULTS: RankedResults = { cheapest: [], bestValue: [], mostLoved: null };
 
@@ -53,18 +57,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         source: "catalog",
         parsed_criteria: criteria,
         total_matches: 0,
+        notice: buildNoGarmentNotice(),
         results: EMPTY_RESULTS,
       });
       return;
     }
 
     const adapter = new MultiStoreAdapter();
-    const rawCatalogMatches = await adapter.search(criteria);
+    const allProducts = await adapter.loadAllProducts();
     // LAPSITURVALLISUUS (korkea prioriteetti): viimeinen varmistus ennen
     // näyttämistä. Ks. filterChildSafe-funktion kommentti yllä.
-    const catalogMatches = filterChildSafe(rawCatalogMatches);
+    const runSafe = (c: typeof criteria, opts = {}) => filterChildSafe(allProducts.filter((p) => matchesCriteria(p, c, opts)));
+    const rawCatalogMatches = await adapter.search(criteria);
+    let catalogMatches = filterChildSafe(rawCatalogMatches);
+    let notice: Notice | undefined;
+
+    // Vähän täsmälleen sopivia -> otetaan mukaan myös hieman pienemmät koot
+    // ja kerrotaan siitä käyttäjälle.
+    if (targetSizeCm(criteria) !== undefined && catalogMatches.length < 5) {
+      const extended = runSafe(criteria, { allowSmaller: true });
+      if (extended.length > catalogMatches.length) {
+        catalogMatches = extended;
+        notice = buildPartialSizeNotice(criteria);
+      }
+    }
 
     if (catalogMatches.length > 0) {
+      if (!notice && isTeenSearch(criteria) && catalogMatches.length <= 5) notice = buildLimitedCoverageNotice();
       const ranked = rankResults(catalogMatches);
       const lastImported = await adapter.lastImportedAt();
       res.status(200).json({
@@ -73,10 +92,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         parsed_criteria: criteria,
         total_matches: catalogMatches.length,
         last_imported: lastImported,
+        ...(notice ? { notice } : {}),
         results: ranked,
       });
       return;
     }
+
+    // Ei osumia: selvitetään mikä rajaus esti tulokset (rennostettu haku).
+    const zeroNotice = buildNoResultsNotice(criteria, findRelaxation(criteria, (c) => runSafe(c)));
 
     if (rawCatalogMatches.length > 0 && catalogMatches.length === 0) {
       // Kriteerit osuivat omaan katalogiin, MUTTA jokainen osuma suodattui
@@ -90,6 +113,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         parsed_criteria: criteria,
         total_matches: 0,
         last_imported: await adapter.lastImportedAt(),
+        notice: zeroNotice,
         results: EMPTY_RESULTS,
       });
       return;
@@ -106,6 +130,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         source: "catalog",
         parsed_criteria: criteria,
         total_matches: 0,
+        notice: zeroNotice,
         results: EMPTY_RESULTS,
       });
       return;
@@ -137,7 +162,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         query: q,
         source: "ai-limit-reached",
         total_matches: 0,
-        notice: "Päivän hakumäärä on tällä hetkellä täynnä. Kokeile huomenna uudelleen.",
+        notice: buildRateLimitedNotice(),
         results: { cheapest: [], bestValue: [], mostLoved: null },
       });
       return;
