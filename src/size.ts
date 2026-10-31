@@ -12,7 +12,7 @@ const SHOE_EU_BY_CM: [number, number][] = [
   [128, 33], [134, 34], [140, 35], [146, 37], [152, 38], [158, 39], [164, 40],
   [170, 41], [176, 42],
 ];
-function shoeEuForCm(cm: number): number {
+export function shoeEuForCm(cm: number): number {
   let best = SHOE_EU_BY_CM[0];
   for (const e of SHOE_EU_BY_CM) if (Math.abs(e[0] - cm) < Math.abs(best[0] - cm)) best = e;
   return best[1];

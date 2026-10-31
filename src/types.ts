@@ -43,6 +43,12 @@ export interface Product {
   // Puuttuu vanhoista tuonneista - silloin se arvioidaan otsikosta hakuhetkellä.
   winter?: boolean | null;
 
+  // Sama tuote usealla värillä samassa kaupassa ja samalla hinnalla näytetään
+  // kerran (paras sopiva väri edustajana). color_count = värivaihtoehtojen
+  // määrä (vain jos > 1), other_colors = muut värit.
+  color_count?: number;
+  other_colors?: string[];
+
   last_updated: string;
 }
 

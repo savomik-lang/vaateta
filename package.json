@@ -5,7 +5,7 @@
   "description": "Moni-kauppa Awin-adapteri (Outnorth SE/FI, Voghion Global), AI-web-hakuvarapolku, tekstintulkinta ja ranking-moduuli",
   "scripts": {
     "import:all": "node --require ts-node/register src/scripts/import-all.ts",
-    "test": "node --require ts-node/register --test src/nlu/parse-query.test.ts src/pipeline.test.ts src/ranking/brand-tiers.test.ts src/ranking/quality-signals.test.ts src/ranking/rank.test.ts src/ai/map-agent-product.test.ts src/ai/rate-limit.test.ts src/ai/query-cache.test.ts src/adapters/multi-store-adapter.test.ts src/safety/child-safety-filter.test.ts src/nlu/garment-keywords.test.ts src/size.test.ts src/season.test.ts src/search-notice.test.ts src/adapters/generic-awin-importer.test.ts",
+    "test": "node --require ts-node/register --test src/nlu/parse-query.test.ts src/pipeline.test.ts src/ranking/brand-tiers.test.ts src/ranking/quality-signals.test.ts src/ranking/rank.test.ts src/ai/map-agent-product.test.ts src/ai/rate-limit.test.ts src/ai/query-cache.test.ts src/adapters/multi-store-adapter.test.ts src/safety/child-safety-filter.test.ts src/nlu/garment-keywords.test.ts src/size.test.ts src/season.test.ts src/search-notice.test.ts src/adapters/generic-awin-importer.test.ts src/ranking/fit.test.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
