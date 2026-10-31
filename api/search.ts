@@ -3,6 +3,7 @@ import { MultiStoreAdapter, matchesCriteria, targetSizeCm, isTeenSearch } from "
 import { rankResults, RankedResults } from "../src/ranking/rank";
 import { fitContextFromCriteria, dedupeColorVariants } from "../src/ranking/fit";
 import { parseCriteriaFromText } from "../src/nlu/parse-query";
+import { interpretQuery } from "../src/nlu/interpret-query";
 import { config } from "../src/config";
 import { RedisKeyValueStore } from "../src/store/kv-store";
 import { getCachedResults, setCachedResults } from "../src/ai/query-cache";
@@ -42,7 +43,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     // --- 1. Omat Awin-kaupat ensin (Outnorth SE/FI, Voghion Global, ...) ---
-    const criteria = parseCriteriaFromText(q);
+    // Sääntöparseri ensin (ilmainen, deterministinen). LLM-tulkinta on varapolku:
+    // kutsutaan vain kun vaatetyyppi puuttuu tai teksti ei ole suomea, ja jos se
+    // ei ole käytössä tai epäonnistuu, haku jatkuu sääntötuloksella (ks.
+    // src/nlu/llm-interpret.ts). Lapsiturvasuodatus ajetaan tuloksille kuten ennenkin.
+    const { criteria, interpretation } = await interpretQuery(q, parseCriteriaFromText(q));
 
     // RELEVANSSIKORJAUS: jos parseCriteriaFromText ei tunnistanut MITÄÄN
     // vaatetyyppiä tekstistä, haku ei saa pudota koko katalogin läpi -
@@ -57,6 +62,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         query: q,
         source: "catalog",
         parsed_criteria: criteria,
+        interpretation,
         total_matches: 0,
         notice: buildNoGarmentNotice(),
         results: EMPTY_RESULTS,
@@ -94,6 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         query: q,
         source: "catalog",
         parsed_criteria: criteria,
+        interpretation,
         total_matches: catalogMatches.length,
         last_imported: lastImported,
         ...(notice ? { notice } : {}),
@@ -115,6 +122,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         query: q,
         source: "catalog",
         parsed_criteria: criteria,
+        interpretation,
         total_matches: 0,
         last_imported: await adapter.lastImportedAt(),
         notice: zeroNotice,
@@ -133,6 +141,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         query: q,
         source: "catalog",
         parsed_criteria: criteria,
+        interpretation,
         total_matches: 0,
         notice: zeroNotice,
         results: EMPTY_RESULTS,

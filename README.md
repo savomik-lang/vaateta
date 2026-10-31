@@ -47,6 +47,44 @@ rank.ts                   Järjestää tulokset (TÄLLÄ HETKELLÄ TYNKÄ —
 4. Aja tämä säännöllisesti (esim. cron-jobina tai serverless-ajastimena)
    `FEED_REFRESH_INTERVAL_MINUTES`-muuttujan mukaisella välillä.
 
+## Hakutekstin tulkinta (sääntöparseri + LLM-varapolku)
+
+`api/search.ts` tulkitsee hakutekstin kahdessa vaiheessa:
+
+1. **Sääntöparseri** (`src/nlu/parse-query.ts`) ajetaan aina ensin. Se on ilmainen,
+   nopea ja deterministinen.
+2. **LLM-tulkinta** (`src/nlu/llm-interpret.ts`) kutsutaan vain, kun
+   - vaatetyyppiä ei tunnistettu (esim. taivutettu "sadetakin", kirjoitusvirhe), tai
+   - teksti ei ole suomea (ruotsi, englanti, tanska, norja).
+
+LLM ei päätä hakutuloksista. Se poimii tekstistä samat kriteerit kuin sääntöparseri
+(`src/nlu/llm-spec.ts`: pakotettu työkalukutsu, validointi `sanitizeLlmExtraction`).
+Ikä muunnetaan senteiksi koodissa (`AGE_TO_CM`), ei mallissa. Suomenkielisessä
+tekstissä sääntöparserin tulos voittaa ristiriidassa, muilla kielillä LLM:n.
+Lapsiturvasuodatus ajetaan hakutuloksille kuten ennenkin.
+
+Haku ei koskaan kaadu LLM:n takia: jos LLM on pois päältä, päiväraja täynnä,
+aikakatkaisu tulee tai vastaus on virheellinen, haku jatkuu sääntötuloksella.
+Vastauksen `interpretation`-kenttä kertoo mitä tapahtui
+(`method`: `rules`/`llm`, `language`, `confidence`, `llm_status`:
+`used`/`cached`/`disabled`/`rate_limited`/`error`/`too_long`).
+
+Kustannussuojat: LLM vain varapolkuna, enintään 300 merkin teksti, vastaukset
+välimuistissa (24 h), oma päiväraja (oletus 500 kutsua/vrk, erillään AI-web-haun
+rajasta), 8 s aikakatkaisu, ei uudelleenyrityksiä.
+
+| Ympäristömuuttuja | Oletus | Merkitys |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | – | Pakollinen LLM-tulkintaan (sama avain kuin AI-web-haussa) |
+| `NLU_LLM_ENABLED` | päällä kun avain on | `false` kytkee LLM-tulkinnan pois |
+| `NLU_LLM_MODEL` | `AI_SEARCH_MODEL` / `claude-haiku-4-5-20251001` | Käytettävä malli |
+| `NLU_LLM_DAILY_LIMIT` | 500 | Kutsuja päivässä |
+| `NLU_LLM_CACHE_TTL_SECONDS` | 86400 | Tulkintojen välimuisti |
+| `NLU_LLM_TIMEOUT_MS` | 8000 | Yksittäisen kutsun aikaraja |
+
+Rajaukset: `material_keywords` (materiaali) ei tule LLM:ltä, koska feedien materiaalit
+eivät ole suomeksi. Käyttöliittymän ilmoitukset (`notice`) ovat toistaiseksi vain suomeksi.
+
 ## TODO ennen kuin oikea data on käytössä
 
 Nämä on merkitty koodiin `TODO`-kommentteina, mutta koottu tähän

@@ -23,3 +23,18 @@ test("laskuri kasvaa jokaisella kutsulla", async () => {
   assert.equal(r1.currentCount, 1);
   assert.equal(r2.currentCount, 2);
 });
+test("eri keyPrefix-laskurit ovat erillisiä (AI-haku vs. LLM-tulkinta)", async () => {
+  const kv = new InMemoryKeyValueStore();
+  await checkAndIncrementDailyLimit(kv, 100);
+  await checkAndIncrementDailyLimit(kv, 100);
+  const nlu = await checkAndIncrementDailyLimit(kv, 100, "nlu-llm");
+  assert.equal(nlu.currentCount, 1);
+  const ai = await checkAndIncrementDailyLimit(kv, 100);
+  assert.equal(ai.currentCount, 3);
+});
+test("oletusavain ei muutu (ai-search:daily-count:PVM)", async () => {
+  const kv = new InMemoryKeyValueStore();
+  await checkAndIncrementDailyLimit(kv, 100);
+  const key = `ai-search:daily-count:${new Date().toISOString().slice(0, 10)}`;
+  assert.equal(await kv.get(key), "1");
+});
