@@ -1,9 +1,20 @@
 {
   "crons": [
-    { "path": "/api/cron/import-all", "schedule": "0 3 * * *" }
+    {
+      "path": "/api/cron/import-all?store=outnorth-fi,voghion-global",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/import-all?store=outnorth-se",
+      "schedule": "15 3 * * *"
+    }
   ],
   "functions": {
-    "api/cron/import-all.ts": { "maxDuration": 60 },
-    "api/search.ts": { "maxDuration": 30 }
+    "api/cron/import-all.ts": {
+      "maxDuration": 60
+    },
+    "api/search.ts": {
+      "maxDuration": 30
+    }
   }
 }

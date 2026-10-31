@@ -12,10 +12,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ?store=outnorth-fi tuo vain yhden kaupan - hyödyllinen suurille feedeille,
   // jotka eivät mahdu yhteen 60 s funktioajoon peräkkäin tuotuina.
+  // Pilkulla erotettuna useampi: ?store=outnorth-fi,voghion-global
   const onlyStore = typeof req.query.store === "string" ? req.query.store : undefined;
+  const wanted = onlyStore ? onlyStore.split(",").map((x) => x.trim()).filter(Boolean) : [];
   const allConfigured = getConfiguredStores();
-  const stores = onlyStore ? allConfigured.filter((s) => s.storeKey === onlyStore) : allConfigured;
-  if (onlyStore && stores.length === 0) {
+  const stores = wanted.length ? allConfigured.filter((s) => wanted.includes(s.storeKey)) : allConfigured;
+  if (wanted.length && stores.length === 0) {
     res.status(404).json({
       error: `Kauppaa "${onlyStore}" ei löydy tai sitä ei ole konfiguroitu.`,
       configured: allConfigured.map((s) => s.storeKey),
