@@ -24,7 +24,7 @@ export type SizeToken =
   | { kind: "letters"; letters: string[] }
   | { kind: "unknown" };
 
-function monthsToCm(m: number): number {
+export function monthsToCm(m: number): number {
   return m <= 12 ? 56 + 2 * m : 80 + (m - 12);
 }
 

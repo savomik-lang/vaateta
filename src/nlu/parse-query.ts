@@ -1,6 +1,7 @@
 import { SearchCriteria, GarmentType } from "../types";
 import { GARMENT_KEYWORDS } from "./garment-keywords";
-import { AGE_TO_CM } from "../size";
+import { AGE_TO_CM, monthsToCm } from "../size";
+import { normalizeNumberWords } from "./numbers";
 import { isKnownBrandWord } from "../ranking/brand-tiers";
 
 const WATERPROOF_KEYWORDS = ["vedenpitäv", "vedenkestäv", "sadeasu", "sadetakki", "sadehousut"];
@@ -37,14 +38,34 @@ function findGender(text: string): "tyttö" | "poika" | "unisex" | undefined {
   }
   return undefined;
 }
+// Valuutta: €, eur, euro, euroa, euron, euroon tai pelkkä "e".
+const CUR = "(?:€|euro(?:a|n|on)?|eur|e)(?!\\p{L})";
+const AMOUNT = "(\\d+(?:[.,]\\d+)?)";
+const LEAD_ANY = "(?:max\\.?|maks\\.?|maksimissaan|maksimissa|maksimi(?:hinta)?|korkeintaan|enintään|alle|budjetti(?:na|ni|ksi)?|hintaraja(?:na)?|ylärajana)";
+const LEAD_EXPLICIT = "(?:max\\.?|maks\\.?|maksimissaan|maksimissa|korkeintaan|enintään|budjetti(?:na|ni|ksi)?|hintaraja(?:na)?)";
+const PRICE_LEAD = new RegExp(`(?<!\\p{L})${LEAD_ANY}\\s*(?::|on|noin|n\\.)?\\s*${AMOUNT}\\s*${CUR}`, "iu");
+const PRICE_TRAIL = new RegExp(`${AMOUNT}\\s*${CUR}\\s*(?:asti|saakka|tai\\s+alle|korkeintaan|enintään|maksimissaan|max)(?!\\p{L})`, "iu");
+// "max 80" ilman valuuttaa, kun perässä ei ole kirjainta/yksikköä ("korkeintaan 3 paria", "max 6-vuotiaalle").
+const PRICE_BARE = new RegExp(`(?<!\\p{L})${LEAD_EXPLICIT}\\s*${AMOUNT}(?!\\d|[.,]\\d|\\s*[\\p{L}%-])`, "iu");
 function findMaxPrice(text: string) {
-  const match = text.match(/(?:max|alle|korkeintaan|enintään)\s*(\d+)\s*(?:€|eur|euroa|e\b)/);
-  return match ? { amount: parseInt(match[1], 10), currency: "EUR" as const } : undefined;
+  const match = text.match(PRICE_LEAD) ?? text.match(PRICE_TRAIL) ?? text.match(PRICE_BARE);
+  if (!match) return undefined;
+  const amount = parseFloat(match[1].replace(",", "."));
+  return amount > 0 ? { amount, currency: "EUR" as const } : undefined;
 }
 function findSize(text: string): { size_raw?: string; size_cm?: number; age?: number } {
-  const cmMatch = text.match(/(\d{2,3})\s*cm/);
+  const cmMatch = text.match(/(\d{2,3})\s*(?:cm|sentti\p{L}*)/u);
   if (cmMatch) return { size_raw: cmMatch[1], size_cm: parseInt(cmMatch[1], 10) };
-  const ageMatch = text.match(/(\d{1,2})[\s-]?v(?:uotiaalle|uotta|uotiaan|uotias|uotiaana)?\b/);
+  // Kuukaudet (vauvat) ennen ikävuosia: "6 kk", "6 kuukauden" -> vauvakoko, ei ikä.
+  const monthMatch = text.match(/(?<!\d)(\d{1,2})\s*-?\s*(?:kk|kuukau\p{L}*|kuinen|kuis\p{L}*)(?!\p{L})/u);
+  if (monthMatch) {
+    const months = parseInt(monthMatch[1], 10);
+    if (months >= 1 && months <= 36) {
+      const cm = monthsToCm(months);
+      return { size_raw: String(cm), size_cm: cm };
+    }
+  }
+  const ageMatch = text.match(/(?<!\d)(\d{1,2})[\s-]?(?:vuotia\p{L}*|vuotta|vuoden|v)(?!\p{L})/u);
   if (ageMatch) {
     const age = parseInt(ageMatch[1], 10);
     // 0 ja yli 17 -vuotiaat eivät ole lapsihaun ikiä - ei tulkita kokona.
@@ -66,7 +87,8 @@ function findBrandDeny(rawText: string): string[] {
 }
 
 export function parseCriteriaFromText(rawText: string): SearchCriteria {
-  const text = rawText.toLowerCase();
+  // Lukusanat numeroiksi (puhehaku): ikä, kuukaudet, koko ja hinta.
+  const text = normalizeNumberWords(rawText.toLowerCase());
   const criteria: SearchCriteria = {};
   const garmentType = findGarmentType(text);
   if (garmentType) criteria.garment_type = garmentType;
