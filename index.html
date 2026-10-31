@@ -1272,6 +1272,11 @@
     var actions = [];
     statusEl.textContent = 'Haku: "' + q + '"';
 
+    // Ennen notice-kenttää: vaatetyypin puuttuminen näkyy tulkinnasta
+    if (!notice && lastCriteria && typeof lastCriteria === 'object' && !lastCriteria.garment_type) {
+      notice = { code: 'no_garment', message: '', suggestions: [] };
+    }
+
     if (notice && notice.code === 'no_garment') {
       title.textContent = 'Minkä vaatteen haet?';
       msg.textContent = notice.message || 'Kerro vielä, mitä vaatetta etsit, niin haen sopivat vaihtoehdot.';
