@@ -5,7 +5,7 @@ import { Product, Currency } from "../types";
 import { RedisProductStore } from "../store/product-store";
 import { guessGarmentType } from "../nlu/garment-keywords";
 import { StoreDefinition } from "../stores-registry";
-import { isChildSafeProductForStore } from "../safety/child-safety-filter";
+import { isChildSafeProductForStore, hasChildMarkers } from "../safety/child-safety-filter";
 
 // ---------------------------------------------------------------------------
 // YLEISKÄYTTÖINEN Awin-feed-importeri, joka toimii MILLE TAHANSA Awin-
@@ -188,9 +188,14 @@ export interface ImportResult {
   // mapGoogleRow-sarakeoletukset voi tarkistaa ilman paikallista CSV:n
   // avaamista.
   sampleRowKeys?: string[];
+  // Kuinka monta riviä hylättiin koska niissä ei ollut lapsimerkkiä
+  // (vain childOnly-kaupoille, esim. Outnorth).
+  notChildRows?: number;
+  durationMs?: number;
 }
 
 export async function importAwinStore(store: StoreDefinition & { feedId: string }): Promise<ImportResult> {
+  const startedAt = Date.now();
   const url = store.format === "google" ? buildGoogleFeedUrl(store.feedId) : buildClassicFeedUrl(store.feedId);
   // Osa CDN:istä (mm. Awinin CloudFront) hylkää pyynnöt ilman User-Agentia -
   // Noden oma fetch ei lähetä sitä oletuksena, mikä voi näkyä geneerisenä
@@ -205,23 +210,35 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
     );
   }
 
-  let csvText: string;
-  if (store.format === "google") {
-    // Node/undici saattaa purkaa gzip-pakkauksen itse Content-Encoding-
-    // otsikon perusteella, jolloin tavuvirta EI enää ole gzipattu meille
-    // asti - toisinaan taas ei. Yritetään ensin gunzip, ja jos se epäonnistuu
-    // (data ei olekaan gzip-muodossa), tulkitaan tavuvirta suoraan UTF-8:ksi.
-    const buf = Buffer.from(await response.arrayBuffer());
-    try {
-      csvText = gunzipSync(buf).toString("utf-8");
-    } catch {
-      csvText = buf.toString("utf-8");
-    }
-  } else {
-    csvText = await response.text();
-  }
+  // Puretaan gzip tavujen "taikanumeron" (1f 8b) perusteella: Node/undici voi
+  // purkaa Content-Encoding:n itse, tai Awin voi palauttaa raakaa .gz-tiedostoa
+  // - molemmat tapaukset hoituvat tunnistamalla muoto datasta itsestään.
+  const buf = Buffer.from(await response.arrayBuffer());
+  const csvText = (buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b ? gunzipSync(buf) : buf).toString("utf-8");
 
-  const rows: Record<string, string>[] = parse(csvText, { columns: true, skip_empty_lines: true, relax_column_count: true });
+  // childOnly-kaupoissa (Outnorth ~95k riviä, pääosin aikuisten tuotteita)
+  // pudotetaan ei-lapsirivit jo jäsennysvaiheessa (on_record), jottei koko
+  // 95k rivin taulukkoa pidetä muistissa.
+  let fetchedRows = 0;
+  let notChildRows = 0;
+  let firstRowKeys: string[] | undefined;
+  const rows: Record<string, string>[] = parse(csvText, {
+    columns: true,
+    skip_empty_lines: true,
+    relax_column_count: true,
+    on_record: (record: Record<string, string>) => {
+      fetchedRows++;
+      if (!firstRowKeys) firstRowKeys = Object.keys(record);
+      if (store.childOnly) {
+        const text = [record.product_name || record.title, record.merchant_category || record.google_product_category, record.product_type].filter(Boolean).join(" ");
+        if (!hasChildMarkers(text, record.age_group)) {
+          notChildRows++;
+          return null;
+        }
+      }
+      return record;
+    },
+  });
 
   const products: Product[] = [];
   let skipped = 0;
@@ -240,10 +257,12 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
   return {
     storeKey: store.storeKey,
     displayName: store.displayName,
-    fetchedRows: rows.length,
+    fetchedRows,
     importedProducts: deduped.length,
     skippedRows: skipped + (products.length - deduped.length),
-    sampleRowKeys: products.length === 0 && rows.length > 0 ? Object.keys(rows[0]) : undefined,
+    sampleRowKeys: products.length === 0 && fetchedRows > 0 ? firstRowKeys : undefined,
+    notChildRows: store.childOnly ? notChildRows : undefined,
+    durationMs: Date.now() - startedAt,
   };
 }
 

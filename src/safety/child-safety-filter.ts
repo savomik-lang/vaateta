@@ -132,3 +132,29 @@ export function isChildSafeProduct(input: SafetyCheckInput): SafetyCheckResult {
 export function isChildSafeProductForStore(_storeKey: string, input: SafetyCheckInput): SafetyCheckResult {
   return isChildSafeProduct(input);
 }
+
+// ---------------------------------------------------------------------------
+// LAPSIMERKIT - käytetään tuonnissa "childOnly"-kaupoille (ks.
+// stores-registry.ts), joiden valikoima on pääosin aikuisten. Tämä on eri
+// asia kuin turvasuodatin yllä: tässä kysytään "onko tuote selvästi
+// lapsille?" (hyväksy vain kyllä-vastaukset), ei "onko tuote vaarallinen?".
+// Sanarajat tehdään Unicode-tietoisesti (\p{L}), koska JS:n \b ei tunnista
+// ä/ö-kirjaimia sanamerkeiksi.
+// ---------------------------------------------------------------------------
+const CHILD_MARKER_KEYWORDS = [
+  "kid", "kids", "kid's", "junior", "juniors", "jr", "child", "children",
+  "children's", "childrens", "baby", "babies", "toddler", "toddlers", "infant",
+  "boy", "boys", "girl", "girls", "youth", "teen", "teens",
+  "barn", "barnen", "barnens", "bebis", "ungdom", "pojkar", "flickor",
+  "lapsi", "lapset", "lasten", "lapsille", "lapselle", "vauva", "vauvat",
+  "taapero", "pojat", "pojille", "tytöt", "tytöille", "nuoret",
+];
+const CHILD_AGE_GROUP_VALUES = new Set(["newborn", "infant", "toddler", "kids", "youth"]);
+const childMarkerRegex = new RegExp(`(?<![\\p{L}\\p{N}])(?:${CHILD_MARKER_KEYWORDS.map(escapeRegExp).join("|")})(?![\\p{L}\\p{N}])`, "iu");
+
+export function hasChildMarkers(text: string, ageGroup?: string | null): boolean {
+  const ag = (ageGroup || "").trim().toLowerCase();
+  if (ag && CHILD_AGE_GROUP_VALUES.has(ag)) return true;
+  if (ag === "adult") return false;
+  return childMarkerRegex.test(text);
+}

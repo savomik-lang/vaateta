@@ -102,3 +102,23 @@ test("tavallinen talvitakki hyväksytään", () => {
   });
   assert.equal(result.safe, true);
 });
+
+import { hasChildMarkers } from "./child-safety-filter";
+
+test("hasChildMarkers: tunnistaa lapsimerkit otsikosta (en/sv/fi)", () => {
+  assert.equal(hasChildMarkers("Kids Waterproof Rain Pants"), true);
+  assert.equal(hasChildMarkers("Barn Skaljacka Junior"), true);
+  assert.equal(hasChildMarkers("Lasten talvitakki"), true);
+  assert.equal(hasChildMarkers("Tytöt kurahousut"), true);
+});
+
+test("hasChildMarkers: aikuisten tuote ilman lapsimerkkiä hylätään", () => {
+  assert.equal(hasChildMarkers("Men's Hiking Boots GTX"), false);
+  assert.equal(hasChildMarkers("Women's Down Jacket"), false);
+});
+
+test("hasChildMarkers: age_group ratkaisee ensin, eikä osamerkkijono riitä", () => {
+  assert.equal(hasChildMarkers("Rain Jacket", "kids"), true);
+  assert.equal(hasChildMarkers("Kids Rain Jacket", "adult"), false);
+  assert.equal(hasChildMarkers("Skidoo Jacket"), false); // "kid" ei osu sanan sisällä
+});

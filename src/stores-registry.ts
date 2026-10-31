@@ -23,11 +23,17 @@ export interface StoreDefinition {
   //   Google Shopping -skeeman mukaiset (id, title, link, price, jne).
   //   Tätä käytetään kun Awinin "Datafeed Format" -sarake näyttää "Google".
   format: "classic" | "google";
+  // true = kauppa myy pääosin AIKUISTEN tuotteita (esim. Outnorth-ulkoilu-
+  // vaatteet, ~95k tuotetta joista vain pieni osa lasten). Tuonnissa
+  // hyväksytään silloin VAIN tuotteet, joissa on selkeä lapsimerkki
+  // (kids/junior/barn/lasten/age_group jne.) - muuten Redis täyttyisi ja
+  // haku hidastuisi aikuistuotteilla, joita lapsihaku ei koskaan näyttäisi.
+  childOnly?: boolean;
 }
 
 export const AWIN_STORES: StoreDefinition[] = [
-  { storeKey: "outnorth-se", displayName: "Outnorth SE", feedIdEnvVar: "AWIN_OUTNORTH_SE_FEED_ID", format: "classic" },
-  { storeKey: "outnorth-fi", displayName: "Outnorth FI", feedIdEnvVar: "AWIN_OUTNORTH_FI_FEED_ID", format: "classic" },
+  { storeKey: "outnorth-se", displayName: "Outnorth SE", feedIdEnvVar: "AWIN_OUTNORTH_SE_FEED_ID", format: "classic", childOnly: true },
+  { storeKey: "outnorth-fi", displayName: "Outnorth FI", feedIdEnvVar: "AWIN_OUTNORTH_FI_FEED_ID", format: "classic", childOnly: true },
   { storeKey: "voghion-global", displayName: "Voghion Global", feedIdEnvVar: "AWIN_VOGHION_GLOBAL_FEED_ID", format: "google" },
   // PÄIVITÄ TÄHÄN uusi rivi kun Babyshop/Boozt tms. joskus hyväksyy:
   // { storeKey: "babyshop-fi", displayName: "Babyshop FI", feedIdEnvVar: "AWIN_BABYSHOP_FI_FEED_ID", format: "classic" },

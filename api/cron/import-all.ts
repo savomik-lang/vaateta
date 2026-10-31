@@ -10,7 +10,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const stores = getConfiguredStores();
+  // ?store=outnorth-fi tuo vain yhden kaupan - hyödyllinen suurille feedeille,
+  // jotka eivät mahdu yhteen 60 s funktioajoon peräkkäin tuotuina.
+  const onlyStore = typeof req.query.store === "string" ? req.query.store : undefined;
+  const allConfigured = getConfiguredStores();
+  const stores = onlyStore ? allConfigured.filter((s) => s.storeKey === onlyStore) : allConfigured;
+  if (onlyStore && stores.length === 0) {
+    res.status(404).json({
+      error: `Kauppaa "${onlyStore}" ei löydy tai sitä ei ole konfiguroitu.`,
+      configured: allConfigured.map((s) => s.storeKey),
+    });
+    return;
+  }
   if (stores.length === 0) {
     res.status(200).json({
       message: "Ei yhtään kauppaa konfiguroitu .env:ssä - tarkista AWIN_*_FEED_ID-muuttujat.",
