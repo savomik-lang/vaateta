@@ -149,7 +149,7 @@ function parseMoney(raw: string | undefined, currency: string | undefined) {
   return { amount, currency: (currency as Currency) || "EUR" };
 }
 
-function mapRow(row: RawFeedRow, storeKey: string): Product | null {
+export function mapRow(row: RawFeedRow, storeKey: string, opts: { basePriceIsSale?: boolean } = {}): Product | null {
   if (!row.aw_product_id || !row.product_name || !row.aw_deep_link) return null;
   // Eri mainostajien classic-feedit nimeävät samat asiat eri sarakkeisiin
   // (Outnorth: Fashion:size, Fashion:suitable_for, product_price_old/
@@ -166,11 +166,19 @@ function mapRow(row: RawFeedRow, storeKey: string): Product | null {
     ageGroup: row.age_group,
   });
   if (!safety.safe) return null;
-  const price = parseMoney(row.search_price, row.currency);
-  // HUOM: base_price (Outnorth FI) on hinta ILMAN ALVia, ei alkuperäinen
-  // hinta - sitä ei käytetä. Alkuperäiseksi hinnaksi kelpaa vain korkeampi
-  // kuin nykyinen hinta.
-  const rawOriginal = parseMoney(row.store_price || row.product_price_old, row.currency);
+  let price = parseMoney(row.search_price, row.currency);
+  // Alkuperäinen hinta: SE-feedissä product_price_old (normaalihinta, search_price
+  // on voimassa oleva hinta). FI-feedissä (basePriceIsSale) search_price on
+  // normaalihinta ja base_price alennettu hinta -> hinnaksi base_price ja
+  // alkuperäiseksi search_price. Alkuperäiseksi kelpaa vain nykyistä korkeampi.
+  let rawOriginal = parseMoney(row.store_price || row.product_price_old, row.currency);
+  if (opts.basePriceIsSale && price) {
+    const sale = parseMoney(row.base_price, row.currency);
+    if (sale && sale.amount > 0 && sale.amount < price.amount) {
+      rawOriginal = price;
+      price = sale;
+    }
+  }
   if (!price) return null;
   const originalPrice = rawOriginal && rawOriginal.amount > price.amount ? rawOriginal : null;
   const discountPercent = originalPrice && originalPrice.amount > price.amount
@@ -287,7 +295,7 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
   for (const row of rows) {
     const product = store.format === "google"
       ? mapGoogleRow(row as GoogleFeedRow, store.storeKey)
-      : mapRow(row as RawFeedRow, store.storeKey);
+      : mapRow(row as RawFeedRow, store.storeKey, { basePriceIsSale: store.basePriceIsSale });
     if (product) products.push(product); else skipped++;
   }
 

@@ -13,9 +13,6 @@
     "api/cron/import-all.ts": {
       "maxDuration": 60
     },
-    "api/cron/debug-feed.ts": {
-      "maxDuration": 60
-    },
     "api/search.ts": {
       "maxDuration": 30
     }
