@@ -331,17 +331,6 @@
   }
   .notice-actions .chip:hover{ background: var(--ink); color: var(--paper-raised); }
 
-  /* Aikuisten koko -merkintä tuotekortissa */
-  .rc-badge{
-    align-self: flex-start;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.04em;
-    color: var(--blue);
-    background: rgba(51,80,92,0.1);
-    border-radius: 2px;
-    padding: 2px 6px;
-  }
   .search-meta{
     margin: 12px 0 0;
     font-size: 13.5px;
@@ -566,56 +555,113 @@
   }
   .live-search-status.error{ color: var(--berry); }
 
-  .filmstrips{ display:flex; flex-direction: column; gap: 34px; margin-top: 24px; }
-  .filmstrip h3{
+  /* ---------- TULOKSET: VÄLILEHDET + RUUDUKKO ---------- */
+  .results{ margin-top: 18px; }
+  .tabs{
+    display:flex;
+    gap: 4px;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .tabs::-webkit-scrollbar{ display:none; }
+  .tab{
+    flex: none;
     font-family:'Space Grotesk', sans-serif;
     font-size: 15px;
-    font-weight: 700;
-    margin: 0 0 12px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 10px 12px 9px;
+    min-height: 44px;
+    cursor: pointer;
+    white-space: nowrap;
   }
-  .filmstrip-row{
-    display:flex;
+  .tab:hover{ color: var(--ink); }
+  .tab[aria-selected="true"]{ color: var(--ink); border-bottom-color: var(--mustard); font-weight: 700; }
+  .tab:focus-visible{ outline: 2px solid var(--sage); outline-offset: -2px; }
+  .tab-desc{ font-size: 13.5px; color: var(--ink-soft); margin: 10px 0 14px; }
+  .result-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
     gap: 14px;
-    overflow-x: auto;
-    padding-bottom: 8px;
-    scroll-snap-type: x proximity;
+  }
+  .result-grid:focus-visible{ outline: 2px solid var(--sage); outline-offset: 4px; }
+  @media (max-width: 560px){
+    .result-grid{ grid-template-columns: 1fr 1fr; gap: 10px; }
   }
   .result-card{
-    flex: 0 0 220px;
-    scroll-snap-align: start;
+    position: relative;
     background: var(--paper-raised);
     border: 1px solid var(--line);
-    border-radius: var(--radius);
-    padding: 14px;
+    border-radius: 4px;
+    padding: 10px 10px 12px;
     display:flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 5px;
+    transition: border-color .15s ease, box-shadow .15s ease;
   }
+  .result-card:hover{ border-color: var(--ink); box-shadow: 0 10px 24px -16px rgba(0,0,0,0.45); }
+  .result-card:focus-within{ border-color: var(--ink); }
+  .rc-media{ position: relative; margin-bottom: 4px; }
   .result-card .rc-img{
-    width: 100%; height: 130px; object-fit: cover;
-    border-radius: 2px; background: var(--paper);
-    margin-bottom: 4px;
+    display:block;
+    width: 100%; aspect-ratio: 1 / 1; object-fit: contain;
+    border-radius: 2px; background: #fff;
   }
-  .result-card .rc-brand{
+  .rc-media.noimg{ aspect-ratio: 1 / 1; background: var(--paper); border-radius: 2px; }
+  .rc-discount{
+    position:absolute; top: 6px; left: 6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 12px; font-weight: 500;
+    background: var(--berry); color: #fff;
+    border-radius: 2px; padding: 2px 6px;
+  }
+  .result-card .rc-store{
     font-family:'IBM Plex Mono', monospace;
     font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
     color: var(--ink-soft);
+    overflow:hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .result-card .rc-title{ font-size: 14px; font-weight: 500; line-height: 1.3; }
-  .result-card .rc-price{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 14px; color: var(--blue); margin-top: 2px;
+  .result-card .rc-title{
+    font-size: 14px; font-weight: 500; line-height: 1.3;
+    display:-webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow:hidden;
   }
-  .result-card .rc-price .original{
-    text-decoration: line-through; color: var(--ink-soft); font-size: 12px; margin-right: 6px;
+  .result-card .rc-price{ display:flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-top: 2px; }
+  .rc-price .now{ font-family:'IBM Plex Mono', monospace; font-size: 16px; font-weight: 500; color: var(--ink); }
+  .rc-price .now.sale{ color: var(--berry); }
+  .rc-price .was{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-soft); text-decoration: line-through; }
+  .rc-price .approx{ flex-basis: 100%; font-size: 12px; color: var(--ink-soft); }
+  .rc-why{ list-style: none; margin: 2px 0 0; padding: 0; display:flex; flex-wrap: wrap; gap: 4px; }
+  .rc-why li{
+    font-size: 11.5px; line-height: 1.3;
+    color: var(--sage);
+    background: rgba(87,101,76,0.1);
+    border-radius: 2px; padding: 2px 6px;
   }
+  .rc-why li.adult{ color: var(--blue); background: rgba(51,80,92,0.1); }
   .result-card .rc-link{
-    margin-top: 6px;
+    margin-top: auto;
+    padding-top: 6px;
     font-family:'Space Grotesk', sans-serif;
-    font-size: 13px; font-weight: 500;
+    font-size: 13.5px; font-weight: 500;
     color: var(--berry); text-decoration: none;
   }
-  .result-card .rc-link:hover{ text-decoration: underline; }
+  /* Koko kortti on klikattava (linkki venytetään kortin päälle) */
+  .result-card .rc-link::after{ content:""; position:absolute; inset:0; border-radius: 4px; }
+  .result-card .rc-link:focus-visible{ outline: none; }
+  .result-card .rc-link:focus-visible::after{ outline: 2px solid var(--sage); outline-offset: 2px; }
+  .result-card:hover .rc-link{ text-decoration: underline; }
+
+  .refine{ margin-top: 22px; }
+  .refine-label{
+    display:block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
 
   /* ---------- MARKETS ---------- */
   .markets{
@@ -843,18 +889,17 @@
 
     <div class="notice-inline" id="noticeInline" hidden aria-live="polite"></div>
 
-    <div id="liveSearchResults" class="filmstrips" hidden>
-      <div class="filmstrip">
-        <h3>Halvimmat</h3>
-        <div class="filmstrip-row" id="filmstripCheapest"></div>
+    <div id="liveSearchResults" class="results" hidden>
+      <div class="tabs" role="tablist" aria-label="Tulosten järjestys">
+        <button type="button" class="tab" role="tab" id="tab-cheapest" data-list="cheapest" aria-selected="true" aria-controls="resultGrid">Halvimmat</button>
+        <button type="button" class="tab" role="tab" id="tab-bestValue" data-list="bestValue" aria-selected="false" aria-controls="resultGrid" tabindex="-1">Paras hinta-laatu</button>
+        <button type="button" class="tab" role="tab" id="tab-mostLoved" data-list="mostLoved" aria-selected="false" aria-controls="resultGrid" tabindex="-1" hidden>Suosituimmat</button>
       </div>
-      <div class="filmstrip">
-        <h3>Paras hinta-laatu</h3>
-        <div class="filmstrip-row" id="filmstripBestValue"></div>
-      </div>
-      <div class="filmstrip" id="filmstripLovedWrap" hidden>
-        <h3>Näistä ihmiset pitivät eniten</h3>
-        <div class="filmstrip-row" id="filmstripLoved"></div>
+      <p class="tab-desc" id="tabDesc"></p>
+      <div class="result-grid" id="resultGrid" role="tabpanel" aria-labelledby="tab-cheapest" tabindex="0"></div>
+      <div class="refine" id="refine" hidden>
+        <span class="refine-label" id="refineLabel">Tarkenna hakua</span>
+        <ul class="notice-actions" id="refineChips" aria-labelledby="refineLabel"></ul>
       </div>
     </div>
   </div>
@@ -988,37 +1033,185 @@
     return /^https?:\/\//i.test(String(u || '')) ? esc(u) : '#';
   }
 
-  function moneyLabel(m){
-    if (!m) return '';
-    return esc(m.amount) + ' ' + (m.currency === 'EUR' ? '€' : esc(m.currency));
+  // ---------- HINNAT ----------
+  // Kurssit vastaavat backendin src/currency.ts:ää. Käytetään vain
+  // likimääräiseen "≈ € " -muunnokseen; kaupan oma hinta näytetään aina.
+  var RATES_TO_EUR = { EUR: 1, SEK: 0.09, NOK: 0.085, DKK: 0.134 };
+  function fmtMoney(m){
+    if (!m || typeof m.amount !== 'number') return '';
+    var whole = Math.round(m.amount) === m.amount;
+    try {
+      return new Intl.NumberFormat('fi-FI', {
+        style: 'currency', currency: m.currency || 'EUR', currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: 2
+      }).format(m.amount);
+    } catch (e) {
+      return m.amount + ' ' + (m.currency || '');
+    }
+  }
+  // Palauttaa {now, was, pct}. "was" (yliviivattu) näytetään VAIN, jos se on
+  // samassa valuutassa ja selvästi suurempi kuin nykyinen hinta. Näin
+  // ristiriitainen data ei voi koskaan yliviivata oikeaa myyntihintaa.
+  function priceInfo(p){
+    var now = p.price, o = p.original_price;
+    var valid = now && typeof now.amount === 'number';
+    var was = valid && o && typeof o.amount === 'number' && o.currency === now.currency && o.amount > now.amount ? o : null;
+    var pct = was ? Math.round((1 - now.amount / was.amount) * 100) : 0;
+    if (pct < 3) { was = null; pct = 0; }
+    return { now: now, was: was, pct: pct };
+  }
+
+  var STORE_NAMES = { 'outnorth-se': 'Outnorth SE', 'outnorth-fi': 'Outnorth FI', 'voghion-global': 'Voghion' };
+  function storeName(p){ return STORE_NAMES[p.source] || (p.source ? String(p.source) : ''); }
+
+  // Sopiiko tuotteen kokolista haettuun cm-kokoon ("110", "104/110", "110-116 cm")
+  function sizeAvailable(p, cm){
+    if (!cm) return false;
+    return (p.size_available || []).some(function(s){
+      var nums = (String(s).match(/\d{2,3}/g) || []).map(Number).filter(function(n){ return n >= 44 && n <= 188; });
+      if (!nums.length) return false;
+      var lo = Math.min.apply(null, nums), hi = Math.max.apply(null, nums);
+      return cm >= lo && cm <= hi;
+    });
+  }
+
+  function whyTags(p){
+    var tags = [];
+    var s = lastCriteria ? sizeInfo(lastCriteria) : null;
+    if (s && s.cm && sizeAvailable(p, s.cm)) tags.push({ text: 'Koko ' + s.cm + ' saatavilla' });
+    if (p.waterproof === true) tags.push({ text: 'Vedenpitävä' });
+    var adult = adultSizes(p);
+    if (adult.length) tags.push({ text: 'Aikuisten koko ' + adult.join('/'), cls: 'adult' });
+    if (typeof p.rating === 'number' && p.rating > 0) {
+      tags.push({ text: '★ ' + p.rating.toLocaleString('fi-FI', { maximumFractionDigits: 1 }) + (p.rating_count ? ' (' + p.rating_count + ')' : '') });
+    }
+    return tags.slice(0, 3);
   }
 
   function renderCard(product){
-    var original = product.original_price
-      ? '<span class="original">' + moneyLabel(product.original_price) + '</span>'
-      : '';
-    var img = product.image_url
-      ? '<img class="rc-img" src="' + safeUrl(product.image_url) + '" alt="" loading="lazy">'
-      : '';
-    var adult = adultSizes(product);
-    var badge = adult.length
-      ? '<span class="rc-badge">Aikuisten koko ' + esc(adult.join('/')) + '</span>'
-      : '';
+    var pr = priceInfo(product);
+    var media = product.image_url
+      ? '<div class="rc-media"><img class="rc-img" src="' + safeUrl(product.image_url) + '" alt="" loading="lazy">'
+      : '<div class="rc-media noimg">';
+    if (pr.pct) media += '<span class="rc-discount">−' + pr.pct + ' %</span>';
+    media += '</div>';
+    var approx = '';
+    if (pr.now && pr.now.currency && pr.now.currency !== 'EUR' && RATES_TO_EUR[pr.now.currency]) {
+      approx = '<span class="approx">≈ ' + esc(fmtMoney({ amount: Math.round(pr.now.amount * RATES_TO_EUR[pr.now.currency]), currency: 'EUR' })) + '</span>';
+    }
+    var price = '<div class="rc-price">' +
+      '<span class="now' + (pr.was ? ' sale' : '') + '"><span class="visually-hidden">Hinta </span>' + esc(fmtMoney(pr.now)) + '</span>' +
+      (pr.was ? '<s class="was"><span class="visually-hidden">Ennen </span>' + esc(fmtMoney(pr.was)) + '</s>' : '') +
+      approx + '</div>';
+    var tags = whyTags(product);
+    var why = tags.length ? '<ul class="rc-why">' + tags.map(function(t){
+      return '<li' + (t.cls ? ' class="' + t.cls + '"' : '') + '>' + esc(t.text) + '</li>';
+    }).join('') + '</ul>' : '';
+    var meta = [storeName(product), product.brand].filter(Boolean).filter(function(v, i, a){ return a.indexOf(v) === i; });
     return (
-      '<div class="result-card">' +
-        img +
-        badge +
-        '<span class="rc-brand">' + esc(product.brand) + '</span>' +
+      '<article class="result-card">' +
+        media +
+        '<span class="rc-store">' + esc(meta.join(' · ')) + '</span>' +
         '<span class="rc-title">' + esc(product.title) + '</span>' +
-        '<span class="rc-price">' + original + moneyLabel(product.price) + '</span>' +
-        '<a class="rc-link" href="' + safeUrl(product.url_affiliate) + '" target="_blank" rel="noopener sponsored">Kauppaan →</a>' +
-      '</div>'
+        price + why +
+        '<a class="rc-link" href="' + safeUrl(product.url_affiliate) + '" target="_blank" rel="noopener sponsored">' +
+          'Katso kaupassa<span class="visually-hidden">: ' + esc(product.title) + '</span> →</a>' +
+      '</article>'
     );
   }
 
-  function renderFilmstrip(containerId, products){
-    var el = document.getElementById(containerId);
-    el.innerHTML = (products || []).map(renderCard).join('');
+  // Samat koko-/värivariantit (sama nimi ja hinta) näytetään vain kerran
+  function dedupeProducts(list){
+    var seen = {};
+    return (list || []).filter(function(p){
+      if (!p || !p.title) return false;
+      var k = String(p.title).toLowerCase() + '|' + (p.price ? p.price.amount + p.price.currency : '');
+      if (seen[k]) return false;
+      seen[k] = true; return true;
+    });
+  }
+
+  // ---------- VÄLILEHDET ----------
+  var TAB_DESCS = {
+    cheapest: 'Edullisimmat vaihtoehdot hinnan mukaan.',
+    bestValue: 'Edullisimman kolmanneksen joukosta laatumerkit ja tunnetut merkit ensin.',
+    mostLoved: 'Parhaat asiakasarviot saaneet.'
+  };
+  var lastResults = null, activeList = 'cheapest', preferredList = 'cheapest';
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs .tab'));
+
+  function renderResults(results){
+    lastResults = {
+      cheapest: dedupeProducts(results && results.cheapest),
+      bestValue: dedupeProducts(results && results.bestValue),
+      mostLoved: dedupeProducts(results && results.mostLoved)
+    };
+    tabs.forEach(function(t){ t.hidden = lastResults[t.dataset.list].length === 0; });
+    // Käyttäjän valitsema välilehti säilyy, kun sille on tuloksia
+    activeList = lastResults[preferredList].length ? preferredList
+      : (lastResults.cheapest.length ? 'cheapest' : 'bestValue');
+    selectTab(activeList, false);
+    renderRefine();
+  }
+
+  function selectTab(list, focus){
+    activeList = list;
+    tabs.forEach(function(t){
+      var on = t.dataset.list === list;
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+      if (on && focus) t.focus();
+    });
+    var grid = document.getElementById('resultGrid');
+    grid.setAttribute('aria-labelledby', 'tab-' + list);
+    grid.innerHTML = (lastResults[list] || []).map(renderCard).join('');
+    document.getElementById('tabDesc').textContent = TAB_DESCS[list] || '';
+  }
+
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){ preferredList = t.dataset.list; selectTab(t.dataset.list, false); });
+    t.addEventListener('keydown', function(e){
+      var visible = tabs.filter(function(x){ return !x.hidden; });
+      var i = visible.indexOf(t), next = null;
+      if (e.key === 'ArrowRight') next = visible[(i + 1) % visible.length];
+      else if (e.key === 'ArrowLeft') next = visible[(i - 1 + visible.length) % visible.length];
+      else if (e.key === 'Home') next = visible[0];
+      else if (e.key === 'End') next = visible[visible.length - 1];
+      if (next) { e.preventDefault(); preferredList = next.dataset.list; selectTab(next.dataset.list, true); }
+    });
+  });
+
+  // ---------- TARKENNUKSET TULOSTEN ALLA ----------
+  var WATERPROOF_TYPES = { takki: 1, housut: 1, haalari: 1, 'kengät': 1, lapaset: 1 };
+  function refineActions(){
+    var c = lastCriteria;
+    if (!c || typeof c !== 'object' || !c.garment_type || !lastResults) return [];
+    var out = [];
+    var all = lastResults.cheapest.concat(lastResults.bestValue);
+    var eur = all.map(function(p){ return p.price && RATES_TO_EUR[p.price.currency] ? p.price.amount * RATES_TO_EUR[p.price.currency] : null; })
+      .filter(function(v){ return v; }).sort(function(a, b){ return a - b; });
+    if (eur.length >= 2) {
+      var limit = Math.floor(eur[Math.floor(eur.length / 2)] / 10) * 10;
+      var cur = c.max_price && c.max_price.amount;
+      if (limit >= 10 && limit > eur[0] && (!cur || limit < cur)) {
+        out.push({ label: 'Alle ' + limit + ' €', query: rebuildQuery(Object.assign({}, c, { max_price: { amount: limit, currency: 'EUR' } }), lastQuery, []) });
+      }
+    }
+    if (!c.waterproof && WATERPROOF_TYPES[c.garment_type]) {
+      out.push({ label: 'Vain vedenpitävät', query: rebuildQuery(Object.assign({}, c, { waterproof: true }), lastQuery, []) });
+    }
+    var s = sizeInfo(c);
+    if (s && s.cm && s.cm + 6 <= 176) {
+      var next = Object.assign({}, c, { size_cm: s.cm + 6 });
+      delete next.size_raw; delete next.age;
+      out.push({ label: 'Koko ' + (s.cm + 6) + ' (kasvunvaraa)', query: rebuildQuery(next, lastQuery, []) });
+    }
+    return dedupe(out.filter(function(a){ return a.query && a.query !== lastQuery; }));
+  }
+  function renderRefine(){
+    var actions = refineActions();
+    document.getElementById('refineChips').innerHTML = actionButtons(actions, false);
+    document.getElementById('refine').hidden = actions.length === 0;
   }
 
   function setAllInputs(q){
@@ -1076,17 +1269,7 @@
           : data.total_matches + ' tulosta löytyi.';
         renderInlineNotice(notice);
 
-        renderFilmstrip('filmstripCheapest', data.results.cheapest);
-        renderFilmstrip('filmstripBestValue', data.results.bestValue);
-
-        var lovedWrap = document.getElementById('filmstripLovedWrap');
-        if (data.results.mostLoved && data.results.mostLoved.length > 0) {
-          renderFilmstrip('filmstripLoved', data.results.mostLoved);
-          lovedWrap.hidden = false;
-        } else {
-          lovedWrap.hidden = true;
-        }
-
+        renderResults(data.results);
         resultsEl.hidden = false;
       })
       .catch(function(err){
