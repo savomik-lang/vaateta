@@ -1548,7 +1548,7 @@
   var ADULT_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
   function adultSizes(p){
     // Lasten tuote (Kids/Junior) -> lasten S/M/L, ei aikuisten koko
-    if (/\b(kids?|junior|jr|youth|lasten|barn|girls'?|boys'?)\b/i.test(String(p.title || ''))) return [];
+    if (/\b(kids?|junior|juniors|jr|youth|teens?|lasten|nuorten|barn|girls'?|boys'?)\b/i.test(String(p.title || ''))) return [];
     var tokens = (p.size_available || []).join(',').split(/[\/,;|]+/).map(function(t){ return t.trim().toUpperCase(); });
     // Mikä tahansa luku 50–176 (esim. "152", "S (110-116)") = lasten cm-koko.
     // Naisten EU-koot (32–46) eivät osu tähän väliin.
