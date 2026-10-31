@@ -148,6 +148,7 @@ const CHILD_MARKER_KEYWORDS = [
   "barn", "barnen", "barnens", "bebis", "ungdom", "pojkar", "flickor",
   "lapsi", "lapset", "lasten", "lapsille", "lapselle", "vauva", "vauvat",
   "taapero", "pojat", "pojille", "tytöt", "tytöille", "nuoret",
+  "pojke", "flicka", "poika", "tyttö", "lastenvaatteet", "barnkläder", "småbarn", "pikkulapsi",
 ];
 const CHILD_AGE_GROUP_VALUES = new Set(["newborn", "infant", "toddler", "kids", "youth"]);
 const childMarkerRegex = new RegExp(`(?<![\\p{L}\\p{N}])(?:${CHILD_MARKER_KEYWORDS.map(escapeRegExp).join("|")})(?![\\p{L}\\p{N}])`, "iu");

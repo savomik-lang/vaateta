@@ -27,14 +27,22 @@ const COLUMNS = [
   "product_type", "last_updated", "currency", "size", "gender", "age_group",
 ].join(",");
 
-function buildClassicFeedUrl(feedId: string): string {
+function buildClassicFeedUrl(store: StoreDefinition & { feedId: string }): string {
   const apiKey = config.awin.datafeedApiKey();
+  if (store.classicColumns) {
+    // Täsmälleen Awinin Datafeeds.csv:n / Create-a-Feed'in tuottama muoto
+    // (sarakkeet URL-enkoodattuna, esim. "Fashion%3Asize").
+    const cols = store.classicColumns.map(encodeURIComponent).join("%2C");
+    return (
+      `https://productdata.awin.com/datafeed/download/apikey/${apiKey}` +
+      `/fid/${store.feedId}/format/csv/language/${store.classicLanguage || "any"}` +
+      `/delimiter/%2C/compression/gzip/columns/${cols}/`
+    );
+  }
   return (
     `https://productdata.awin.com/datafeed/download/apikey/${apiKey}` +
-    `/language/any/fid/${feedId}/columns/${COLUMNS}` +
+    `/language/any/fid/${store.feedId}/columns/${COLUMNS}` +
     // LAPSITURVALLISUUS: adultcontent/0 = EI aikuissisältöä feedissä.
-    // (ks. src/safety/child-safety-filter.ts kommentit - tämä on silti
-    // vain yksi puolustuskerros monesta, ei ainoa suoja.)
     `/format/csv/delimiter/%2C/compression/gzip/adultcontent/0/`
   );
 }
@@ -110,6 +118,10 @@ interface RawFeedRow {
   delivery_cost?: string; brand_name?: string; in_stock?: string; colour?: string;
   product_type?: string; last_updated?: string; currency?: string;
   size?: string; gender?: string; age_group?: string;
+  // Outnorthin feedien kentät
+  category_name?: string; merchant_product_category_path?: string;
+  product_price_old?: string; base_price?: string; aw_image_url?: string;
+  "Fashion:suitable_for"?: string; "Fashion:size"?: string;
 }
 
 function guessWaterproof(...texts: (string | undefined)[]): boolean | null {
@@ -122,8 +134,8 @@ function guessWaterproof(...texts: (string | undefined)[]): boolean | null {
 function guessGender(raw: string | undefined): "tyttö" | "poika" | "unisex" | null {
   if (!raw) return null;
   const v = raw.toLowerCase();
-  if (v.includes("girl") || v.includes("female")) return "tyttö";
-  if (v.includes("boy") || v.includes("male")) return "poika";
+  if (/girl|female|flick|tytö|tytt/.test(v)) return "tyttö";
+  if (/boy|male|pojk|pojat|poika|pojille/.test(v)) return "poika";
   if (v.includes("unisex")) return "unisex";
   return null;
 }
@@ -137,19 +149,23 @@ function parseMoney(raw: string | undefined, currency: string | undefined) {
 
 function mapRow(row: RawFeedRow, storeKey: string): Product | null {
   if (!row.aw_product_id || !row.product_name || !row.aw_deep_link) return null;
+  // Eri mainostajien classic-feedit nimeävät samat asiat eri sarakkeisiin
+  // (Outnorth: Fashion:size, Fashion:suitable_for, product_price_old/
+  // base_price, category_name) - poimitaan ensisijainen arvo kummasta tahansa.
+  const category = row.merchant_category || row.category_name || row.product_type || row.merchant_product_category_path;
+  const suitableFor = row["Fashion:suitable_for"] || row.gender || row.age_group;
+  const sizeRaw = row["Fashion:size"] || row.size;
   // LAPSITURVALLISUUS (korkea prioriteetti) - ks. mapGoogleRow yllä ja
-  // src/safety/child-safety-filter.ts. Classic-feedissä ei ole erillistä
-  // age_group-sarakkeen vastinetta COLUMNS-listassa, joten tarkistus
-  // perustuu tässä otsikkoon/kategoriaan.
+  // src/safety/child-safety-filter.ts.
   const safety = isChildSafeProductForStore(storeKey, {
     title: row.product_name,
-    category: row.merchant_category || row.product_type,
+    category,
     description: row.description,
     ageGroup: row.age_group,
   });
   if (!safety.safe) return null;
   const price = parseMoney(row.search_price, row.currency);
-  const originalPrice = parseMoney(row.store_price, row.currency);
+  const originalPrice = parseMoney(row.store_price || row.product_price_old || row.base_price, row.currency);
   if (!price) return null;
   const discountPercent = originalPrice && originalPrice.amount > price.amount
     ? Math.round((1 - price.amount / originalPrice.amount) * 100) : null;
@@ -159,16 +175,16 @@ function mapRow(row: RawFeedRow, storeKey: string): Product | null {
     source: storeKey,
     title: row.product_name,
     brand: row.brand_name || "Tuntematon",
-    garment_type: guessGarmentType(row.merchant_category, row.product_type, row.product_name),
+    garment_type: guessGarmentType(row.merchant_category || row.category_name, row.product_type || row.merchant_product_category_path, row.product_name),
     price, original_price: originalPrice, discount_percent: discountPercent,
-    size_available: row.size ? [row.size] : [],
+    size_available: sizeRaw ? [sizeRaw] : [],
     size_normalized: null,
     material: null,
     waterproof: guessWaterproof(row.description, row.product_name),
     color: row.colour || null,
-    gender: guessGender(row.gender),
+    gender: guessGender(suitableFor),
     url_affiliate: row.aw_deep_link,
-    image_url: row.merchant_image_url || "",
+    image_url: row.merchant_image_url || row.aw_image_url || "",
     in_stock: (row.in_stock || "").toLowerCase() !== "false" && row.in_stock !== "0",
     shipping_cost_from: parseMoney(row.delivery_cost, row.currency),
     free_shipping_threshold: null,
@@ -196,7 +212,7 @@ export interface ImportResult {
 
 export async function importAwinStore(store: StoreDefinition & { feedId: string }): Promise<ImportResult> {
   const startedAt = Date.now();
-  const url = store.format === "google" ? buildGoogleFeedUrl(store.feedId) : buildClassicFeedUrl(store.feedId);
+  const url = store.format === "google" ? buildGoogleFeedUrl(store.feedId) : buildClassicFeedUrl(store);
   // Osa CDN:istä (mm. Awinin CloudFront) hylkää pyynnöt ilman User-Agentia -
   // Noden oma fetch ei lähetä sitä oletuksena, mikä voi näkyä geneerisenä
   // "fetch failed" -virheenä ilman HTTP-statuskoodia.
@@ -244,7 +260,12 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
       fetchedRows++;
       if (!firstRowKeys) firstRowKeys = Object.keys(record);
       if (store.childOnly) {
-        const text = [record.product_name || record.title, record.merchant_category || record.google_product_category, record.product_type].filter(Boolean).join(" ");
+        const text = [
+          record.product_name || record.title,
+          record.merchant_category || record.google_product_category,
+          record.category_name, record.merchant_product_category_path, record.product_type,
+          record["Fashion:suitable_for"],
+        ].filter(Boolean).join(" ");
         if (!hasChildMarkers(text, record.age_group)) {
           notChildRows++;
           return null;
