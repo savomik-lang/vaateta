@@ -19,12 +19,15 @@ const WORDS: Record<DetectedLanguage, Set<string>> = {
     "åring", "storlek", "och", "eller", "inte", "byxor", "jacka", "skor", "tröja", "overall",
     "under", "högst", "kronor", "kr", "regnbyxor", "regnjacka", "vinterjacka", "klänning",
     "mössa", "vantar", "strumpor", "pojke", "flicka", "något", "varmt", "vattentät",
+    "stl", "tjej", "kille", "handskar", "kängor", "stövlar", "gummistövlar", "baddräkt", "huvtröja", "regnställ",
+    "vinterbyxor", "vinteroverall", "sexåring", "månader", "budget", "för",
   ]),
   en: new Set([
     "i", "need", "looking", "for", "my", "the", "and", "or", "not", "no", "year", "years", "old",
     "size", "under", "max", "pants", "jacket", "shoes", "shirt", "daughter", "boy", "girl", "kid",
     "kids", "jeans", "something", "warm", "waterproof", "winter", "coat", "boots", "dress",
     "trousers", "euros", "with", "without", "baby", "toddler",
+    "snowsuit", "beanie", "gloves", "mittens", "hoodie", "sweater", "swimsuit", "wellies", "sneakers", "budget", "yo",
   ]),
   other: new Set([
     "jeg", "trenger", "leter", "etter", "til", "min", "mitt", "datter", "sønn", "barn", "år",

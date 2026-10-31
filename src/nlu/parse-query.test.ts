@@ -124,3 +124,174 @@ test("ikä 18+ ei tulkita lapsen kooksi", () => {
   assert.equal(parseCriteriaFromText("takki kolmekymmentä vuotta").size_cm, undefined);
 });
 
+// --- Ruotsi ja englanti (UI-chatin kieliversiot) ---------------------------------------
+test("sv/en: UI-chatin viisi lausetta tuottavat vaatetyypin, koon ja hinnan oikealla valuutalla", () => {
+  const a = parseCriteriaFromText("vinterjacka till 6 år");
+  assert.equal(a.garment_type, "takki");
+  assert.equal(a.size_cm, 116);
+  assert.equal(a.age, 6);
+  assert.equal(a.season, "winter");
+
+  const b = parseCriteriaFromText("regnbyxor storlek 116 max 400 kr");
+  assert.equal(b.garment_type, "kurahousut");
+  assert.equal(b.size_cm, 116);
+  assert.deepEqual(b.max_price, { amount: 400, currency: "SEK" });
+
+  const c = parseCriteriaFromText("mössa till min son 4 år");
+  assert.equal(c.garment_type, "pipo");
+  assert.equal(c.size_cm, 104);
+  assert.equal(c.age, 4);
+  assert.equal(c.child_gender_pref, "poika");
+
+  const d = parseCriteriaFromText("winter jacket for 6 year old");
+  assert.equal(d.garment_type, "takki");
+  assert.equal(d.size_cm, 116);
+  assert.equal(d.age, 6);
+  assert.equal(d.season, "winter");
+
+  const e = parseCriteriaFromText("rain pants size 116 under 40 euros");
+  assert.equal(e.garment_type, "kurahousut");
+  assert.equal(e.size_cm, 116);
+  assert.deepEqual(e.max_price, { amount: 40, currency: "EUR" });
+});
+test("sv: vaatesanat", () => {
+  const g = (q: string) => parseCriteriaFromText(q).garment_type;
+  assert.equal(g("jacka"), "takki");
+  assert.equal(g("regnjacka"), "takki");
+  assert.equal(g("vinteroverall"), "haalari");
+  assert.equal(g("regnställ"), "haalari");
+  assert.equal(g("vinterbyxor"), "toppahousut");
+  assert.equal(g("termobyxor"), "toppahousut");
+  assert.equal(g("överdragsbyxor"), "toppahousut");
+  assert.equal(g("byxor"), "housut");
+  assert.equal(g("jeans"), "housut");
+  assert.equal(g("tröja"), "paita");
+  assert.equal(g("huvtröja"), "paita");
+  assert.equal(g("klänning"), "mekko");
+  assert.equal(g("mössa"), "pipo");
+  assert.equal(g("vantar"), "lapaset");
+  assert.equal(g("handskar"), "lapaset");
+  assert.equal(g("strumpor"), "sukat");
+  assert.equal(g("strumpbyxor"), "sukat");
+  assert.equal(g("skor"), "kengät");
+  assert.equal(g("stövlar"), "kengät");
+  assert.equal(g("gummistövlar"), "kengät");
+  assert.equal(g("kängor"), "kengät");
+  assert.equal(g("pyjamas"), "pyjama");
+  assert.equal(g("baddräkt"), "uimapuku");
+  assert.equal(g("badbyxor"), "uimapuku");
+  assert.equal(g("body"), "body");
+});
+test("en: vaatesanat", () => {
+  const g = (q: string) => parseCriteriaFromText(q).garment_type;
+  assert.equal(g("snowsuit for toddler"), "haalari");
+  assert.equal(g("snow pants"), "toppahousut");
+  assert.equal(g("winter pants for kids"), "toppahousut");
+  assert.equal(g("rain jacket"), "takki");
+  assert.equal(g("beanie"), "pipo");
+  assert.equal(g("a warm hat"), "pipo");
+  assert.equal(g("gloves"), "lapaset");
+  assert.equal(g("mittens"), "lapaset");
+  assert.equal(g("boots"), "kengät");
+  assert.equal(g("wellies"), "kengät");
+  assert.equal(g("sneakers"), "kengät");
+  assert.equal(g("hoodie"), "paita");
+  assert.equal(g("sweater"), "paita");
+  assert.equal(g("swimsuit"), "uimapuku");
+});
+test("en: sana ei osu osamerkkijonoon (that/what ei ole hat)", () => {
+  assert.equal(parseCriteriaFromText("what is that").garment_type, undefined);
+  assert.equal(parseCriteriaFromText("something for my kid").garment_type, undefined);
+});
+test("sv/en: ikämuodot", () => {
+  const age = (q: string) => parseCriteriaFromText(`jacka ${q}`).age;
+  assert.equal(age("6 år"), 6);
+  assert.equal(age("6-åring"), 6);
+  assert.equal(age("6 års"), 6);
+  assert.equal(age("sexåring"), 6);
+  assert.equal(age("till en sexåring"), 6);
+  assert.equal(age("till ett barn på fjorton år"), 14);
+  assert.equal(age("6 year old"), 6);
+  assert.equal(age("6-year-old"), 6);
+  assert.equal(age("6 yo"), 6);
+  assert.equal(age("age 6"), 6);
+  assert.equal(age("6 years"), 6);
+  assert.equal(age("six year old"), 6);
+  assert.equal(age("for a six-year-old"), 6);
+  assert.equal(age("fourteen years old"), 14);
+  assert.equal(age("ages 4-11"), undefined);
+});
+test("sv/en: kuukaudet ovat vauvakoko eivätkä ikävuosia", () => {
+  for (const q of ["body 6 månader", "body 6 mån", "body sex månader", "baby body 6 months", "body six months old"]) {
+    const r = parseCriteriaFromText(q);
+    assert.equal(r.size_cm, 68, q);
+    assert.equal(r.age, undefined, q);
+  }
+});
+test("sv/en: koko storlek/stl/size", () => {
+  assert.equal(parseCriteriaFromText("jacka storlek 128").size_cm, 128);
+  assert.equal(parseCriteriaFromText("jacka stl 128").size_cm, 128);
+  assert.equal(parseCriteriaFromText("jacket size 128").size_cm, 128);
+  assert.equal(parseCriteriaFromText("takki koko 128").size_cm, 128);
+  // kenkien EU-koko -> pituus
+  assert.equal(parseCriteriaFromText("skor storlek 34").size_cm, 134);
+  assert.equal(parseCriteriaFromText("boots size 40").size_cm, 164);
+  // vaatteilla pieni luku ei ole senttikoko
+  assert.equal(parseCriteriaFromText("jacket size 34").size_cm, undefined);
+});
+test("sv/en: hintarajat ja valuutat", () => {
+  const p = (q: string) => parseCriteriaFromText(q).max_price;
+  assert.deepEqual(p("jacka max 400 kr"), { amount: 400, currency: "SEK" });
+  assert.deepEqual(p("jacka högst 400 kronor"), { amount: 400, currency: "SEK" });
+  assert.deepEqual(p("jacka under 400 sek"), { amount: 400, currency: "SEK" });
+  assert.deepEqual(p("jacka budget 400 kr"), { amount: 400, currency: "SEK" });
+  assert.deepEqual(p("jacka 400 kr eller mindre"), { amount: 400, currency: "SEK" });
+  assert.deepEqual(p("jacket under 40 euros"), { amount: 40, currency: "EUR" });
+  assert.deepEqual(p("jacket max 40 eur"), { amount: 40, currency: "EUR" });
+  assert.deepEqual(p("jacket less than 40 €"), { amount: 40, currency: "EUR" });
+  assert.deepEqual(p("jacket under €40"), { amount: 40, currency: "EUR" });
+  assert.deepEqual(p("jacket 40 euros or less"), { amount: 40, currency: "EUR" });
+  assert.deepEqual(p("jacket up to 40 euros"), { amount: 40, currency: "EUR" });
+  // ruotsinkielinen "max 400" ilman valuuttaa -> kruunu; suomi/englanti -> EUR
+  assert.deepEqual(p("regnjacka till min dotter max 400"), { amount: 400, currency: "SEK" });
+  assert.deepEqual(p("takki max 80"), { amount: 80, currency: "EUR" });
+});
+test("sv/en: hintaraja ei sekoitu ikään", () => {
+  assert.equal(parseCriteriaFromText("jacka under 6 år").max_price, undefined);
+  assert.equal(parseCriteriaFromText("jacket under 6 years old").max_price, undefined);
+});
+test("sv/en: sukupuoli ja lapsisignaali", () => {
+  const r = (q: string) => parseCriteriaFromText(q);
+  assert.equal(r("jacka till min dotter").child_gender_pref, "tyttö");
+  assert.equal(r("jacka till en flicka").child_gender_pref, "tyttö");
+  assert.equal(r("jacka tjej").child_gender_pref, "tyttö");
+  assert.equal(r("jacka till min son").child_gender_pref, "poika");
+  assert.equal(r("jacka till pojke").child_gender_pref, "poika");
+  assert.equal(r("jacka kille").child_gender_pref, "poika");
+  assert.equal(r("jacket for my daughter").child_gender_pref, "tyttö");
+  assert.equal(r("jacket for a girl").child_gender_pref, "tyttö");
+  assert.equal(r("jacket for my son").child_gender_pref, "poika");
+  assert.equal(r("jacket for a boy").child_gender_pref, "poika");
+  assert.equal(r("jacka barn").child_signal, true);
+  assert.equal(r("jacket for kids").child_signal, true);
+  assert.equal(r("jacket for a toddler").child_signal, true);
+  assert.equal(r("baby jacket").child_signal, true);
+  // sana ei osu osamerkkijonoon (season/reason sisältävät "son")
+  assert.equal(r("jacket for the season").child_gender_pref, undefined);
+});
+test("sv/en: vedenpitävä ja talvi", () => {
+  assert.equal(parseCriteriaFromText("vattentät jacka").waterproof, true);
+  assert.equal(parseCriteriaFromText("waterproof jacket").waterproof, true);
+  assert.equal(parseCriteriaFromText("vinterstövlar").season, "winter");
+  assert.equal(parseCriteriaFromText("winter boots").season, "winter");
+});
+test("suomenkielinen haku käyttäytyy ennallaan sv/en-sääntöjen lisäyksen jälkeen", () => {
+  const r = parseCriteriaFromText("Talvihaalari 5-vuotiaalle tytölle, max 120 €");
+  assert.equal(r.garment_type, "haalari");
+  assert.equal(r.child_gender_pref, "tyttö");
+  assert.deepEqual(r.max_price, { amount: 120, currency: "EUR" });
+  assert.equal(r.size_raw, "110");
+  assert.equal(parseCriteriaFromText("pipo 3-vuotiaalle").garment_type, "pipo");
+  assert.equal(parseCriteriaFromText("kengät koko 34").size_cm, 134);
+});
+
