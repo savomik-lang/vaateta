@@ -70,3 +70,29 @@ test("dedupeResults: kauppojen yhdistäminen ja värit yhdessä", () => {
   assert.equal(out[0].color_count, 2);
   assert.equal(out[0].other_offers?.length, 1);
 });
+
+test("Suomen kauppa on edustaja vaikka Ruotsin kauppa olisi halvempi; SE-tarjouksessa toimitushuomautus", () => {
+  const cheapSe = { ...se, price: { amount: 300, currency: "SEK" as const } };
+  const out = dedupeResults([cheapSe, fi], coatCtx);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].source, "outnorth-fi");
+  assert.equal(out[0].market, "FI");
+  assert.equal(out[0].shipping_note, undefined);
+  assert.equal(out[0].other_offers![0].market, "SE");
+  assert.match(out[0].other_offers![0].shipping_note!, /tarkista toimitus Suomeen/);
+});
+
+test("pelkkä SE-tuote saa market SE ja huomautuksen; FI-tuote ei huomautusta", () => {
+  const onlySe = dedupeResults([{ ...se, title: "Vain Ruotsissa Jacket", group_id: "X", color: "Red" }], coatCtx)[0];
+  assert.equal(onlySe.market, "SE");
+  assert.ok(onlySe.shipping_note);
+  const onlyFi = dedupeResults([{ ...fi, title: "Vain Suomessa Jacket", group_id: "Y", color: "Red" }], coatCtx)[0];
+  assert.equal(onlyFi.market, "FI");
+  assert.equal(onlyFi.shipping_note, undefined);
+});
+
+test("parempi koko ruotsalaisella voittaa edelleen suomalaisen markkina-etusijan", () => {
+  const fiSmall = { ...fi, size_available: ["134/140"] };
+  const out = dedupeResults([fiSmall, se], coatCtx);
+  assert.equal(out[0].source, "outnorth-se");
+});
