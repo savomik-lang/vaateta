@@ -61,7 +61,7 @@
   header{
     position: relative;
     z-index: 2;
-    padding: 26px 0 0;
+    padding: 16px 0 0;
   }
   header .wrap{
     display:flex;
@@ -76,13 +76,29 @@
     color: var(--paper-raised);
   }
   .logo .dot{ color: #E7A94A; }
-  .header-tag{
+  a.logo{ text-decoration: none; display:inline-flex; align-items: baseline; }
+  .logo .beta{
+    margin-left: 6px;
     font-family:'IBM Plex Mono', monospace;
-    font-size: 11px;
-    color: rgba(246,244,238,0.85);
-    border: 1px solid rgba(246,244,238,0.35);
-    padding: 5px 10px;
-    border-radius: var(--radius);
+    font-size: 10px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(246,244,238,0.8);
+    border: 1px solid rgba(246,244,238,0.4);
+    border-radius: 2px; padding: 1px 5px;
+    position: relative; top: -3px;
+  }
+  .nav{ display:flex; gap: 4px; margin:0; padding:0; list-style:none; }
+  .nav a{
+    display:inline-flex; align-items:center; min-height: 44px; padding: 0 10px;
+    font-size: 14.5px; font-weight: 500; text-decoration: none;
+    color: rgba(246,244,238,0.92);
+    text-shadow: 0 1px 8px rgba(0,0,0,0.35);
+    border-radius: 2px;
+  }
+  .nav a:hover{ color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+  .nav a:focus-visible{ outline: 2px solid #E7A94A; outline-offset: 0; }
+  @media (max-width: 420px){
+    .nav a{ padding: 0 7px; font-size: 14px; }
+    .logo .beta{ display:none; }
   }
 
   /* ---------- HERO PHOTO ---------- */
@@ -384,116 +400,10 @@
   }
   .btn.ghost:hover{ background: rgba(246,244,238,0.14); transform:none; }
 
-  /* ---------- CARE LABEL (signature element) ----------
-     Floats centered, overlapping only the very bottom edge of the
-     hero photo (ground/path area) so it never sits over either child. */
-  .demo-float{
-    position: relative;
-    z-index: 3;
-    display:flex;
-    flex-direction: column;
-    align-items:center;
-    gap: 14px;
-    margin-top: -86px;
-    padding: 0 28px;
-  }
-  .care-label{
-    background: rgba(246,244,238,0.97);
-    backdrop-filter: blur(6px);
-    border: 1.5px dashed var(--ink);
-    border-radius: 6px;
-    width: 100%;
-    max-width: 360px;
-    padding: 22px 22px 6px;
-    position: relative;
-    box-shadow: 0 20px 44px -18px rgba(0,0,0,0.4);
-  }
-  .care-label .cl-head{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 10.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--ink-soft);
-    display:flex;
-    justify-content: space-between;
-    border-bottom: 1px solid var(--line);
-    padding-bottom: 10px;
-    margin-bottom: 14px;
-  }
-  .cl-query{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 13px;
-    color: var(--ink);
-    background: rgba(87,101,76,0.09);
-    border-left: 3px solid var(--sage);
-    padding: 10px 12px;
-    margin-bottom: 16px;
-  }
-  .cl-result{
-    display:flex;
-    justify-content: space-between;
-    align-items:flex-start;
-    gap: 10px;
-    padding: 10px 0;
-    border-bottom: 1px dotted var(--line);
-    font-size: 13.5px;
-  }
-  .cl-result:last-of-type{ border-bottom: none; }
-  .cl-result .name{ font-weight: 500; }
-  .cl-result .why{ display:block; font-size: 11.5px; color: var(--ink-soft); margin-top: 2px; }
-  .cl-result .price{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 13px;
-    color: var(--blue);
-    white-space: nowrap;
-  }
-  .demo-switch{
-    display:flex; gap: 8px; align-items:center; justify-content:center;
-    padding: 12px 0 16px;
-    border-top: 1px solid var(--line);
-    margin-top: 4px;
-  }
-  .demo-dot{
-    width: 8px; height: 8px; border-radius: 50%;
-    background: transparent; border: 1.5px solid var(--ink-soft);
-    cursor: pointer; padding: 0;
-  }
-  .demo-dot.active{ background: var(--berry); border-color: var(--berry); }
-  .demo-dot:hover{ border-color: var(--ink); }
-  .demo-try{
-    display:block;
-    width: 100%;
-    margin: 4px 0 14px;
-    font-family:'Space Grotesk', sans-serif;
-    font-size: 14px;
-    font-weight: 500;
-    padding: 10px 14px;
-    background: var(--ink);
-    color: var(--paper-raised);
-    border: 1px solid var(--ink);
-    border-radius: var(--radius);
-    cursor: pointer;
-  }
-  .demo-try:hover{ background: var(--berry); border-color: var(--berry); }
-  .cl-note{
-    font-size: 11.5px;
-    color: var(--ink-soft);
-    text-align: center;
-    margin: -4px 0 4px;
-  }
-
-  @media (prefers-reduced-motion: no-preference){
-    .demo-float{ animation: settle 700ms cubic-bezier(.2,.8,.2,1) both; }
-  }
-  @keyframes settle{
-    from{ transform: translateY(18px); opacity: 0; }
-    to{ transform: translateY(0); opacity: 1; }
-  }
-
   /* ---------- HOW IT WORKS ---------- */
   .steps{
-    padding: 28px 0 88px;
-    border-top: 1px solid var(--line);
+    padding: 28px 0 64px;
+    scroll-margin-top: 70px;
   }
   .steps h2{
     font-family:'Fraunces', serif;
@@ -693,8 +603,22 @@
 
   /* ---------- ABOUT ---------- */
   .about{
-    padding: 0 0 88px;
+    padding: 8px 0 64px;
     border-top: 1px solid var(--line);
+    scroll-margin-top: 70px;
+  }
+  #kaupat{ scroll-margin-top: 90px; }
+  .about h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 15.5px; font-weight: 700;
+    margin: 0 0 6px;
+  }
+  .about .small{ font-size: 13px; margin-top: 8px; }
+  .stores{ display:flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 0; padding: 0; list-style: none; }
+  .stores li{
+    font-size: 13.5px;
+    border: 1px solid var(--ink); border-radius: 999px;
+    padding: 4px 11px;
   }
   .about h2{
     font-family:'Fraunces', serif;
@@ -720,7 +644,7 @@
   .cta{
     background: var(--ink);
     color: var(--paper-raised);
-    padding: 64px 0;
+    padding: 40px 0;
   }
   .cta .wrap{
     display:grid;
@@ -731,8 +655,8 @@
   .cta h2{
     font-family:'Fraunces', serif;
     font-weight: 500;
-    font-size: 30px;
-    margin: 0 0 12px;
+    font-size: 26px;
+    margin: 0 0 8px;
   }
   .cta p{
     color: rgba(246,244,238,0.72);
@@ -754,27 +678,18 @@
   footer{
     padding: 34px 0 44px;
   }
-  footer .wrap{
-    display:flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 12px;
-    border-top: 1px solid var(--line);
-    padding-top: 20px;
+  footer .footer-top{
+    display:flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 6px 16px;
+    margin-bottom: 10px;
   }
-  footer p{
-    font-size: 12.5px;
-    color: var(--ink-soft);
-    margin: 0;
+  footer .logo{ color: var(--ink); font-size: 19px; }
+  footer .links{ display:flex; flex-wrap: wrap; gap: 0 4px; margin:0; padding:0; list-style:none; }
+  footer .links a{
+    display:inline-flex; align-items:center; min-height: 40px; padding: 0 8px;
+    font-size: 13.5px; text-decoration: none; color: var(--ink-soft);
   }
-  footer .links{
-    display:flex;
-    gap: 18px;
-    font-size: 12.5px;
-  }
-  footer .links a{ text-decoration: none; color: var(--ink-soft); }
-  footer .links a:hover{ color: var(--ink); }
+  footer .links a:hover{ color: var(--ink); text-decoration: underline; }
+  footer .fineprint{ font-size: 12.5px; color: var(--ink-soft); margin: 0 0 6px; max-width: 70ch; }
 
   @media (max-width: 860px){
     .hero-photo .hero-content{ padding-top: 150px; padding-bottom: 40px; }
@@ -783,28 +698,31 @@
       background: linear-gradient(180deg, rgba(35,38,43,0.55) 0%, rgba(35,38,43,0.15) 22%, rgba(35,38,43,0.70) 48%, rgba(35,38,43,0.88) 100%);
     }
     .wrap{ padding: 0 18px; }
-    /* Mobiilissa kortti ei saa peittää hakukenttää: ei päällekkäisyyttä */
-    .demo-float{ padding: 0 18px; margin-top: 28px; }
     .step-row{ grid-template-columns: 1fr; }
     .cta .wrap{ grid-template-columns: 1fr; }
-    .care-label{ transform: rotate(1deg); max-width: 100%; }
   }
 </style>
 </head>
 <body>
 
-<section class="hero-photo">
+<section class="hero-photo" id="top">
   <header>
     <div class="wrap">
-      <div class="logo">vaateta<span class="dot">.</span></div>
-      <div class="header-tag">TESTIVERSIO — FI · SE · NO · DK</div>
+      <a class="logo" href="#top" aria-label="Vaateta, sivun alkuun">vaateta<span class="dot">.</span><span class="beta" aria-label="beetaversio">beta</span></a>
+      <nav aria-label="Päävalikko">
+        <ul class="nav">
+          <li><a href="#miten-toimii">Miten toimii</a></li>
+          <li><a href="#kaupat">Kaupat</a></li>
+          <li><a href="#meista">Meistä</a></li>
+        </ul>
+      </nav>
     </div>
   </header>
 
   <div class="wrap hero-content">
-    <span class="eyebrow">Suositusagentti lastenvaatteille</span>
+    <span class="eyebrow">Lastenvaatehaku</span>
     <h1>Lapsen vaatteet,<br>ilman <em>iltakymmenen</em><br>selaustuntia.</h1>
-    <p class="lede">Kerro yhdellä lauseella, mitä lapsi tarvitsee: koko tai ikä, budjetti ja mitä vaatteelta odotat. Vaateta vertaa pohjoismaisia verkkokauppoja ja näyttää parhaat vaihtoehdot. Sinä päätät, minne klikkaat.</p>
+    <p class="lede">Kerro yhdellä lauseella, mitä lapsi tarvitsee. Vaateta vertaa verkkokauppoja ja näyttää sopivimmat – sinä valitset.</p>
     <form class="search-form" id="heroSearchForm" role="search" data-search-form>
       <label for="heroSearchInput" class="visually-hidden">Mitä lapsi tarvitsee?</label>
       <input
@@ -823,7 +741,6 @@
     <p class="voice-hint" id="voiceHint" aria-live="polite"></p>
     <span class="chips-label" id="heroChipsLabel">Esimerkiksi</span>
     <ul class="chips" id="heroChips" aria-labelledby="heroChipsLabel"></ul>
-    <p class="search-meta"><a href="#miten-toimii">Miten se toimii</a> · <a href="#meista">Meistä</a></p>
   </div>
 </section>
 
@@ -842,39 +759,24 @@
   <div class="wrap"><p class="voice-hint sticky-hint" id="stickyVoiceHint" aria-live="polite"></p></div>
 </div>
 
-<div class="demo-float">
-  <div class="care-label" id="careLabel">
-    <div class="cl-head"><span id="clSearchId">Haku #0114</span><span id="clSize">110 cm</span></div>
-    <div class="cl-query" id="clQuery">"Talvihaalari 5-vuotiaalle tytölle, max 120 €"</div>
-    <div id="clResults"></div>
-    <p class="cl-note">Esimerkki siitä, miltä tulokset näyttävät</p>
-    <button type="button" class="demo-try" id="demoTry">Kokeile tätä hakua →</button>
-    <div class="demo-switch" role="group" aria-label="Vaihda esimerkkihaku">
-      <button class="demo-dot active" data-demo="0" aria-label="Esimerkki 1"></button>
-      <button class="demo-dot" data-demo="1" aria-label="Esimerkki 2"></button>
-      <button class="demo-dot" data-demo="2" aria-label="Esimerkki 3"></button>
-    </div>
-  </div>
-</div>
-
 <section class="steps" id="miten-toimii">
   <div class="wrap">
-    <h2>Kolme askelta, ei lomaketta</h2>
+    <h2>Näin se toimii</h2>
     <div class="step-row">
       <div class="step">
         <span class="num">01</span>
         <h3>Kerro tarve</h3>
-        <p>Kirjoita tai puhu vapaasti, niin kuin selittäisit kaverille: koko, tyyppi, budjetti — ja jos haluat, myös suosikkibrändit tai ne joita mieluummin vältät. Ei pakollisia kenttiä.</p>
+        <p>Kirjoita tai sano omin sanoin: vaate, koko tai ikä ja budjetti.</p>
       </div>
       <div class="step">
         <span class="num">02</span>
-        <h3>Agentti hakee ja karsii</h3>
-        <p>Vaateta käy puolestasi läpi useita pohjoismaisia kauppoja, vertailee kokoja ja tarjouksia, ja jättää pois ne jotka eivät edes ole varastossa.</p>
+        <h3>Vaateta vertaa</h3>
+        <p>Haemme sopivat tuotteet useasta kaupasta. Loppuneet jätetään pois.</p>
       </div>
       <div class="step">
         <span class="num">03</span>
         <h3>Sinä valitset</h3>
-        <p>Näet parhaat löydöt ja tarkalleen miksi juuri ne valittiin. Viimeisen päätöksen teet sinä — klikkaat suoraan kauppaan, emme osta mitään puolestasi.</p>
+        <p>Näet, miksi tuote sopii, ja ostat suoraan kaupasta.</p>
       </div>
     </div>
   </div>
@@ -882,9 +784,8 @@
 
 <section class="live-search" id="kokeile" hidden>
   <div class="wrap">
-    <span class="eyebrow">Hakutulokset (testiversio)</span>
-    <h2 id="resultsHeading">Löydöt</h2>
-    <p class="live-search-hint">Testivaiheessa haku kattaa rajatun joukon pohjoismaisia verkkokauppoja. Tuotetiedot päivittyvät kerran vuorokaudessa.</p>
+    <h2 id="resultsHeading">Tulokset</h2>
+    <p class="live-search-hint">Mukana Outnorth (Suomi ja Ruotsi) ja Voghion. Hinnat päivittyvät kerran päivässä.</p>
 
     <div class="understood" id="understood" hidden>
       <span class="understood-label" id="understoodLabel">Ymmärsin haun näin</span>
@@ -895,7 +796,7 @@
 
     <div class="empty-state" id="emptyState" hidden aria-live="polite">
       <h3 id="emptyTitle">Emme löytäneet tähän sopivia tuotteita vielä</h3>
-      <p id="emptyMsg">Testivaiheessa mukana on vasta muutama kauppa, joten valikoima on suppea. Kokeile toista hakua tai jotain näistä:</p>
+      <p id="emptyMsg">Mukana on vielä vain muutama kauppa. Kokeile toista hakua tai näitä:</p>
       <ul class="chips on-paper" id="emptyChips" aria-label="Ehdotettuja hakuja"></ul>
     </div>
 
@@ -918,115 +819,62 @@
   </div>
 </section>
 
-<section class="markets">
-  <div class="wrap">
-    <span class="eyebrow">Käytössä (tulossa)</span>
-    <div class="row" style="margin-top:14px;">
-      <span class="swatch fi">Suomi</span>
-      <span class="swatch">Ruotsi</span>
-      <span class="swatch">Norja</span>
-      <span class="swatch">Tanska</span>
-    </div>
-  </div>
-</section>
-
 <section class="about" id="meista">
   <div class="wrap">
-    <span class="eyebrow">Meistä</span>
-    <h2>Miksi rakennamme Vaatetaa</h2>
+    <h2>Meistä</h2>
     <div class="about-grid">
-      <p>
-        Pohjoismainen vanhempi käyttää keskimäärin useita tunteja kuukaudessa lastenvaatteiden selailuun eri verkkokaupoissa — koot vaihtelevat brändeittäin, tarjoukset ovat hajallaan, ja "oikean" tuotteen löytäminen vaatii kymmenien välilehtien auki pitämistä.
-      </p>
-      <p>
-        Vaateta rakentaa suositusagenttia, joka poistaa tämän selaustyön: vanhempi kertoo yhdellä lauseella tarpeen, ja agentti hakee, normalisoi koot ja pisteyttää löydöt useista kaupoista — päätös ja klikkaus jäävät aina vanhemmalle itselleen.
-      </p>
-      <p>
-        Tuote rakennetaan alusta asti kumppanuuspohjaisesti virallisten affiliate-rajapintojen (mm. Awin) kautta, ilman sivustojen scrapingia — tämä pitää palvelun sekä kauppojen että käyttäjien kannalta luotettavalla pohjalla pitkällä aikavälillä.
-      </p>
+      <div>
+        <h3>Miksi Vaateta</h3>
+        <p>Lastenvaatteita etsiessä koot, hinnat ja tarjoukset ovat hajallaan kymmenissä välilehdissä. Vaateta kokoaa sopivat vaihtoehdot yhteen hakuun.</p>
+      </div>
+      <div id="kaupat">
+        <h3>Mukana olevat kaupat</h3>
+        <ul class="stores">
+          <li>Outnorth Suomi</li>
+          <li>Outnorth Ruotsi</li>
+          <li>Voghion</li>
+        </ul>
+        <p class="small">Lisää lastenvaatekauppoja on tulossa.</p>
+      </div>
+      <div>
+        <h3>Miten Vaateta rahoitetaan</h3>
+        <p>Jos ostat kaupasta Vaatetan linkin kautta, saatamme saada kaupalta pienen palkkion. Se ei nosta hintaasi eikä vaikuta tulosten järjestykseen.</p>
+      </div>
     </div>
   </div>
 </section>
 
-<section class="cta" id="kiinnostus">
+<section class="cta" id="palaute">
   <div class="wrap">
     <div>
-      <h2>Ole ensimmäisten joukossa.</h2>
-      <p>Rakennamme parhaillaan ensimmäistä versiota. Jätä sähköpostisi, niin saat viestin kun pääset kokeilemaan.</p>
+      <h2>Puuttuuko jotain?</h2>
+      <p>Kerro, mitä etsit tai mikä ei toiminut. Luemme jokaisen viestin.</p>
     </div>
     <div>
-      <a class="btn" href="mailto:hei@vaateta.com?subject=Kiinnostunut%20Vaatetasta">Ilmoita kiinnostuksesi →</a>
+      <a class="btn" href="mailto:hei@vaateta.com?subject=Palaute%20Vaatetasta">Lähetä palautetta →</a>
     </div>
   </div>
 </section>
 
 <footer>
   <div class="wrap">
-    <p>&copy; 2026 Vaateta. Testiversio — palvelu ei vielä välitä ostoksia.</p>
-    <div class="links">
-      <a href="tietosuoja.html">Tietosuoja</a>
-      <a href="mailto:hei@vaateta.com">Ota yhteyttä</a>
+    <div class="footer-top">
+      <a class="logo" href="#top" aria-label="Vaateta, sivun alkuun">vaateta<span class="dot">.</span></a>
+      <nav aria-label="Alatunniste">
+        <ul class="links">
+          <li><a href="#miten-toimii">Miten toimii</a></li>
+          <li><a href="#kaupat">Kaupat</a></li>
+          <li><a href="tietosuoja.html">Tietosuoja</a></li>
+          <li><a href="mailto:hei@vaateta.com">Ota yhteyttä</a></li>
+        </ul>
+      </nav>
     </div>
+    <p class="fineprint">Hinnat ja saatavuus päivittyvät kerran päivässä, joten tarkista lopullinen hinta kaupasta. Tuotelinkit ovat kumppanilinkkejä. Etusivun kuva on luotu tekoälyllä.</p>
+    <p class="fineprint">&copy; 2026 Vaateta · beta</p>
   </div>
 </footer>
 
 <script>
-  var demos = [
-    {
-      id: "Haku #0114",
-      size: "110 cm",
-      query: "\"Talvihaalari 5-vuotiaalle tytölle, max 120 €\"",
-      results: [
-        { name: "Reima Tepastella", why: "Vedenpitävä, hyvä arvio, oma koko saatavilla", price: "109 €" },
-        { name: "Didriksons Rio", why: "Edullisin, toimitus 2 pv", price: "89 €" },
-        { name: "Polarn O. Pyret", why: "Paras arvostelu, hieman yli budjetin", price: "128 €" }
-      ]
-    },
-    {
-      id: "Haku #0287",
-      size: "110 cm",
-      query: "\"Farkut ja pari t-paitaa pojalle, edullisin vaihtoehto kelpaa\"",
-      results: [
-        { name: "Lindex Farkut + 2-pack", why: "Edullisin yhdistelmä, varastossa", price: "34 €" },
-        { name: "Kappahl Basic-setti", why: "Sama koko molemmissa, nopea toimitus", price: "39 €" },
-        { name: "Zalando Essentials", why: "Halvin yksittäin, eri kaupasta", price: "42 €" }
-      ]
-    },
-    {
-      id: "Haku #0342",
-      size: "92 cm",
-      query: "\"Kurahousut 2-vuotiaalle, täytyy olla vedenpitävät, hinnalla ei väliä\"",
-      results: [
-        { name: "Reima Kittilä", why: "Testivoittaja vedenpitävyydessä", price: "59 €" },
-        { name: "Didriksons Rain", why: "Kevyempi malli, hyvä liikkuvuus", price: "49 €" },
-        { name: "Molo Waterproof", why: "Premium-materiaali, pisin takuu", price: "72 €" }
-      ]
-    }
-  ];
-
-  function renderDemo(i){
-    var d = demos[i];
-    document.getElementById('clSearchId').textContent = d.id;
-    document.getElementById('clSize').textContent = d.size;
-    document.getElementById('clQuery').textContent = d.query;
-    var html = '';
-    d.results.forEach(function(r){
-      html += '<div class="cl-result"><div><span class="name">' + r.name +
-        '</span><span class="why">' + r.why + '</span></div><div class="price">' + r.price + '</div></div>';
-    });
-    document.getElementById('clResults').innerHTML = html;
-    document.querySelectorAll('.demo-dot').forEach(function(dot){
-      dot.classList.toggle('active', dot.dataset.demo === String(i));
-    });
-  }
-
-  document.querySelectorAll('.demo-dot').forEach(function(dot){
-    dot.addEventListener('click', function(){
-      renderDemo(parseInt(dot.dataset.demo, 10));
-    });
-  });
-
-  renderDemo(0);
 
   // ---------- OIKEA HAKU (kutsuu /api/search) ----------
   var searchSection = document.getElementById('kokeile');
@@ -1254,12 +1102,6 @@
       if (!q) { form.querySelector('input').focus(); return; }
       runSearch(q);
     });
-  });
-
-  document.getElementById('demoTry').addEventListener('click', function(){
-    var active = document.querySelector('.demo-dot.active');
-    var d = demos[active ? parseInt(active.dataset.demo, 10) : 0];
-    runSearch(d.query.replace(/^"|"$/g, ''));
   });
 
   var searchSeq = 0;
@@ -1517,7 +1359,7 @@
     } else {
       // Vanha muoto ilman palautetta
       title.textContent = 'Emme löytäneet tähän sopivia tuotteita vielä';
-      msg.textContent = 'Testivaiheessa mukana on vasta muutama kauppa, joten valikoima on suppea. Kokeile toista hakua tai jotain näistä:';
+      msg.textContent = 'Mukana on vielä vain muutama kauppa. Kokeile toista hakua tai näitä:';
       document.getElementById('emptyChips').innerHTML = actionButtons(fallbackActions(q), false);
     }
     emptyEl.hidden = false;
