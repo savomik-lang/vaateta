@@ -202,6 +202,81 @@
     0%,100%{ box-shadow: 0 0 0 0 rgba(168,61,52,0.55); }
     50%{ box-shadow: 0 0 0 7px rgba(168,61,52,0); }
   }
+  /* ---------- PUHEHAKUIKKUNA (Googlen tapaan) ---------- */
+  body.voice-open{ overflow: hidden; }
+  .voice-overlay{
+    position: fixed; inset: 0; z-index: 60;
+    display:flex; align-items:center; justify-content:center;
+    --level: 0;
+  }
+  .voice-overlay[hidden]{ display:none; }
+  .voice-backdrop{ position:absolute; inset:0; background: rgba(35,38,43,0.55); backdrop-filter: blur(3px); }
+  .voice-dialog{
+    position: relative;
+    width: min(420px, calc(100% - 32px));
+    background: var(--paper-raised);
+    border-radius: 14px;
+    padding: 30px 24px 26px;
+    text-align: center;
+    box-shadow: 0 30px 60px -20px rgba(0,0,0,0.5);
+  }
+  @media (max-width: 560px){
+    /* Mobiilissa alareunan paneeli: mikrofoni peukalon ulottuvilla */
+    .voice-overlay{ align-items: flex-end; }
+    .voice-dialog{ width: 100%; border-radius: 18px 18px 0 0; padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
+  }
+  .voice-close{
+    position:absolute; top: 6px; right: 6px;
+    width: 44px; height: 44px; border: none; background: transparent; border-radius: 50%;
+    font-size: 26px; line-height: 1; color: var(--ink-soft); cursor: pointer;
+  }
+  .voice-close:hover{ background: rgba(35,38,43,0.08); color: var(--ink); }
+  .voice-close:focus-visible, .voice-mic:focus-visible, .voice-type:focus-visible{ outline: 3px solid var(--sage); outline-offset: 3px; }
+  .voice-title{ font-family:'Fraunces', serif; font-weight: 500; font-size: 26px; margin: 4px 0 4px; }
+  .voice-status{ font-size: 15px; color: var(--ink-soft); margin: 0 0 22px; min-height: 1.5em; }
+  .voice-mic{
+    position: relative;
+    width: 96px; height: 96px;
+    border-radius: 50%; border: none;
+    background: var(--berry); color: #fff;
+    display:inline-grid; place-items:center;
+    cursor: pointer;
+  }
+  .voice-mic svg{ position: relative; z-index: 1; width: 42px; height: 42px; }
+  .voice-ring{
+    position:absolute; inset: 0; border-radius: 50%;
+    background: rgba(168,61,52,0.22);
+    transform: scale(calc(1 + var(--level) * 0.8));
+    transition: transform 90ms linear;
+  }
+  .voice-ring.r2{ background: rgba(168,61,52,0.11); transform: scale(calc(1.12 + var(--level) * 1.4)); }
+  /* Ilman äänitasomittaria (mobiili): rengas sykkii, kun ääntä kuuluu */
+  @media (prefers-reduced-motion: no-preference){
+    .voice-overlay[data-state="listening"]:not(.has-meter) .voice-ring.r2{ animation: voicebreath 1.8s ease-in-out infinite; }
+    .voice-overlay.sound:not(.has-meter) .voice-ring{ animation: voicepulse 0.7s ease-in-out infinite; }
+  }
+  @keyframes voicebreath{ 0%,100%{ transform: scale(1.08); opacity: .7; } 50%{ transform: scale(1.3); opacity: 1; } }
+  @keyframes voicepulse{ 0%,100%{ transform: scale(1.1); } 50%{ transform: scale(1.55); } }
+  .voice-overlay[data-state="nospeech"] .voice-mic,
+  .voice-overlay[data-state="error"] .voice-mic{ background: var(--ink-soft); }
+  .voice-overlay[data-state="nospeech"] .voice-ring,
+  .voice-overlay[data-state="error"] .voice-ring,
+  .voice-overlay[data-state="done"] .voice-ring{ display:none; }
+  .voice-transcript{
+    font-size: 21px; line-height: 1.35; color: var(--ink);
+    min-height: 2.7em; margin: 20px 0 4px;
+    overflow-wrap: anywhere;
+  }
+  .voice-transcript .interim{ color: var(--ink-soft); }
+  .voice-example{ font-size: 13.5px; color: var(--ink-soft); margin: 0; }
+  .voice-overlay:not([data-state="listening"]) .voice-example{ display:none; }
+  .voice-type{
+    margin-top: 14px;
+    font-family:'Space Grotesk', sans-serif; font-size: 14.5px; font-weight: 500;
+    background: transparent; border: none; color: var(--blue);
+    text-decoration: underline; text-underline-offset: 3px;
+    min-height: 44px; padding: 0 10px; cursor: pointer;
+  }
   .voice-hint{
     margin: 10px 0 0;
     min-height: 0;
@@ -733,7 +808,7 @@
         autocomplete="off"
         enterkeyhint="search"
       >
-      <button type="button" class="mic-btn" id="micBtn" aria-label="Sano haku ääneen" aria-pressed="false" title="Sano haku ääneen" hidden>
+      <button type="button" class="mic-btn" id="micBtn" aria-label="Sano haku ääneen" title="Sano haku ääneen" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
       </button>
       <button type="submit" class="btn">Hae</button>
@@ -750,7 +825,7 @@
     <form class="search-form" role="search" data-search-form>
       <label for="stickySearchInput" class="visually-hidden">Mitä lapsi tarvitsee?</label>
       <input type="search" id="stickySearchInput" name="q" placeholder="Mitä lapsi tarvitsee?" autocomplete="off" enterkeyhint="search" tabindex="-1">
-      <button type="button" class="mic-btn" id="stickyMicBtn" data-input="stickySearchInput" data-hint="stickyVoiceHint" aria-label="Sano haku ääneen" aria-pressed="false" title="Sano haku ääneen" tabindex="-1" hidden>
+      <button type="button" class="mic-btn" id="stickyMicBtn" data-input="stickySearchInput" data-hint="stickyVoiceHint" aria-label="Sano haku ääneen" title="Sano haku ääneen" tabindex="-1" hidden>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
       </button>
       <button type="submit" class="btn" tabindex="-1">Hae</button>
@@ -873,6 +948,23 @@
     <p class="fineprint">&copy; 2026 Vaateta · beta</p>
   </div>
 </footer>
+
+<div class="voice-overlay" id="voiceOverlay" data-state="listening" hidden>
+  <div class="voice-backdrop" data-voice-close></div>
+  <div class="voice-dialog" role="dialog" aria-modal="true" aria-labelledby="voiceTitle" aria-describedby="voiceStatus">
+    <button type="button" class="voice-close" id="voiceClose" aria-label="Sulje puhehaku" data-voice-close>×</button>
+    <h2 class="voice-title" id="voiceTitle">Puhu nyt</h2>
+    <p class="voice-status" id="voiceStatus" aria-live="polite">Kerro, mitä lapsi tarvitsee.</p>
+    <button type="button" class="voice-mic" id="voiceMic" aria-label="Lopeta kuuntelu">
+      <span class="voice-ring" aria-hidden="true"></span>
+      <span class="voice-ring r2" aria-hidden="true"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+    </button>
+    <p class="voice-transcript" id="voiceTranscript" aria-live="polite"></p>
+    <p class="voice-example" id="voiceExample">Esim. ”talvitakki 6-vuotiaalle, max 80 euroa”</p>
+    <button type="button" class="voice-type" id="voiceType" hidden>Kirjoita haku</button>
+  </div>
+</div>
 
 <script>
 
@@ -1442,88 +1534,220 @@
   });
   renderChips('heroChips', seasonalChips().slice(0, 5));
 
-  // ---------- MIKROFONI (selaimen puheentunnistus, suomi) ----------
-  // Puhe muuttuu ensin tekstiksi kenttään. Haku käynnistyy vasta, kun
-  // käyttäjä on tarkistanut tekstin ja painaa Hae.
-  // Mikrofoni on sekä hero-haussa että kiinnittyvässä hakupalkissa. Kumpikin
-  // painike kirjoittaa omaan kenttäänsä (data-input) ja näyttää ohjeen omassa
-  // kohdassaan (data-hint). Kerrallaan kuunnellaan vain yhtä.
+  // ---------- MIKROFONI: PUHEHAKUIKKUNA (selaimen puheentunnistus, suomi) ----------
+  // Painallus avaa ikkunan: iso mikrofoni, "Puhu nyt", puhe näkyy tekstinä
+  // reaaliajassa. Kuuntelu loppuu itsestään: jos mitään ei kuulu 4 s:iin, tai
+  // ~1,5 s tauon jälkeen kun puhe on alkanut. Tunnistettu teksti haetaan heti
+  // (kuten Googlen puhehaussa); teksti jää hakukenttään muokattavaksi.
+  var NO_SPEECH_MS = 4000, SILENCE_AFTER_SPEECH_MS = 1500, MAX_LISTEN_MS = 15000, DONE_DELAY_MS = 650;
   var micBtn = document.getElementById('micBtn');
   micBtn.setAttribute('data-input', 'heroSearchInput');
-  micBtn.setAttribute('data-hint', 'voiceHint');
   var micButtons = Array.prototype.slice.call(document.querySelectorAll('.mic-btn'));
   var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var recognizer = null, listening = false, heard = '', activeMic = null;
+  var recognizer = null, listening = false, heard = '', activeMic = null, voiceState = 'closed';
+  var timers = {}, lastFocus = null, gotError = null;
+  var vo = document.getElementById('voiceOverlay');
+  var voTitle = document.getElementById('voiceTitle'), voStatus = document.getElementById('voiceStatus');
+  var voMic = document.getElementById('voiceMic'), voText = document.getElementById('voiceTranscript');
+  var voType = document.getElementById('voiceType');
   var MIC_ERRORS = {
     'not-allowed': 'Mikrofonin käyttö on estetty. Voit sallia sen selaimen asetuksista tai kirjoittaa haun.',
     'service-not-allowed': 'Puheentunnistus ei ole käytettävissä tässä selaimessa. Kirjoita haku kenttään.',
-    'no-speech': 'En kuullut puhetta. Paina mikrofonia ja kokeile uudelleen.',
     'audio-capture': 'Mikrofonia ei löytynyt. Kirjoita haku kenttään.',
-    'network': 'Puheentunnistus ei saanut yhteyttä. Kirjoita haku kenttään.',
+    'network': 'Puheentunnistus ei saanut yhteyttä. Tarkista verkkoyhteys ja yritä uudelleen.',
     'language-not-supported': 'Selain ei tunnista suomea puheesta. Kirjoita haku kenttään.'
   };
+  // Virheet, joissa uusi yritys ei auta -> tarjotaan kirjoittamista
+  var FATAL_ERRORS = { 'not-allowed': 1, 'service-not-allowed': 1, 'audio-capture': 1, 'language-not-supported': 1 };
 
-  function micParts(btn){
-    return { input: document.getElementById(btn.getAttribute('data-input')), hint: document.getElementById(btn.getAttribute('data-hint')) };
-  }
   function clearVoiceHints(){
     document.querySelectorAll('.voice-hint').forEach(function(h){ h.textContent = ''; });
   }
+  function clearTimers(){ Object.keys(timers).forEach(function(k){ clearTimeout(timers[k]); }); timers = {}; }
+  function targetInput(){ return document.getElementById((activeMic || micBtn).getAttribute('data-input')); }
 
-  function setListening(btn, on){
-    var parts = micParts(btn);
-    listening = on;
-    activeMic = on ? btn : null;
-    btn.classList.toggle('listening', on);
-    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    btn.setAttribute('aria-label', on ? 'Lopeta kuuntelu' : 'Sano haku ääneen');
-    btn.title = btn.getAttribute('aria-label');
-    parts.input.placeholder = on ? 'Kuuntelen…' : parts.input.getAttribute('data-placeholder');
+  function setVoiceState(state, opts){
+    opts = opts || {};
+    voiceState = state;
+    vo.setAttribute('data-state', state);
+    var t = {
+      listening: ['Puhu nyt', 'Kerro, mitä lapsi tarvitsee.', 'Lopeta kuuntelu'],
+      hearing:   ['Puhu nyt', 'Kuuntelen…', 'Lopeta kuuntelu'],
+      done:      ['Haetaan…', '', 'Lopeta kuuntelu'],
+      nospeech:  ['En kuullut puhetta', 'Napauta mikrofonia ja yritä uudelleen.', 'Aloita kuuntelu uudelleen'],
+      error:     ['Puhehaku ei onnistunut', opts.message || '', 'Yritä uudelleen']
+    }[state];
+    voTitle.textContent = t[0];
+    voStatus.textContent = t[1];
+    voMic.setAttribute('aria-label', t[2]);
+    voMic.hidden = state === 'error' && !!opts.fatal;
+    voType.hidden = !(state === 'nospeech' || state === 'error');
+    if (state === 'listening' || state === 'nospeech' || state === 'error') voText.textContent = '';
   }
 
-  function startListening(btn){
-    var parts = micParts(btn);
-    heard = '';
-    clearVoiceHints();
+  // ---- Äänitasomittari: vain laitteella, vain kun tarkka osoitin (työpöytä).
+  // Mobiilissa toinen mikrofonivirta voi häiritä puheentunnistusta, joten siellä
+  // animaatio seuraa puheentunnistuksen ääni-/puhetapahtumia.
+  var meter = null;
+  function canMeter(){
+    var iOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    return !iOS && window.matchMedia && window.matchMedia('(pointer: fine)').matches &&
+      navigator.mediaDevices && navigator.mediaDevices.getUserMedia && (window.AudioContext || window.webkitAudioContext);
+  }
+  function startMeter(){
+    if (!canMeter()) return;
+    var token = {};
+    meter = token;
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(function(stream){
+      if (meter !== token) { stream.getTracks().forEach(function(t){ t.stop(); }); return; }
+      var AC = window.AudioContext || window.webkitAudioContext;
+      var ctx = new AC(), an = ctx.createAnalyser();
+      an.fftSize = 512;
+      ctx.createMediaStreamSource(stream).connect(an);
+      var data = new Uint8Array(an.fftSize);
+      token.stream = stream; token.ctx = ctx;
+      vo.classList.add('has-meter');
+      (function loop(){
+        if (meter !== token) return;
+        an.getByteTimeDomainData(data);
+        var sum = 0;
+        for (var i = 0; i < data.length; i++) { var v = (data[i] - 128) / 128; sum += v * v; }
+        var level = Math.min(1, Math.sqrt(sum / data.length) * 5);
+        vo.style.setProperty('--level', level.toFixed(3));
+        token.raf = requestAnimationFrame(loop);
+      })();
+    }).catch(function(){ /* ei mittaria: animaatio seuraa tapahtumia */ });
+  }
+  function stopMeter(){
+    var m = meter; meter = null;
+    vo.classList.remove('has-meter');
+    vo.style.setProperty('--level', '0');
+    if (!m) return;
+    if (m.raf) cancelAnimationFrame(m.raf);
+    if (m.stream) m.stream.getTracks().forEach(function(t){ t.stop(); });
+    if (m.ctx && m.ctx.close) m.ctx.close();
+  }
+
+  function startRecognition(){
+    clearTimers();
+    heard = ''; gotError = null;
+    setVoiceState('listening');
     recognizer = new Recognition();
     recognizer.lang = 'fi-FI';
     recognizer.interimResults = true;
+    recognizer.continuous = false;
     recognizer.maxAlternatives = 1;
+    recognizer.onsoundstart = recognizer.onspeechstart = function(){ vo.classList.add('sound'); };
+    recognizer.onsoundend = recognizer.onspeechend = function(){ vo.classList.remove('sound'); };
     recognizer.onresult = function(ev){
-      var text = '';
-      for (var i = 0; i < ev.results.length; i++) text += ev.results[i][0].transcript;
-      heard = text.trim();
-      parts.input.value = heard;
+      var fin = '', interim = '';
+      for (var i = 0; i < ev.results.length; i++) {
+        var r = ev.results[i];
+        if (r.isFinal) fin += r[0].transcript; else interim += r[0].transcript;
+      }
+      heard = (fin + interim).replace(/\s+/g, ' ').trim();
+      if (!heard) return;
+      voText.innerHTML = esc(fin) + '<span class="interim">' + esc(interim) + '</span>';
+      if (voiceState === 'listening') setVoiceState('hearing');
+      clearTimeout(timers.noSpeech);
+      clearTimeout(timers.silence);
+      timers.silence = setTimeout(function(){ if (listening && recognizer) recognizer.stop(); }, SILENCE_AFTER_SPEECH_MS);
     };
     recognizer.onerror = function(ev){
-      if (MIC_ERRORS[ev.error]) parts.hint.textContent = MIC_ERRORS[ev.error];
+      if (ev.error === 'aborted' || ev.error === 'no-speech') return;
+      gotError = ev.error;
     };
     recognizer.onend = function(){
-      setListening(btn, false);
-      if (heard) {
-        parts.hint.textContent = 'Tarkista teksti ja paina Hae.';
-        parts.input.focus();
+      listening = false;
+      clearTimers();
+      stopMeter();
+      vo.classList.remove('sound');
+      if (voiceState === 'closed') return;
+      if (gotError) {
+        setVoiceState('error', { message: MIC_ERRORS[gotError] || 'Puhetta ei voitu tunnistaa. Yritä uudelleen tai kirjoita haku.', fatal: !!FATAL_ERRORS[gotError] });
+        (voMic.hidden ? voType : voMic).focus();
+        return;
       }
+      if (heard) {
+        var q = heard;
+        setVoiceState('done');
+        voText.textContent = q;
+        timers.done = setTimeout(function(){
+          closeVoice(false);
+          targetInput().value = q;
+          runSearch(q);
+        }, DONE_DELAY_MS);
+        return;
+      }
+      setVoiceState('nospeech');
+      voMic.focus();
     };
     try {
       recognizer.start();
-      setListening(btn, true);
+      listening = true;
+      startMeter();
+      // Mikrofoni sulkeutuu itsestään, jos mitään ei kuulu 4 sekuntiin
+      timers.noSpeech = setTimeout(function(){ if (listening && !heard && recognizer) recognizer.abort(); }, NO_SPEECH_MS);
+      timers.max = setTimeout(function(){ if (listening && recognizer) recognizer.stop(); }, MAX_LISTEN_MS);
     } catch (err) {
-      setListening(btn, false);
-      parts.hint.textContent = 'Puheentunnistusta ei voitu käynnistää. Kirjoita haku kenttään.';
+      listening = false;
+      setVoiceState('error', { message: 'Puheentunnistusta ei voitu käynnistää. Kirjoita haku kenttään.', fatal: true });
     }
+  }
+
+  function openVoice(btn){
+    activeMic = btn;
+    lastFocus = document.activeElement;
+    clearVoiceHints();
+    micButtons.forEach(function(m){ m.classList.toggle('listening', m === btn); m.setAttribute('aria-expanded', m === btn ? 'true' : 'false'); });
+    vo.hidden = false;
+    document.body.classList.add('voice-open');
+    startRecognition();
+    voMic.focus();
+  }
+
+  function closeVoice(restoreFocus){
+    var wasOpen = voiceState !== 'closed';
+    voiceState = 'closed';
+    clearTimers();
+    if (listening && recognizer) { try { recognizer.abort(); } catch (e) {} }
+    listening = false;
+    stopMeter();
+    vo.classList.remove('sound');
+    vo.hidden = true;
+    document.body.classList.remove('voice-open');
+    micButtons.forEach(function(m){ m.classList.remove('listening'); m.setAttribute('aria-expanded', 'false'); });
+    if (wasOpen && restoreFocus !== false && lastFocus && lastFocus.focus) lastFocus.focus();
   }
 
   if (Recognition) {
     micButtons.forEach(function(btn){
-      var parts = micParts(btn);
       btn.hidden = false;
-      parts.input.setAttribute('data-placeholder', parts.input.placeholder);
-      btn.addEventListener('click', function(){
-        // Painallus kesken kuuntelun lopettaa sen (kummasta painikkeesta tahansa)
-        if (listening && recognizer) { recognizer.stop(); return; }
-        startListening(btn);
-      });
+      btn.setAttribute('aria-haspopup', 'dialog');
+      btn.setAttribute('aria-expanded', 'false');
+      btn.removeAttribute('aria-pressed');
+      btn.addEventListener('click', function(){ if (voiceState === 'closed') openVoice(btn); });
+    });
+    voMic.addEventListener('click', function(){
+      if (listening && recognizer) { recognizer.stop(); return; }   // valmis -> hae
+      if (voiceState === 'nospeech' || voiceState === 'error') startRecognition();
+    });
+    vo.addEventListener('click', function(e){
+      if (e.target.closest('[data-voice-close]')) closeVoice();
+    });
+    voType.addEventListener('click', function(){
+      closeVoice(false);
+      targetInput().focus();
+    });
+    vo.addEventListener('keydown', function(e){
+      if (e.key === 'Escape') { e.preventDefault(); closeVoice(); return; }
+      if (e.key === 'Tab') {
+        // Fokus pysyy ikkunassa
+        var f = [document.getElementById('voiceClose'), voMic, voType].filter(function(el){ return !el.hidden; });
+        var i = f.indexOf(document.activeElement);
+        var next = e.shiftKey ? f[(i - 1 + f.length) % f.length] : f[(i + 1) % f.length];
+        e.preventDefault(); next.focus();
+      }
     });
   }
 
@@ -1531,8 +1755,6 @@
   var sticky = document.getElementById('stickySearch');
   var heroForm = document.getElementById('heroSearchForm');
   function setSticky(show){
-    // Palkki piiloutuu kesken kuuntelun -> lopetetaan, ettei mikrofoni jää päälle näkymättömänä
-    if (!show && listening && activeMic && sticky.contains(activeMic) && recognizer) recognizer.stop();
     sticky.classList.toggle('visible', show);
     sticky.setAttribute('aria-hidden', show ? 'false' : 'true');
     sticky.querySelectorAll('input, button').forEach(function(el){
