@@ -1,7 +1,8 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { MultiStoreAdapter, matchesCriteria, targetSizeCm, isTeenSearch } from "../src/adapters/multi-store-adapter";
 import { rankResults, RankedResults } from "../src/ranking/rank";
-import { fitContextFromCriteria, dedupeColorVariants } from "../src/ranking/fit";
+import { fitContextFromCriteria } from "../src/ranking/fit";
+import { dedupeResults } from "../src/ranking/offers";
 import { parseCriteriaFromText } from "../src/nlu/parse-query";
 import { interpretQuery } from "../src/nlu/interpret-query";
 import { config } from "../src/config";
@@ -77,9 +78,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const fitCtx = fitContextFromCriteria(criteria);
     // Samat tuotteet eri väreissä (sama kauppa, sama hinta) näytetään kerran.
     const runSafe = (c: typeof criteria, opts = {}) =>
-      dedupeColorVariants(filterChildSafe(allProducts.filter((p) => matchesCriteria(p, c, opts))), fitContextFromCriteria(c));
+      dedupeResults(filterChildSafe(allProducts.filter((p) => matchesCriteria(p, c, opts))), fitContextFromCriteria(c));
     const rawCatalogMatches = await adapter.search(criteria);
-    let catalogMatches = dedupeColorVariants(filterChildSafe(rawCatalogMatches), fitCtx);
+    let catalogMatches = dedupeResults(filterChildSafe(rawCatalogMatches), fitCtx);
     let notice: Notice | undefined;
 
     // Vähän täsmälleen sopivia -> otetaan mukaan myös hieman pienemmät koot

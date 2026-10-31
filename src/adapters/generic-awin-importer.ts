@@ -122,6 +122,7 @@ interface RawFeedRow {
   size?: string; gender?: string; age_group?: string;
   // Outnorthin feedien kentät
   category_name?: string; merchant_product_category_path?: string;
+  parent_product_id?: string; ean?: string;
   product_price_old?: string; base_price?: string; aw_image_url?: string;
   "Fashion:suitable_for"?: string; "Fashion:size"?: string;
 }
@@ -204,6 +205,9 @@ export function mapRow(row: RawFeedRow, storeKey: string, opts: { basePriceIsSal
     free_shipping_threshold: null,
     rating: null, rating_count: null,
     winter: guessWinter(row.product_name, category, row.description),
+    // Kauppojen välinen tuotevertailu (src/ranking/offers.ts): sama tuote eri kaupoissa.
+    ...(row.parent_product_id ? { group_id: row.parent_product_id } : {}),
+    ...(row.ean ? { ean: row.ean } : {}),
     last_updated: row.last_updated || new Date().toISOString(),
   };
 }
