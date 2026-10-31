@@ -645,6 +645,11 @@
     border-radius: 2px; padding: 2px 6px;
   }
   .rc-why li.adult{ color: var(--blue); background: rgba(51,80,92,0.1); }
+  .result-card .rc-colors{ font-size: 12px; color: var(--ink-soft); }
+  .result-card .rc-colors::before{
+    content:""; display:inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px;
+    border-radius: 50%; background: conic-gradient(#A83D34 0 25%, #33505C 0 50%, #C98A2B 0 75%, #57654C 0);
+  }
   .result-card .rc-link{
     margin-top: auto;
     padding-top: 6px;
@@ -898,6 +903,7 @@
 
     <div id="liveSearchResults" class="results" hidden>
       <div class="tabs" role="tablist" aria-label="Tulosten järjestys">
+        <button type="button" class="tab" role="tab" id="tab-bestMatch" data-list="bestMatch" aria-selected="false" aria-controls="resultGrid" tabindex="-1" hidden>Sopivimmat</button>
         <button type="button" class="tab" role="tab" id="tab-cheapest" data-list="cheapest" aria-selected="true" aria-controls="resultGrid">Halvimmat</button>
         <button type="button" class="tab" role="tab" id="tab-bestValue" data-list="bestValue" aria-selected="false" aria-controls="resultGrid" tabindex="-1">Paras hinta-laatu</button>
         <button type="button" class="tab" role="tab" id="tab-mostLoved" data-list="mostLoved" aria-selected="false" aria-controls="resultGrid" tabindex="-1" hidden>Suosituimmat</button>
@@ -1115,16 +1121,28 @@
       return '<li' + (t.cls ? ' class="' + t.cls + '"' : '') + '>' + esc(t.text) + '</li>';
     }).join('') + '</ul>' : '';
     var meta = [storeName(product), product.brand].filter(Boolean).filter(function(v, i, a){ return a.indexOf(v) === i; });
+    var colors = colorLine(product);
     return (
       '<article class="result-card">' +
         media +
         '<span class="rc-store">' + esc(meta.join(' · ')) + '</span>' +
         '<span class="rc-title">' + esc(product.title) + '</span>' +
-        price + why +
+        colors + price + why +
         '<a class="rc-link" href="' + safeUrl(product.url_affiliate) + '" target="_blank" rel="noopener sponsored">' +
           'Katso kaupassa<span class="visually-hidden">: ' + esc(product.title) + '</span> →</a>' +
       '</article>'
     );
+  }
+
+  // Backend yhdistää saman tuotteen värit yhdeksi riviksi: color_count = värien
+  // määrä, other_colors = muut kuin kortissa näkyvä väri.
+  function colorLine(p){
+    var n = Number(p.color_count);
+    if (!(n > 1)) return '';
+    var others = Array.isArray(p.other_colors) ? p.other_colors.filter(function(c){ return typeof c === 'string' && c.trim(); }) : [];
+    var full = others.length ? 'Myös: ' + others.join(', ') : '';
+    return '<span class="rc-colors"' + (full ? ' title="' + esc(full) + '"' : '') + '>' + n + ' väriä' +
+      (full ? '<span class="visually-hidden">. ' + esc(full) + '</span>' : '') + '</span>';
   }
 
   // Samat koko-/värivariantit (sama nimi ja hinta) näytetään vain kerran
@@ -1140,23 +1158,27 @@
 
   // ---------- VÄLILEHDET ----------
   var TAB_DESCS = {
+    bestMatch: 'Parhaiten haettuun kokoon ja ikään sopivat ensin, sitten hinnan mukaan.',
     cheapest: 'Edullisimmat vaihtoehdot hinnan mukaan.',
     bestValue: 'Edullisimman kolmanneksen joukosta laatumerkit ja tunnetut merkit ensin.',
     mostLoved: 'Parhaat asiakasarviot saaneet.'
   };
-  var lastResults = null, activeList = 'cheapest', preferredList = 'cheapest';
+  // Oletus: Sopivimmat (kun backend palauttaa sen). Käyttäjän oma valinta korvaa oletuksen.
+  var lastResults = null, activeList = 'cheapest', preferredList = 'bestMatch';
+  var LIST_FALLBACK = ['bestMatch', 'cheapest', 'bestValue', 'mostLoved'];
   var tabs = Array.prototype.slice.call(document.querySelectorAll('.tabs .tab'));
 
   function renderResults(results){
     lastResults = {
+      bestMatch: dedupeProducts(results && results.bestMatch),
       cheapest: dedupeProducts(results && results.cheapest),
       bestValue: dedupeProducts(results && results.bestValue),
       mostLoved: dedupeProducts(results && results.mostLoved)
     };
     tabs.forEach(function(t){ t.hidden = lastResults[t.dataset.list].length === 0; });
     // Käyttäjän valitsema välilehti säilyy, kun sille on tuloksia
-    activeList = lastResults[preferredList].length ? preferredList
-      : (lastResults.cheapest.length ? 'cheapest' : 'bestValue');
+    activeList = lastResults[preferredList] && lastResults[preferredList].length ? preferredList
+      : LIST_FALLBACK.filter(function(k){ return lastResults[k].length; })[0] || 'cheapest';
     selectTab(activeList, false);
     renderRefine();
   }
