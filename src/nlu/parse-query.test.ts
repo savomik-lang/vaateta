@@ -76,3 +76,51 @@ test("brand_deny: 'ei liian kallis' ei ole brändi, 'ei Reimaa' on", () => {
   assert.deepEqual(parseCriteriaFromText("Takki, ei Reimaa").brand_deny, ["reimaa"]);
   assert.deepEqual(parseCriteriaFromText("takki ei reimaa").brand_deny, ["reimaa"]);
 });
+
+test("puhehaku: lukusanaikä ja hintaraja (116 cm, max 80 EUR)", () => {
+  for (const q of [
+    "talvitakki 6-vuotiaalle, max 80 euroa",
+    "talvitakki kuusivuotiaalle max 80 euroa",
+    "talvitakki kuuden vuoden ikäiselle alle 80 €",
+    "Talvitakki 6 vuotiaalle maksimissaan 80 euroa",
+  ]) {
+    const r = parseCriteriaFromText(q);
+    assert.equal(r.size_cm, 116, q);
+    assert.equal(r.age, 6, q);
+    assert.deepEqual(r.max_price, { amount: 80, currency: "EUR" }, q);
+    assert.equal(r.garment_type, "takki", q);
+    assert.equal(r.season, "winter", q);
+  }
+});
+test("hintarajan muodot: korkeintaan, enintään, budjetti, asti, e/eur", () => {
+  const price = (q: string) => parseCriteriaFromText(q).max_price?.amount;
+  assert.equal(price("takki korkeintaan 60 euroa"), 60);
+  assert.equal(price("takki enintään 60 eur"), 60);
+  assert.equal(price("takki budjetti 60"), 60);
+  assert.equal(price("takki 60 euroon asti"), 60);
+  assert.equal(price("takki alle 60 e"), 60);
+  assert.equal(price("takki max 29,90 €"), 29.9);
+  assert.equal(price("takki kahdeksankymmentä euroa asti"), 80);
+});
+test("hintaraja ei sekoitu ikään tai määrään", () => {
+  assert.equal(parseCriteriaFromText("takki alle 6-vuotiaalle").max_price, undefined);
+  assert.equal(parseCriteriaFromText("sukat korkeintaan 3 paria").max_price, undefined);
+  assert.equal(parseCriteriaFromText("takki 116 cm").max_price, undefined);
+});
+test("lukusana koossa: sataviisitoista senttiä", () => {
+  const r = parseCriteriaFromText("haalari sataviisitoista senttiä");
+  assert.equal(r.size_cm, 115);
+  assert.equal(parseCriteriaFromText("haalari 116 senttiä").size_cm, 116);
+});
+test("kuukaudet tulkitaan vauvakooksi, ei vuosiksi", () => {
+  for (const q of ["body kuuden kuukauden", "body 6 kk", "body kuusikuinen", "body 6kk"]) {
+    const r = parseCriteriaFromText(q);
+    assert.equal(r.size_cm, 68, q);
+    assert.equal(r.age, undefined, q);
+  }
+  assert.equal(parseCriteriaFromText("haalari puolitoistavuotiaalle").size_cm, 86);
+});
+test("ikä 18+ ei tulkita lapsen kooksi", () => {
+  assert.equal(parseCriteriaFromText("takki kolmekymmentä vuotta").size_cm, undefined);
+});
+
