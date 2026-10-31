@@ -39,6 +39,9 @@ export function parseSizeToken(raw: string): SizeToken {
   const colorPrefixed = t.match(/^[^\d]*[a-zåäö][^\d]*\s(\d{2,3}(?:[.,]5)?(?:\s*[\/-]\s*\d{2,3})?)$/);
   if (colorPrefixed && !/^(?:eu|uk|us)\b/.test(t)) t = colorPrefixed[1];
 
+  // Kokonaisluku desimaalimuodossa: "28.0" -> "28"
+  t = t.replace(/(\d)[.,]0$/, "$1");
+
   // Puolikoot: "28.5", "40,5" -> pyöristetään alas-ylös ([n, n+1]).
   const half = t.match(/^(?:eu\s*)?(\d{2})[.,]5$/);
   if (half) {

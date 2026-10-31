@@ -71,3 +71,9 @@ test("parseSizeToken: puolikoot ja värietuliitteiset koot", () => {
   assert.equal(productSizeFit(["Black/Multi 28", "Black/Multi 30"], 164, true), null);
   assert.equal(productSizeFit(["Navy 40"], 164, true), "exact");
 });
+
+test("parseSizeToken: desimaalimuotoinen kokonaisluku (28.0)", () => {
+  assert.deepEqual(parseSizeToken("28.0"), { kind: "eu", lo: 28, hi: 28 });
+  assert.equal(productSizeFit(["36.0", "35.0", "32.0", "31.0"], 164, true), null);
+  assert.equal(productSizeFit(["40.0"], 164, true), "exact");
+});
