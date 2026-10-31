@@ -67,7 +67,8 @@ export function fitScore(p: Product, ctx: FitContext): number {
   if (ctx.genderPref && ctx.genderPref !== "unisex") score += p.gender === ctx.genderPref ? 5 : 0;
   if (ctx.winter && p.winter === true) score += 3;
   if (ctx.waterproof && p.waterproof === true) score += 2;
-  if (p.discount_percent) score += Math.min(50, p.discount_percent) / 10;
+  // Karkea alennusbonus (ei saa ohittaa sopivuutta tai hintajärjestystä tasatilanteissa).
+  if (p.discount_percent) score += p.discount_percent >= 30 ? 2 : p.discount_percent >= 15 ? 1 : 0;
   return score;
 }
 

@@ -77,3 +77,11 @@ test("parseSizeToken: desimaalimuotoinen kokonaisluku (28.0)", () => {
   assert.equal(productSizeFit(["36.0", "35.0", "32.0", "31.0"], 164, true), null);
   assert.equal(productSizeFit(["40.0"], 164, true), "exact");
 });
+
+test("vaatteen pelkkä pieni luku on ikä vuosina: 14-vuotiaalle 8, 10, 12 eivät kelpaa, 14 ja 15 kelpaavat", () => {
+  for (const s of ["5", "8", "10", "12"]) assert.equal(productSizeFit([s], 164, false), null, s);
+  assert.equal(productSizeFit(["14"], 164, false), "exact");
+  assert.equal(productSizeFit(["15"], 164, false), "exact");
+  // kengillä pienet luvut (UK) eivät riitä yksinään
+  assert.equal(productSizeFit(["3.5", "40"], 164, true), "exact");
+});

@@ -87,6 +87,14 @@ export function parseSizeToken(raw: string): SizeToken {
     if (n >= 15 && n <= 43) return { kind: "eu", lo: n, hi: n };
   }
 
+  // Pelkkä pieni kokonaisluku 1-14 = ikä vuosina ("10", "12" - esim. Rip Curl).
+  // Kengillä näitä ei käytetä (UK-koot), ks. tokenFit.
+  const bareAge = t.match(/^(\d{1,2})$/);
+  if (bareAge) {
+    const a = parseInt(bareAge[1], 10);
+    if (a >= 1 && a <= 14) return { kind: "cm", lo: AGE_TO_CM[a], hi: AGE_TO_CM[a] };
+  }
+
   // Kirjainkoot: "XS", "S/M", "XS-S"
   const parts = t.split(/[\/\-–\s]+/).filter(Boolean);
   if (parts.length > 0 && parts.every((x) => LETTER_RE.test(x))) return { kind: "letters", letters: parts };
@@ -121,7 +129,11 @@ export function tokenFit(tok: SizeToken, targetCm: number, isShoe: boolean): Siz
       if (overlaps(tok.lo, tok.hi, targetCm - 9, targetCm - 4)) return "smaller";
       return null;
     case "eu": {
-      if (!isShoe) return null;
+      // Vaatteissa yksittäinen 15-17 on ikä vuosina, ei kenkäkoko.
+      if (!isShoe) {
+        if (tok.lo === tok.hi && tok.lo <= 17) return tokenFit({ kind: "cm", lo: AGE_TO_CM[tok.lo], hi: AGE_TO_CM[tok.lo] }, targetCm, false);
+        return null;
+      }
       const eu = shoeEuForCm(targetCm);
       if (overlaps(tok.lo, tok.hi, eu - 1, eu + 2)) return "exact";
       if (overlaps(tok.lo, tok.hi, eu - 3, eu - 2)) return "smaller";
