@@ -19,7 +19,7 @@ const CHILD_SIGNAL_KEYWORDS = [
   "taaperolle", "taaperon", "taapero",
   "pikkulapsi", "pikkulapselle", "tytölle", "pojalle",
 ];
-const COLOR_KEYWORDS = ["musta", "sininen", "punainen", "vihreä", "keltainen", "vaaleanpunainen", "harmaa", "valkoinen", "ruskea", "oranssi"];
+export const COLOR_KEYWORDS = ["musta", "sininen", "punainen", "vihreä", "keltainen", "vaaleanpunainen", "harmaa", "valkoinen", "ruskea", "oranssi"];
 const SEASON_WINTER_REGEX = /talvi|untuva|vinter|winter/;
 const SEASON_TOPPA_GARMENTS = new Set<GarmentType>(["takki", "haalari", "kengät"]);
 // Sanat jotka "ei ..." -rakenteessa eivät ole brändejä ("ei liian kallis").
