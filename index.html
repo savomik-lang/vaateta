@@ -1196,6 +1196,62 @@
     });
   });
 
+  // ---------- VÄLIAIKAINEN: LUKUSANAT NUMEROIKSI ----------
+  // Puheentunnistus kirjoittaa iän usein sanoina ("kuusivuotiaalle"), mutta
+  // backendin tulkinta ymmärtää vain numerot. Muunnetaan ennen hakua VAIN
+  // iän (vuotias/vuoden), hinnan (euroa/€) ja koon (senttiä/cm) yhteydessä.
+  // Hakukenttään jää käyttäjän oma teksti. Poistetaan, kun backend
+  // (src/nlu/parse-query.ts) tunnistaa lukusanat itse.
+  var FI_UNITS = { yksi: 1, kaksi: 2, kolme: 3, 'neljä': 4, viisi: 5, kuusi: 6, 'seitsemän': 7, kahdeksan: 8, 'yhdeksän': 9 };
+  var FI_UNITS_GEN = { yhden: 1, kahden: 2, kolmen: 3, 'neljän': 4, viiden: 5, kuuden: 6, 'seitsemän': 7, kahdeksan: 8, 'yhdeksän': 9 };
+  var FI_AGE_WORDS = (function(){
+    var m = { kymmenen: 10, puolitoista: 1 };
+    Object.keys(FI_UNITS).forEach(function(w){ m[w] = FI_UNITS[w]; m[w + 'toista'] = FI_UNITS[w] + 10; });
+    Object.keys(FI_UNITS_GEN).forEach(function(w){ m[w] = FI_UNITS_GEN[w]; m[w + 'toista'] = FI_UNITS_GEN[w] + 10; });
+    return m;
+  })();
+  var FI_AGE_RE = Object.keys(FI_AGE_WORDS).sort(function(a, b){ return b.length - a.length; }).join('|');
+  var FI_UNIT_RE = Object.keys(FI_UNITS).join('|');
+  // Perusmuotoiset luvut 1–999 ("kahdeksankymmentä", "sataviisitoista")
+  var FI_NUM_RE = new RegExp('^(?:(' + FI_UNIT_RE + ')?(sataa?))?(?:(' + FI_UNIT_RE + ')kymmentä|(kymmenen)|(' + FI_UNIT_RE + ')toista)?(' + FI_UNIT_RE + ')?$');
+  function parseFiNumber(word){
+    var m = String(word).toLowerCase().match(FI_NUM_RE);
+    if (!m || !m[0]) return null;
+    var n = 0;
+    if (m[2]) n += (m[1] ? FI_UNITS[m[1]] : 1) * 100;
+    if (m[3]) n += FI_UNITS[m[3]] * 10;
+    if (m[4]) n += 10;
+    if (m[5]) n += FI_UNITS[m[5]] + 10;
+    if (m[6]) n += FI_UNITS[m[6]];
+    return n || null;
+  }
+  function normalizeNumberWords(text){
+    var s = String(text);
+    // Ikä: "kuusivuotiaalle", "kuusi vuotiaalle", "kuuden-vuotiaalle"
+    s = s.replace(new RegExp('(^|[^a-zåäö])(' + FI_AGE_RE + ')[\\s-]*(vuotia[a-zåäö]*)', 'gi'), function(_, pre, w, suf){
+      return pre + FI_AGE_WORDS[w.toLowerCase()] + '-' + suf.toLowerCase();
+    });
+    // Ikä: "kuuden vuoden ikäiselle", "6 vuoden vanhalle", "kuusi vuotta"
+    s = s.replace(new RegExp('(^|[^a-zåäö0-9])(' + FI_AGE_RE + '|\\d{1,2})\\s+(?:vuoden|vuotta)(?:\\s+(?:ikäiselle|ikäisen|ikäinen|vanhalle|vanhan|vanha))?(?![a-zåäö])', 'gi'), function(_, pre, w){
+      var n = /^\d+$/.test(w) ? Number(w) : FI_AGE_WORDS[w.toLowerCase()];
+      return pre + n + '-vuotiaalle';
+    });
+    // Hinta: "kahdeksankymmentä euroa" -> "80 euroa"
+    s = s.replace(/(^|[^a-zåäö])([a-zåäö]+)(\s+)(euroa|euron|euroon|eur|e|€)(?![a-zåäö])/gi, function(all, pre, w, sp, cur){
+      var n = parseFiNumber(w);
+      return n ? pre + n + sp + cur : all;
+    });
+    // Hintaraja: "maksimissaan 80", "budjetti 80", "80 euroon asti"
+    s = s.replace(/(^|[^a-zåäö])(maksimissaan|maksimi|budjettina|budjetti)\s+(?=\d)/gi, '$1max ');
+    s = s.replace(/(^|[^a-zåäö0-9])(\d+)\s*euroon\s+(?:asti|saakka)/gi, '$1max $2 €');
+    // Koko: "sataviisitoista senttiä", "116 senttiä" -> "116 cm"
+    s = s.replace(/(^|[^a-zåäö0-9])([a-zåäö]+|\d{2,3})\s*(?:senttimetriä|senttiä|sentin|sentti)(?![a-zåäö])/gi, function(all, pre, w){
+      var n = /^\d+$/.test(w) ? Number(w) : parseFiNumber(w);
+      return n && n >= 44 && n <= 188 ? pre + n + ' cm' : all;
+    });
+    return s;
+  }
+
   var searchSeq = 0;
 
   function runSearch(q){
@@ -1212,7 +1268,7 @@
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     searchSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
 
-    fetch('/api/search?q=' + encodeURIComponent(q))
+    fetch('/api/search?q=' + encodeURIComponent(normalizeNumberWords(q)))
       .then(function(r){
         if (!r.ok) throw new Error('Haku epäonnistui (' + r.status + ')');
         return r.json();
