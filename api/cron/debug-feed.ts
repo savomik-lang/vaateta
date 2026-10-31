@@ -42,6 +42,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const differs: Record<string, number> = {};
   const samples: Record<string, Record<string, string>[]> = {};
   const match: Record<string, string>[] = [];
+  const ratio = { lower: 0, higher: 0, equal: 0, buckets: {} as Record<string, number>, unparsable: 0 };
+  const currencyMismatch: Record<string, number> = {};
   parse(text, {
     columns: true, skip_empty_lines: true, relax_column_count: true,
     on_record: (rec: Record<string, string>) => {
@@ -58,6 +60,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           (samples[c] ||= []).length < 3 && samples[c].push({ id: rec.aw_product_id, name: rec.product_name, search_price: rec.search_price, [c]: v });
         }
       }
+      if (rec.base_price) {
+        const m = rec.base_price.match(/^([\d.,]+)\s*([A-Z]{3})?$/);
+        if (!m || isNaN(price)) ratio.unparsable++;
+        else {
+          const b = parseFloat(m[1].replace(",", "."));
+          if (m[2] && rec.currency && m[2] !== rec.currency) currencyMismatch[`${m[2]}/${rec.currency}`] = (currencyMismatch[`${m[2]}/${rec.currency}`] || 0) + 1;
+          if (b < price - 0.005) ratio.lower++; else if (b > price + 0.005) ratio.higher++; else ratio.equal++;
+          const pct = Math.round((1 - b / price) * 100 / 5) * 5;
+          ratio.buckets[String(pct)] = (ratio.buckets[String(pct)] || 0) + 1;
+        }
+      }
       if (id && (rec.aw_product_id === id || rec.merchant_product_id === id || rec.aw_deep_link?.includes(`p=${id}&`))) {
         const { description, ...rest } = rec;
         match.push(rest);
@@ -65,5 +78,5 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return null;
     },
   });
-  res.status(200).json({ store: storeKey, total, header, nonEmpty, differsFromSearchPrice: differs, samples, match });
+  res.status(200).json({ store: storeKey, total, header, nonEmpty, differsFromSearchPrice: differs, baseVsSearch: ratio, currencyMismatch, samples, match });
 }
