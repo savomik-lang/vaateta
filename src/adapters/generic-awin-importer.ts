@@ -208,7 +208,12 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
     // (esim. väärä apikey, feediä ei ole liitetty julkaisijaan). API-avain
     // peitetään, ettei se vuoda virheilmoituksen kautta.
     let bodySnippet = "";
-    try { bodySnippet = (await response.text()).replace(/\s+/g, " ").slice(0, 300); } catch { /* ei runkoa */ }
+    try {
+      bodySnippet = (await response.text()).replace(/\s+/g, " ");
+      // Awin kaiuttaa pyydetyn polun (apikey mukana) 404-vastauksen runkoon -
+      // peitetään avain ja token myös sieltä ennen kuin teksti palautetaan.
+      bodySnippet = bodySnippet.replace(/(apikey\/)[^/\s"]+/g, "$1***").replace(/(publisher\/[^/]+\/)[^/\s"]+/g, "$1***").slice(0, 400);
+    } catch { /* ei runkoa */ }
     const maskedUrl = url
       .replace(/apikey\/[^/]+/, "apikey/***")
       .replace(/(publisher\/[^/]+\/)[^/]+/, "$1***");
