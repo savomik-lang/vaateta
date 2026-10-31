@@ -1,4 +1,5 @@
 import { Product } from "../types";
+import { toEur } from "../currency";
 import { compareBrandTier } from "./brand-tiers";
 import { hasQualitySignal } from "./quality-signals";
 
@@ -10,7 +11,7 @@ export interface RankedResults {
 const TOP_N = 5;
 
 export function rankResults(products: Product[]): RankedResults {
-  const cheapest = [...products].sort((a, b) => a.price.amount - b.price.amount).slice(0, TOP_N);
+  const cheapest = [...products].sort((a, b) => toEur(a.price) - toEur(b.price)).slice(0, TOP_N);
   const bestValue = computeBestValue(products);
   const ratedProducts = products.filter((p) => p.rating !== null);
   const mostLoved = ratedProducts.length >= 3
@@ -21,7 +22,7 @@ export function rankResults(products: Product[]): RankedResults {
 
 export function computeBestValue(products: Product[]): Product[] {
   if (products.length === 0) return [];
-  const sortedByPrice = [...products].sort((a, b) => a.price.amount - b.price.amount);
+  const sortedByPrice = [...products].sort((a, b) => toEur(a.price) - toEur(b.price));
   const cheapestThirdCount = Math.max(1, Math.ceil(sortedByPrice.length / 3));
   const cheapestThird = sortedByPrice.slice(0, cheapestThirdCount);
   const withQualitySignal = cheapestThird.filter(hasQualitySignal);
@@ -35,6 +36,6 @@ export function computeBestValue(products: Product[]): Product[] {
   }
   return candidates.sort((a, b) => {
     const tierDiff = compareBrandTier(a.brand, b.brand);
-    return tierDiff !== 0 ? tierDiff : a.price.amount - b.price.amount;
+    return tierDiff !== 0 ? tierDiff : toEur(a.price) - toEur(b.price);
   }).slice(0, TOP_N);
 }

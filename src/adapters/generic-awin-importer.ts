@@ -165,8 +165,12 @@ function mapRow(row: RawFeedRow, storeKey: string): Product | null {
   });
   if (!safety.safe) return null;
   const price = parseMoney(row.search_price, row.currency);
-  const originalPrice = parseMoney(row.store_price || row.product_price_old || row.base_price, row.currency);
+  // HUOM: base_price (Outnorth FI) on hinta ILMAN ALVia, ei alkuperäinen
+  // hinta - sitä ei käytetä. Alkuperäiseksi hinnaksi kelpaa vain korkeampi
+  // kuin nykyinen hinta.
+  const rawOriginal = parseMoney(row.store_price || row.product_price_old, row.currency);
   if (!price) return null;
+  const originalPrice = rawOriginal && rawOriginal.amount > price.amount ? rawOriginal : null;
   const discountPercent = originalPrice && originalPrice.amount > price.amount
     ? Math.round((1 - price.amount / originalPrice.amount) * 100) : null;
 

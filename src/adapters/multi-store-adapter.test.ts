@@ -117,3 +117,26 @@ test("lastImportedAt palauttaa vanhimman päivitysajan kauppojen joukosta", asyn
 
   assert.equal(lastImported, olderTimestamp, "näyttää vanhimman kaupan ajan, jotta jälkeenjäänyt kauppa huomataan");
 });
+
+test("hintaraja verrataan EUR:ssa: SEK-hintainen tuote ei livahda max-hinnan ohi", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "sek:1", garment_type: "takki", in_stock: true, price: { amount: 1500, currency: "SEK" } }), // ~135 EUR
+    makeProduct({ id: "sek:2", garment_type: "takki", in_stock: true, price: { amount: 800, currency: "SEK" } }), // ~72 EUR
+  ]);
+  const adapter = new MultiStoreAdapter([store]);
+  const results = await adapter.search({ garment_type: "takki", max_price: { amount: 120, currency: "EUR" } });
+  assert.deepEqual(results.map((p) => p.id), ["sek:2"]);
+});
+
+test("otsikon 'Girls' sulkee pois pojalle-haussa, 'Boys' tytölle-haussa", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "g:1", garment_type: "takki", in_stock: true, title: "Girls Winter Coat" }),
+    makeProduct({ id: "b:1", garment_type: "takki", in_stock: true, title: "Boys Winter Coat" }),
+    makeProduct({ id: "n:1", garment_type: "takki", in_stock: true, title: "Kids Winter Coat" }),
+  ]);
+  const adapter = new MultiStoreAdapter([store]);
+  const boys = await adapter.search({ garment_type: "takki", child_gender_pref: "poika" });
+  assert.deepEqual(boys.map((p) => p.id).sort(), ["b:1", "n:1"]);
+  const girls = await adapter.search({ garment_type: "takki", child_gender_pref: "tyttö" });
+  assert.deepEqual(girls.map((p) => p.id).sort(), ["g:1", "n:1"]);
+});

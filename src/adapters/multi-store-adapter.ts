@@ -1,5 +1,6 @@
 import { Product, SearchCriteria } from "../types";
 import { RedisProductStore, InMemoryProductStore, IProductStore } from "../store/product-store";
+import { toEur } from "../currency";
 import { AWIN_STORES, getConfiguredStores } from "../stores-registry";
 
 // ---------------------------------------------------------------------------
@@ -38,6 +39,9 @@ const ADULT_SIZE_RANGE_REGEX = new RegExp(`\\b${ADULT_SIZE_TOKEN}\\s*[-–]\\s*$
 // Voghionin kaltaisessa yleismarkkinapaikassa tällaisia tuotteita on
 // harvoin, ja aikuisvaatteiden suodattaminen oikein painaa enemmän.
 
+const GIRL_TITLE_REGEX = /\b(girl|girls|flicka|flickor)\b/i;
+const BOY_TITLE_REGEX = /\b(boy|boys|pojke|pojkar)\b/i;
+
 function hasChildSignal(c: SearchCriteria): boolean {
   return Boolean(c.child_signal) || Boolean(c.child_gender_pref) || Boolean(c.size_raw);
 }
@@ -50,9 +54,13 @@ export function matchesCriteria(p: Product, c: SearchCriteria): boolean {
   if (!p.in_stock) return false;
   if (hasChildSignal(c) && looksLikeAdultProduct(p.title)) return false;
   if (c.garment_type && p.garment_type !== c.garment_type) return false;
-  if (c.max_price && p.price.currency === c.max_price.currency) {
-    if (p.price.amount > c.max_price.amount) return false;
-  }
+  // Vertailu EUR:ssa, jotta SEK/NOK/DKK-hintaiset tuotteet (Outnorth SE)
+  // eivät livahda hintarajan ohi pelkän valuuttaeron vuoksi.
+  if (c.max_price && toEur(p.price) > toEur(c.max_price)) return false;
+  // Otsikossa nimenomaan vastakkaiselle sukupuolelle ("Girls ...") merkitty
+  // tuote ei kuulu pojalle/tytölle-hakuun, vaikka feedin gender-kenttä olisi tyhjä.
+  if (c.child_gender_pref === "poika" && GIRL_TITLE_REGEX.test(p.title) && !BOY_TITLE_REGEX.test(p.title)) return false;
+  if (c.child_gender_pref === "tyttö" && BOY_TITLE_REGEX.test(p.title) && !GIRL_TITLE_REGEX.test(p.title)) return false;
   if (c.brand_deny?.some((b) => p.brand.toLowerCase().includes(b.toLowerCase()))) return false;
   if (c.brand_allow?.length) {
     const allowed = c.brand_allow.some((b) => p.brand.toLowerCase().includes(b.toLowerCase()));
