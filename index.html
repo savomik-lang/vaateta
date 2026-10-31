@@ -356,6 +356,9 @@
   .sticky-search .search-form{ flex: 1; box-shadow: none; padding: 3px; max-width: none; }
   .sticky-search .search-form input{ font-size: 16px; padding: 8px 10px; }
   .sticky-search .search-form .btn{ padding: 8px 16px; }
+  .sticky-search .mic-btn{ width: 42px; min-height: 40px; margin-right: 4px; }
+  .sticky-search .mic-btn svg{ width: 20px; height: 20px; }
+  .sticky-search .sticky-hint{ margin: 6px 0 0; font-size: 13.5px; color: var(--ink-soft); }
   @media (max-width: 560px){
     .sticky-search .logo{ display:none; }
   }
@@ -825,9 +828,13 @@
     <form class="search-form" role="search" data-search-form>
       <label for="stickySearchInput" class="visually-hidden">Mitä lapsi tarvitsee?</label>
       <input type="search" id="stickySearchInput" name="q" placeholder="Mitä lapsi tarvitsee?" autocomplete="off" enterkeyhint="search" tabindex="-1">
+      <button type="button" class="mic-btn" id="stickyMicBtn" data-input="stickySearchInput" data-hint="stickyVoiceHint" aria-label="Sano haku ääneen" aria-pressed="false" title="Sano haku ääneen" tabindex="-1" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+      </button>
       <button type="submit" class="btn" tabindex="-1">Hae</button>
     </form>
   </div>
+  <div class="wrap"><p class="voice-hint sticky-hint" id="stickyVoiceHint" aria-live="polite"></p></div>
 </div>
 
 <div class="demo-float">
@@ -1245,7 +1252,7 @@
     emptyEl.hidden = true;
     noticeInlineEl.hidden = true;
     understoodEl.hidden = true;
-    voiceHint.textContent = '';
+    clearVoiceHints();
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     searchSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
 
@@ -1565,62 +1572,85 @@
   // ---------- MIKROFONI (selaimen puheentunnistus, suomi) ----------
   // Puhe muuttuu ensin tekstiksi kenttään. Haku käynnistyy vasta, kun
   // käyttäjä on tarkistanut tekstin ja painaa Hae.
+  // Mikrofoni on sekä hero-haussa että kiinnittyvässä hakupalkissa. Kumpikin
+  // painike kirjoittaa omaan kenttäänsä (data-input) ja näyttää ohjeen omassa
+  // kohdassaan (data-hint). Kerrallaan kuunnellaan vain yhtä.
   var micBtn = document.getElementById('micBtn');
-  var heroInput = document.getElementById('heroSearchInput');
+  micBtn.setAttribute('data-input', 'heroSearchInput');
+  micBtn.setAttribute('data-hint', 'voiceHint');
+  var micButtons = Array.prototype.slice.call(document.querySelectorAll('.mic-btn'));
   var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  var recognizer = null, listening = false, heard = '';
+  var recognizer = null, listening = false, heard = '', activeMic = null;
+  var MIC_ERRORS = {
+    'not-allowed': 'Mikrofonin käyttö on estetty. Voit sallia sen selaimen asetuksista tai kirjoittaa haun.',
+    'service-not-allowed': 'Puheentunnistus ei ole käytettävissä tässä selaimessa. Kirjoita haku kenttään.',
+    'no-speech': 'En kuullut puhetta. Paina mikrofonia ja kokeile uudelleen.',
+    'audio-capture': 'Mikrofonia ei löytynyt. Kirjoita haku kenttään.',
+    'network': 'Puheentunnistus ei saanut yhteyttä. Kirjoita haku kenttään.',
+    'language-not-supported': 'Selain ei tunnista suomea puheesta. Kirjoita haku kenttään.'
+  };
 
-  function setListening(on){
+  function micParts(btn){
+    return { input: document.getElementById(btn.getAttribute('data-input')), hint: document.getElementById(btn.getAttribute('data-hint')) };
+  }
+  function clearVoiceHints(){
+    document.querySelectorAll('.voice-hint').forEach(function(h){ h.textContent = ''; });
+  }
+
+  function setListening(btn, on){
+    var parts = micParts(btn);
     listening = on;
-    micBtn.classList.toggle('listening', on);
-    micBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-    micBtn.setAttribute('aria-label', on ? 'Lopeta kuuntelu' : 'Sano haku ääneen');
-    micBtn.title = micBtn.getAttribute('aria-label');
-    heroInput.placeholder = on ? 'Kuuntelen…' : heroInput.getAttribute('data-placeholder');
+    activeMic = on ? btn : null;
+    btn.classList.toggle('listening', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    btn.setAttribute('aria-label', on ? 'Lopeta kuuntelu' : 'Sano haku ääneen');
+    btn.title = btn.getAttribute('aria-label');
+    parts.input.placeholder = on ? 'Kuuntelen…' : parts.input.getAttribute('data-placeholder');
+  }
+
+  function startListening(btn){
+    var parts = micParts(btn);
+    heard = '';
+    clearVoiceHints();
+    recognizer = new Recognition();
+    recognizer.lang = 'fi-FI';
+    recognizer.interimResults = true;
+    recognizer.maxAlternatives = 1;
+    recognizer.onresult = function(ev){
+      var text = '';
+      for (var i = 0; i < ev.results.length; i++) text += ev.results[i][0].transcript;
+      heard = text.trim();
+      parts.input.value = heard;
+    };
+    recognizer.onerror = function(ev){
+      if (MIC_ERRORS[ev.error]) parts.hint.textContent = MIC_ERRORS[ev.error];
+    };
+    recognizer.onend = function(){
+      setListening(btn, false);
+      if (heard) {
+        parts.hint.textContent = 'Tarkista teksti ja paina Hae.';
+        parts.input.focus();
+      }
+    };
+    try {
+      recognizer.start();
+      setListening(btn, true);
+    } catch (err) {
+      setListening(btn, false);
+      parts.hint.textContent = 'Puheentunnistusta ei voitu käynnistää. Kirjoita haku kenttään.';
+    }
   }
 
   if (Recognition) {
-    micBtn.hidden = false;
-    heroInput.setAttribute('data-placeholder', heroInput.placeholder);
-    micBtn.addEventListener('click', function(){
-      if (listening && recognizer) { recognizer.stop(); return; }
-      heard = '';
-      voiceHint.textContent = '';
-      recognizer = new Recognition();
-      recognizer.lang = 'fi-FI';
-      recognizer.interimResults = true;
-      recognizer.maxAlternatives = 1;
-      recognizer.onresult = function(ev){
-        var text = '';
-        for (var i = 0; i < ev.results.length; i++) text += ev.results[i][0].transcript;
-        heard = text.trim();
-        heroInput.value = heard;
-      };
-      recognizer.onerror = function(ev){
-        var messages = {
-          'not-allowed': 'Mikrofonin käyttö on estetty. Voit sallia sen selaimen asetuksista tai kirjoittaa haun.',
-          'service-not-allowed': 'Puheentunnistus ei ole käytettävissä tässä selaimessa. Kirjoita haku kenttään.',
-          'no-speech': 'En kuullut puhetta. Paina mikrofonia ja kokeile uudelleen.',
-          'audio-capture': 'Mikrofonia ei löytynyt. Kirjoita haku kenttään.',
-          'network': 'Puheentunnistus ei saanut yhteyttä. Kirjoita haku kenttään.',
-          'language-not-supported': 'Selain ei tunnista suomea puheesta. Kirjoita haku kenttään.'
-        };
-        if (messages[ev.error]) voiceHint.textContent = messages[ev.error];
-      };
-      recognizer.onend = function(){
-        setListening(false);
-        if (heard) {
-          voiceHint.textContent = 'Tarkista teksti ja paina Hae.';
-          heroInput.focus();
-        }
-      };
-      try {
-        recognizer.start();
-        setListening(true);
-      } catch (err) {
-        setListening(false);
-        voiceHint.textContent = 'Puheentunnistusta ei voitu käynnistää. Kirjoita haku kenttään.';
-      }
+    micButtons.forEach(function(btn){
+      var parts = micParts(btn);
+      btn.hidden = false;
+      parts.input.setAttribute('data-placeholder', parts.input.placeholder);
+      btn.addEventListener('click', function(){
+        // Painallus kesken kuuntelun lopettaa sen (kummasta painikkeesta tahansa)
+        if (listening && recognizer) { recognizer.stop(); return; }
+        startListening(btn);
+      });
     });
   }
 
@@ -1628,6 +1658,8 @@
   var sticky = document.getElementById('stickySearch');
   var heroForm = document.getElementById('heroSearchForm');
   function setSticky(show){
+    // Palkki piiloutuu kesken kuuntelun -> lopetetaan, ettei mikrofoni jää päälle näkymättömänä
+    if (!show && listening && activeMic && sticky.contains(activeMic) && recognizer) recognizer.stop();
     sticky.classList.toggle('visible', show);
     sticky.setAttribute('aria-hidden', show ? 'false' : 'true');
     sticky.querySelectorAll('input, button').forEach(function(el){
