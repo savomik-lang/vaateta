@@ -88,3 +88,10 @@ test("kokotiedoton tuote: ikäväli otsikosta ratkaisee, ilman lapsimerkkiä hyl
   // ilman kokorajausta kokotiedoton tuote ei karsiudu tämän säännön takia
   assert.equal(matchesCriteria(noMarker, parseCriteriaFromText("talvitakki pojalle")), true);
 });
+
+test("nuorelle kokotiedoton 'Baby/Kids shoes' hylätään, 'Junior' hyväksytään", () => {
+  const c = parseCriteriaFromText("kengät 14-vuotiaalle tytölle");
+  const baby = makeProduct({ id: "baby", source: "voghion-global", garment_type: "kengät", title: "Kids Sports Shoes Baby Girl Sneakers" });
+  const junior = makeProduct({ id: "jr", source: "voghion-global", garment_type: "kengät", title: "Junior Sneakers Girls" });
+  assert.deepEqual([baby, junior].filter((p) => matchesCriteria(p, c)).map((p) => p.id), ["jr"]);
+});

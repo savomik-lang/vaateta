@@ -46,3 +46,19 @@ test("sizeRangeCm kertoo pienimmän ja suurimman koon", () => {
   assert.deepEqual(sizeRangeCm([["98/104", "110"], ["146/152"]]), { min: 98, max: 152 });
   assert.equal(sizeRangeCm([["XS"]]), null);
 });
+
+test("kuukausikoot tulkitaan pituuksiksi, eivätkä sovi nuorelle", () => {
+  assert.equal(productSizeFit(["9-12 months", "0-6 months"], 164, true), null);
+  assert.equal(productSizeFit(["12-18 months"], 86, false), "exact");
+});
+
+test("tunnistamaton merkintä ei ohita kokosuodatinta jos tulkittavia kokoja on", () => {
+  assert.equal(productSizeFit(["One Size", "110"], 164, false), null);
+  assert.equal(productSizeFit(["One Size"], 164, false), "exact");
+});
+
+test("kenkien pienet EU-koot (19-33) eivät sovi 14-vuotiaalle, 41 sopii", () => {
+  assert.equal(productSizeFit(["19-20", "21-22", "23-24", "25-26"], 164, true), null);
+  assert.equal(productSizeFit(["19", "20", "33", "35"], 164, true), null);
+  assert.equal(productSizeFit(["41"], 164, true), "exact");
+});

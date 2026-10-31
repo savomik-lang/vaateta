@@ -24,6 +24,10 @@ export type SizeToken =
   | { kind: "letters"; letters: string[] }
   | { kind: "unknown" };
 
+function monthsToCm(m: number): number {
+  return m <= 12 ? 56 + 2 * m : 80 + (m - 12);
+}
+
 const LETTER_RE = /^(xxxs|xxs|xs|s|m|l|xl|xxl|xxxl|[2-9]xl)$/;
 const AGE_UNIT = "(?:y|yr|yrs|year|years|år|v|vuotta|vuotiaat)";
 
@@ -31,8 +35,13 @@ export function parseSizeToken(raw: string): SizeToken {
   const t = raw.trim().toLowerCase();
   if (!t) return { kind: "unknown" };
 
-  // Kuukausikoot (vauvat) - ei tulkita, ei vaikuta nuorten/lasten hakuihin.
-  if (/\b\d{1,2}\s*(?:-\s*\d{1,2}\s*)?(?:m|mo|mos|months?|mån|kk)\b/.test(t)) return { kind: "unknown" };
+  // Kuukausikoot (vauvat), esim. "9-12 months", "0-6 m", "12 kk": karkea pituus.
+  const months = t.match(/\b(\d{1,2})\s*(?:-|–|\/)?\s*(\d{1,2})?\s*(?:m|mo|mos|months?|mån|kk)\b/);
+  if (months) {
+    const a = parseInt(months[1], 10);
+    const b = months[2] ? parseInt(months[2], 10) : a;
+    return { kind: "cm", lo: monthsToCm(Math.min(a, b)), hi: monthsToCm(Math.max(a, b)) };
+  }
 
   // Ikäväli, esim. "13-14 yr", "5-8Y", "6-8 år"
   const ageRange = t.match(new RegExp(`(\\d{1,2})\\s*(?:-|–|/)\\s*(\\d{1,2})\\s*${AGE_UNIT}\\b`));
@@ -51,14 +60,14 @@ export function parseSizeToken(raw: string): SizeToken {
   if (cmRange) {
     const a = parseInt(cmRange[1], 10), b = parseInt(cmRange[2], 10);
     if (a >= 44 && b <= 190 && a <= b) return { kind: "cm", lo: a, hi: b };
-    if (a >= 20 && b <= 47 && a <= b) return { kind: "eu", lo: a, hi: b };
+    if (a >= 15 && b <= 47 && a <= b) return { kind: "eu", lo: a, hi: b };
   }
   const single = t.match(/^(?:eu\s*)?(\d{2,3})(?:\s*cm)?$/);
   if (single) {
     const n = parseInt(single[1], 10);
-    if (/eu/.test(t) && n >= 20 && n <= 47) return { kind: "eu", lo: n, hi: n };
+    if (/eu/.test(t) && n >= 15 && n <= 47) return { kind: "eu", lo: n, hi: n };
     if (n >= 44 && n <= 190) return { kind: "cm", lo: n, hi: n };
-    if (n >= 20 && n <= 43) return { kind: "eu", lo: n, hi: n };
+    if (n >= 15 && n <= 43) return { kind: "eu", lo: n, hi: n };
   }
 
   // Kirjainkoot: "XS", "S/M", "XS-S"
@@ -105,11 +114,16 @@ export function tokenFit(tok: SizeToken, targetCm: number, isShoe: boolean): Siz
 }
 
 // Tuotteen paras sopivuus haettuun kokoon. Ei kokotietoa = hyväksytään.
+// Tunnistamattomat merkinnät ("One Size") ovat neutraaleja vain jos tuotteella
+// EI ole yhtään tulkittavaa kokoa - muuten ne eivät saa ohittaa kokosuodatinta.
 export function productSizeFit(sizes: string[], targetCm: number, isShoe: boolean): SizeFit {
   if (sizes.length === 0) return "exact";
+  const tokens = sizes.map(parseSizeToken);
+  const known = tokens.filter((t) => t.kind !== "unknown");
+  if (known.length === 0) return "exact";
   let best: SizeFit = null;
-  for (const s of sizes) {
-    const fit = tokenFit(parseSizeToken(s), targetCm, isShoe);
+  for (const tok of known) {
+    const fit = tokenFit(tok, targetCm, isShoe);
     if (fit === "exact") return "exact";
     if (fit === "smaller") best = "smaller";
   }

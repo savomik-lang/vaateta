@@ -42,6 +42,7 @@ const ADULT_SIZE_RANGE_REGEX = new RegExp(`\\b${ADULT_SIZE_TOKEN}\\s*[-–]\\s*$
 // Voghionin kaltaisessa yleismarkkinapaikassa tällaisia tuotteita on
 // harvoin, ja aikuisvaatteiden suodattaminen oikein painaa enemmän.
 
+const TEEN_TITLE_REGEX = /\b(teen|teens|teenager|youth|junior|juniors|big kids?|older kids?|nuoret|nuorten|ungdom)\b/i;
 const GIRL_TITLE_REGEX = /\b(girl|girls|flicka|flickor)\b/i;
 const BOY_TITLE_REGEX = /\b(boy|boys|pojke|pojkar)\b/i;
 
@@ -129,6 +130,9 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
       const inferred = inferSizeFromTitle(p.title);
       if (inferred.length > 0) sizes = inferred;
       else if (!hasChildMarkers(p.title)) return false;
+      // Nuorelle (>= 152 cm) kokotiedoton tuote kelpaa vain jos otsikko
+      // viittaa isompiin lapsiin - "Baby/Toddler/Kids" ilman ikää on pienille.
+      else if (targetCm >= 152 && !TEEN_TITLE_REGEX.test(p.title)) return false;
     }
     const fit = productSizeFit(sizes, targetCm, p.garment_type === "kengät");
     if (fit === null) return false;
