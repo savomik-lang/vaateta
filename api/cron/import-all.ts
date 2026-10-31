@@ -32,8 +32,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const results = [];
-  for (const store of stores) {
+  const results: any[] = [];
+  // Kaupat tuodaan rinnakkain: kokonaisaika on hitain kauppa, ei kaikkien summa
+  // (FI + Voghion samassa ajossa mahtuu 60 s rajaan).
+  await Promise.all(stores.map(async (store) => {
     try {
       const result = await importAwinStore(store);
       results.push({ ...result, status: "ok" });
@@ -51,8 +53,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         cause,
       });
     }
-  }
+  }));
 
+  results.sort((x, y) => String(x.storeKey).localeCompare(String(y.storeKey)));
   res.status(200).json({
     imported: results,
     unconfigured_stores: getUnconfiguredStoreNames(),

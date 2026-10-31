@@ -1,5 +1,4 @@
-import { gunzipSync } from "zlib";
-import { parse } from "csv-parse/sync";
+import { readCsvRecords } from "./feed-stream";
 import { config } from "../config";
 import { Product, Currency } from "../types";
 import { RedisProductStore } from "../store/product-store";
@@ -227,6 +226,7 @@ export interface ImportResult {
   // (vain childOnly-kaupoille, esim. Outnorth).
   notChildRows?: number;
   durationMs?: number;
+  timings?: { headersMs: number; streamMs: number; dedupeMs: number; saveMs: number };
 }
 
 export async function importAwinStore(store: StoreDefinition & { feedId: string }): Promise<ImportResult> {
@@ -259,54 +259,45 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
     );
   }
 
-  // Puretaan gzip tavujen "taikanumeron" (1f 8b) perusteella: Node/undici voi
-  // purkaa Content-Encoding:n itse, tai Awin voi palauttaa raakaa .gz-tiedostoa
-  // - molemmat tapaukset hoituvat tunnistamalla muoto datasta itsestään.
-  const buf = Buffer.from(await response.arrayBuffer());
-  const csvText = (buf.length > 2 && buf[0] === 0x1f && buf[1] === 0x8b ? gunzipSync(buf) : buf).toString("utf-8");
+  const headersAt = Date.now();
 
-  // childOnly-kaupoissa (Outnorth ~95k riviä, pääosin aikuisten tuotteita)
-  // pudotetaan ei-lapsirivit jo jäsennysvaiheessa (on_record), jottei koko
-  // 95k rivin taulukkoa pidetä muistissa.
+  // Lataus, gunzip ja CSV-jäsennys virtaavasti (feed-stream.ts) ja rivit
+  // mapataan heti, jotta koko ~95k rivin taulukkoa ei pidetä muistissa.
+  // childOnly-kaupoissa (Outnorth, pääosin aikuisten tuotteita) pudotetaan
+  // ei-lapsirivit ennen mappausta.
   let fetchedRows = 0;
   let notChildRows = 0;
   let firstRowKeys: string[] | undefined;
-  const rows: Record<string, string>[] = parse(csvText, {
-    columns: true,
-    skip_empty_lines: true,
-    relax_column_count: true,
-    on_record: (record: Record<string, string>) => {
-      fetchedRows++;
-      if (!firstRowKeys) firstRowKeys = Object.keys(record);
-      if (store.childOnly) {
-        const text = [
-          record.product_name || record.title,
-          record.merchant_category || record.google_product_category,
-          record.category_name, record.merchant_product_category_path, record.product_type,
-          record["Fashion:suitable_for"],
-        ].filter(Boolean).join(" ");
-        if (!hasChildMarkers(text, record.age_group)) {
-          notChildRows++;
-          return null;
-        }
-      }
-      return record;
-    },
-  });
-
-  const products: Product[] = [];
   let skipped = 0;
-  for (const row of rows) {
+  const products: Product[] = [];
+  for await (const record of readCsvRecords(response.body as unknown as AsyncIterable<Uint8Array>)) {
+    fetchedRows++;
+    if (!firstRowKeys) firstRowKeys = Object.keys(record);
+    if (store.childOnly) {
+      const text = [
+        record.product_name || record.title,
+        record.merchant_category || record.google_product_category,
+        record.category_name, record.merchant_product_category_path, record.product_type,
+        record["Fashion:suitable_for"],
+      ].filter(Boolean).join(" ");
+      if (!hasChildMarkers(text, record.age_group)) {
+        notChildRows++;
+        continue;
+      }
+    }
     const product = store.format === "google"
-      ? mapGoogleRow(row as GoogleFeedRow, store.storeKey)
-      : mapRow(row as RawFeedRow, store.storeKey, { basePriceIsSale: store.basePriceIsSale });
+      ? mapGoogleRow(record as unknown as GoogleFeedRow, store.storeKey)
+      : mapRow(record as unknown as RawFeedRow, store.storeKey, { basePriceIsSale: store.basePriceIsSale });
     if (product) products.push(product); else skipped++;
   }
+  const streamedAt = Date.now();
 
   const deduped = dedupeVariants(products);
 
+  const dedupedAt = Date.now();
   const productStore = new RedisProductStore(store.storeKey);
   await productStore.replaceAll(deduped);
+  const savedAt = Date.now();
 
   return {
     storeKey: store.storeKey,
@@ -316,7 +307,10 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
     skippedRows: skipped + (products.length - deduped.length),
     sampleRowKeys: products.length === 0 && fetchedRows > 0 ? firstRowKeys : undefined,
     notChildRows: store.childOnly ? notChildRows : undefined,
-    durationMs: Date.now() - startedAt,
+    durationMs: savedAt - startedAt,
+    // Vaiheiden kestot (ms): headers = yhteys + vastausotsikot, stream = lataus +
+    // gunzip + jäsennys + mappaus (virtaavasti), dedupe, save = Redis-kirjoitus.
+    timings: { headersMs: headersAt - startedAt, streamMs: streamedAt - headersAt, dedupeMs: dedupedAt - streamedAt, saveMs: savedAt - dedupedAt },
   };
 }
 
