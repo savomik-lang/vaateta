@@ -27,12 +27,28 @@ function storeName(source: string): string {
   return AWIN_STORES.find((s) => s.storeKey === source)?.displayName || source;
 }
 
+export const FOREIGN_SHOP_NOTE = "Ruotsin verkkokauppa – tarkista toimitus Suomeen ennen ostoa";
+
+export function marketOf(source: string): string | undefined {
+  return AWIN_STORES.find((s) => s.storeKey === source)?.market;
+}
+// FI-kauppa ensin, muut (global/tuntematon) sen jälkeen, ulkomaiset viimeisenä.
+function marketRank(source: string): number {
+  const m = marketOf(source);
+  return m === "FI" ? 0 : m === "SE" ? 2 : 1;
+}
+function noteFor(source: string): string | undefined {
+  return marketOf(source) === "SE" ? FOREIGN_SHOP_NOTE : undefined;
+}
+
 function toOffer(p: Product): ProductOffer {
   return {
     source: p.source, store: storeName(p.source), price: p.price,
     original_price: p.original_price, discount_percent: p.discount_percent,
     url_affiliate: p.url_affiliate, size_available: p.size_available,
     color: p.color, in_stock: p.in_stock,
+    ...(marketOf(p.source) ? { market: marketOf(p.source) } : {}),
+    ...(noteFor(p.source) ? { shipping_note: noteFor(p.source) } : {}),
   };
 }
 
@@ -62,6 +78,9 @@ export function mergeCrossStoreOffers(products: Product[], ctx?: FitContext): Pr
       const t = TIER_ORDER[fitTier(a, ctx)] - TIER_ORDER[fitTier(b, ctx)];
       if (t !== 0) return t;
     }
+    // Suomen kauppa edustajaksi ennen ulkomaista, vaikka ulkomainen olisi hieman halvempi.
+    const m = marketRank(a.source) - marketRank(b.source);
+    if (m !== 0) return m;
     return toEur(a.price) - toEur(b.price);
   };
 
@@ -94,5 +113,13 @@ export function mergeCrossStoreOffers(products: Product[], ctx?: FitContext): Pr
 // Yksi askel hakutuloksille: kauppojen välinen yhdistäminen, sitten
 // värivaihtoehtojen yhdistäminen kaupan sisällä.
 export function dedupeResults(products: Product[], ctx?: FitContext): Product[] {
-  return dedupeColorVariants(mergeCrossStoreOffers(products, ctx), ctx);
+  return dedupeColorVariants(mergeCrossStoreOffers(products, ctx), ctx).map(withMarket);
+}
+
+// Lisää tuotteelle markkina-alue ja tarvittaessa toimitushuomautus.
+export function withMarket(p: Product): Product {
+  const market = marketOf(p.source);
+  const note = noteFor(p.source);
+  if (!market) return p;
+  return { ...p, market, ...(note ? { shipping_note: note } : {}) };
 }

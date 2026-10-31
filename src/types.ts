@@ -13,6 +13,9 @@ export type GarmentType =
 export interface ProductOffer {
   source: string;
   store: string;
+  // Markkina-alue ("SE" = Ruotsin verkkokauppa) ja huomautus kun toimitusta Suomeen ei ole varmistettu.
+  market?: string;
+  shipping_note?: string;
   price: Money;
   original_price: Money | null;
   discount_percent: number | null;
@@ -66,6 +69,10 @@ export interface Product {
   // other_offers = sama tuote muissa kaupoissa (vain kun sellainen löytyy).
   group_id?: string;
   ean?: string;
+  // Johdetaan kaupasta hakuhetkellä (stores-registry market). shipping_note
+  // on vain kun kauppa ei ole Suomen kauppa eikä globaali.
+  market?: string;
+  shipping_note?: string;
   other_offers?: ProductOffer[];
 
   last_updated: string;
