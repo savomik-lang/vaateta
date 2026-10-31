@@ -23,7 +23,10 @@
   }
 
   *{ box-sizing: border-box; }
+  /* hidden-attribuutti voittaa aina display-säännöt (esim. .filmstrips{display:flex}) */
+  [hidden]{ display: none !important; }
   html{ scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce){ html{ scroll-behavior: auto; } }
   body{
     margin:0;
     background: var(--paper);
@@ -158,6 +161,187 @@
   .search-form input:focus{ outline: none; }
   .search-form input::placeholder{ color: #7A7D84; }
   .search-form .btn{ border-radius: 4px; padding: 12px 22px; white-space: nowrap; }
+
+  /* ---------- MIKROFONI ---------- */
+  .mic-btn{
+    flex: none;
+    width: 46px;
+    margin-right: 6px;
+    display:flex; align-items:center; justify-content:center;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .mic-btn[hidden]{ display:none; }
+  .mic-btn:hover{ background: rgba(35,38,43,0.07); }
+  .mic-btn:focus-visible{ outline: 2px solid var(--sage); outline-offset: 1px; }
+  .mic-btn svg{ width: 22px; height: 22px; }
+  .mic-btn.listening{ background: var(--berry); color: #fff; }
+  @media (prefers-reduced-motion: no-preference){
+    .mic-btn.listening{ animation: micpulse 1.2s ease-in-out infinite; }
+  }
+  @keyframes micpulse{
+    0%,100%{ box-shadow: 0 0 0 0 rgba(168,61,52,0.55); }
+    50%{ box-shadow: 0 0 0 7px rgba(168,61,52,0); }
+  }
+  .voice-hint{
+    margin: 10px 0 0;
+    min-height: 0;
+    font-size: 14px;
+    color: #F3D9A8;
+  }
+  .voice-hint:empty{ display:none; }
+
+  /* ---------- ESIMERKKISIRUT ---------- */
+  .chips-label{
+    display:block;
+    margin: 18px 0 8px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(246,244,238,0.75);
+  }
+  .chips{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0; padding: 0; list-style: none;
+  }
+  .chip{
+    font-family:'Space Grotesk', sans-serif;
+    font-size: 14px;
+    line-height: 1.2;
+    padding: 9px 14px;
+    min-height: 40px;
+    border-radius: 999px;
+    border: 1px solid rgba(246,244,238,0.5);
+    background: rgba(35,38,43,0.38);
+    color: var(--paper-raised);
+    cursor: pointer;
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+  }
+  .chip:hover{ background: rgba(246,244,238,0.18); }
+  .chip:focus-visible{ outline: 2px solid #E7A94A; outline-offset: 2px; }
+  .chips.on-paper .chip{
+    background: var(--paper-raised);
+    color: var(--ink);
+    border-color: var(--ink);
+    backdrop-filter: none;
+  }
+  .chips.on-paper .chip:hover{ background: var(--ink); color: var(--paper-raised); }
+  @media (max-width: 560px){
+    /* Mobiilissa yksi vieritettävä rivi, ettei hero veny liian pitkäksi */
+    .hero-content .chips{
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      margin-right: -18px;
+      padding-right: 18px;
+      padding-bottom: 4px;
+      scrollbar-width: none;
+    }
+    .hero-content .chips::-webkit-scrollbar{ display:none; }
+  }
+
+  /* ---------- TYHJÄ TULOS ---------- */
+  .empty-state{
+    max-width: 620px;
+    background: var(--paper-raised);
+    border: 1px dashed var(--ink);
+    border-radius: 6px;
+    padding: 20px 22px;
+    margin-top: 8px;
+  }
+  .empty-state[hidden]{ display:none; }
+  .empty-state h3{
+    font-family:'Fraunces', serif;
+    font-weight: 500;
+    font-size: 21px;
+    margin: 0 0 6px;
+  }
+  .empty-state p{ margin: 0 0 14px; font-size: 14.5px; color: var(--ink-soft); }
+  .empty-state .chips .chip.primary,
+  .notice-actions .chip.primary{ background: var(--ink); color: var(--paper-raised); }
+  .empty-state .chips .chip.primary:hover,
+  .notice-actions .chip.primary:hover{ background: var(--berry); border-color: var(--berry); }
+
+  /* ---------- "YMMÄRSIN HAUN NÄIN" ---------- */
+  .understood{
+    display:flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    margin: 4px 0 14px;
+  }
+  .understood-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .understood ul{ display:flex; flex-wrap: wrap; gap: 8px; margin:0; padding:0; list-style:none; }
+  .crit-chip{
+    display:inline-flex;
+    align-items:center;
+    gap: 2px;
+    font-size: 14px;
+    background: rgba(87,101,76,0.12);
+    border: 1px solid rgba(87,101,76,0.35);
+    border-radius: 999px;
+    padding: 0 2px 0 12px;
+    min-height: 36px;
+    color: var(--ink);
+  }
+  .crit-chip button{
+    width: 32px; height: 32px;
+    display:inline-flex; align-items:center; justify-content:center;
+    border: none; background: transparent;
+    border-radius: 50%;
+    color: var(--ink-soft);
+    font-size: 18px; line-height: 1;
+    cursor: pointer;
+  }
+  .crit-chip button:hover{ background: rgba(35,38,43,0.1); color: var(--ink); }
+  .crit-chip button:focus-visible{ outline: 2px solid var(--sage); outline-offset: 0; }
+
+  /* ---------- HAUN PALAUTE TULOSTEN YLLÄ ---------- */
+  .notice-inline{ max-width: 680px; margin: 0 0 6px; }
+  .notice-soft{
+    background: #F5EAD2;
+    border-left: 3px solid var(--mustard);
+    border-radius: 2px;
+    padding: 12px 14px;
+    font-size: 14.5px;
+    color: var(--ink);
+  }
+  .notice-hint{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    padding-left: 2px;
+  }
+  .notice-inline p{ margin: 0; }
+  .notice-actions{ display:flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; padding:0; list-style:none; }
+  .notice-actions .chip{
+    background: var(--paper-raised); color: var(--ink); border-color: var(--ink);
+    backdrop-filter: none; font-size: 13.5px; min-height: 36px; padding: 7px 12px;
+  }
+  .notice-actions .chip:hover{ background: var(--ink); color: var(--paper-raised); }
+
+  /* Aikuisten koko -merkintä tuotekortissa */
+  .rc-badge{
+    align-self: flex-start;
+    font-family:'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    color: var(--blue);
+    background: rgba(51,80,92,0.1);
+    border-radius: 2px;
+    padding: 2px 6px;
+  }
   .search-meta{
     margin: 12px 0 0;
     font-size: 13.5px;
@@ -577,8 +761,14 @@
         autocomplete="off"
         enterkeyhint="search"
       >
+      <button type="button" class="mic-btn" id="micBtn" aria-label="Sano haku ääneen" aria-pressed="false" title="Sano haku ääneen" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+      </button>
       <button type="submit" class="btn">Hae</button>
     </form>
+    <p class="voice-hint" id="voiceHint" aria-live="polite"></p>
+    <span class="chips-label" id="heroChipsLabel">Esimerkiksi</span>
+    <ul class="chips" id="heroChips" aria-labelledby="heroChipsLabel"></ul>
     <p class="search-meta"><a href="#miten-toimii">Miten se toimii</a> · <a href="#meista">Meistä</a></p>
   </div>
 </section>
@@ -638,7 +828,20 @@
     <h2 id="resultsHeading">Löydöt</h2>
     <p class="live-search-hint">Testivaiheessa haku kattaa rajatun joukon pohjoismaisia verkkokauppoja. Tuotetiedot päivittyvät kerran vuorokaudessa.</p>
 
+    <div class="understood" id="understood" hidden>
+      <span class="understood-label" id="understoodLabel">Ymmärsin haun näin</span>
+      <ul id="understoodChips" aria-labelledby="understoodLabel"></ul>
+    </div>
+
     <div id="liveSearchStatus" class="live-search-status" aria-live="polite"></div>
+
+    <div class="empty-state" id="emptyState" hidden aria-live="polite">
+      <h3 id="emptyTitle">Emme löytäneet tähän sopivia tuotteita vielä</h3>
+      <p id="emptyMsg">Testivaiheessa mukana on vasta muutama kauppa, joten valikoima on suppea. Kokeile toista hakua tai jotain näistä:</p>
+      <ul class="chips on-paper" id="emptyChips" aria-label="Ehdotettuja hakuja"></ul>
+    </div>
+
+    <div class="notice-inline" id="noticeInline" hidden aria-live="polite"></div>
 
     <div id="liveSearchResults" class="filmstrips" hidden>
       <div class="filmstrip">
@@ -772,6 +975,8 @@
   var statusEl = document.getElementById('liveSearchStatus');
   var resultsEl = document.getElementById('liveSearchResults');
   var searchInputs = document.querySelectorAll('[data-search-form] input');
+  var emptyEl = document.getElementById('emptyState');
+  var voiceHint = document.getElementById('voiceHint');
 
   // Kauppojen syötteistä tuleva teksti käsitellään aina tekstinä, ei HTML:nä.
   function esc(s){
@@ -795,9 +1000,14 @@
     var img = product.image_url
       ? '<img class="rc-img" src="' + safeUrl(product.image_url) + '" alt="" loading="lazy">'
       : '';
+    var adult = adultSizes(product);
+    var badge = adult.length
+      ? '<span class="rc-badge">Aikuisten koko ' + esc(adult.join('/')) + '</span>'
+      : '';
     return (
       '<div class="result-card">' +
         img +
+        badge +
         '<span class="rc-brand">' + esc(product.brand) + '</span>' +
         '<span class="rc-title">' + esc(product.title) + '</span>' +
         '<span class="rc-price">' + original + moneyLabel(product.price) + '</span>' +
@@ -830,14 +1040,21 @@
     runSearch(d.query.replace(/^"|"$/g, ''));
   });
 
+  var searchSeq = 0;
+
   function runSearch(q){
+    var mySeq = ++searchSeq;
     setAllInputs(q);
     searchSection.hidden = false;
     statusEl.textContent = 'Haetaan...';
     statusEl.classList.remove('error');
     resultsEl.hidden = true;
+    emptyEl.hidden = true;
+    noticeInlineEl.hidden = true;
+    understoodEl.hidden = true;
+    voiceHint.textContent = '';
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    searchSection.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    searchSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
 
     fetch('/api/search?q=' + encodeURIComponent(q))
       .then(function(r){
@@ -845,11 +1062,19 @@
         return r.json();
       })
       .then(function(data){
-        if (data.total_matches === 0) {
-          statusEl.textContent = 'Ei tuloksia tällä haulla. Kokeile toista muotoilua.';
+        // Uudempi haku on jo lähtenyt: tämän vastauksen ei saa korvata sitä
+        if (mySeq !== searchSeq) return;
+        var notice = normalizeNotice(data.notice);
+        renderUnderstood(data.parsed_criteria, q);
+
+        if (!data.total_matches) {
+          renderEmpty(notice, data, q);
           return;
         }
-        statusEl.textContent = data.total_matches + ' tulosta löytyi.';
+        statusEl.textContent = data.total_matches === 1
+          ? '1 tulos löytyi.'
+          : data.total_matches + ' tulosta löytyi.';
+        renderInlineNotice(notice);
 
         renderFilmstrip('filmstripCheapest', data.results.cheapest);
         renderFilmstrip('filmstripBestValue', data.results.bestValue);
@@ -865,9 +1090,355 @@
         resultsEl.hidden = false;
       })
       .catch(function(err){
+        if (mySeq !== searchSeq) return;
         statusEl.textContent = 'Virhe: ' + err.message;
         statusEl.classList.add('error');
       });
+  }
+
+  // =====================================================================
+  // HAUN PALAUTE (notice) JA TULKINTA (parsed_criteria)
+  // API:n muoto: notice = { code, message, suggestions:[{label,query}],
+  // relaxed:{dropped:[...], total_matches} }. Kaikki kentät valinnaisia;
+  // vanha muoto (notice puuttuu tai on pelkkä merkkijono) toimii edelleen.
+  // =====================================================================
+  var noticeInlineEl = document.getElementById('noticeInline');
+  var understoodEl = document.getElementById('understood');
+
+  var GARMENT_LABELS = {
+    takki: 'Takki', kurahousut: 'Kurahousut', toppahousut: 'Toppahousut', housut: 'Housut',
+    'kengät': 'Kengät', paita: 'Paita', haalari: 'Haalari', mekko: 'Mekko', body: 'Body',
+    uimapuku: 'Uimapuku', pyjama: 'Pyjama', sukat: 'Sukat', pipo: 'Pipo', lapaset: 'Lapaset'
+  };
+  // Sanat, joilla etsitään käyttäjän alkuperäinen vaatesana ("talvitakki")
+  var GARMENT_STEMS = {
+    takki: ['takki', 'jacket', 'coat'], kurahousut: ['kurahousu', 'sadehousu'],
+    toppahousut: ['toppahousu', 'talvihousu'], housut: ['housu', 'farkut', 'verkkarit', 'leggingsit'],
+    'kengät': ['kengät', 'saappaat', 'tennarit', 'nilkkurit'], paita: ['paita', 'huppari', 'pusero'],
+    haalari: ['haalari'], mekko: ['mekko'], body: ['body', 'potkupuku'], uimapuku: ['uimapuku', 'uikkari', 'uima-asu'],
+    pyjama: ['pyjama', 'yöpuku'], sukat: ['sukat', 'sukkahousut'], pipo: ['pipo', 'myssy'], lapaset: ['lapaset', 'sormikkaat', 'käsineet']
+  };
+  var NO_GARMENT_BUTTONS = ['Talvitakki', 'Kurahousut', 'Toppahousut', 'Haalari', 'Kengät', 'Pipo', 'Lapaset'];
+  var CM_TO_AGE = [[86,1],[92,2],[98,3],[104,4],[110,5],[116,6],[122,7],[128,8],[134,9],[140,10],[146,11],[152,12],[158,13],[164,14],[170,15],[176,16]];
+  var DROP_LABELS = { size: 'kokoa', max_price: 'hintarajaa', price: 'hintarajaa', gender: 'sukupuolta', child_gender_pref: 'sukupuolta', waterproof: 'vedenpitävyyttä', color: 'väriä', material: 'materiaalia', material_keywords: 'materiaalia', season: 'vuodenaikaa', winter: 'vuodenaikaa' };
+  var DROP_TO_KEY = { size: 'size', size_cm: 'size', size_raw: 'size', max_price: 'max_price', price: 'max_price', gender: 'gender', child_gender_pref: 'gender', waterproof: 'waterproof', color: 'color' };
+
+  function cap(s){ s = String(s || ''); return s.charAt(0).toUpperCase() + s.slice(1); }
+
+  function normalizeNotice(n){
+    if (!n) return null;
+    if (typeof n === 'string') return { code: 'info', message: n, suggestions: [] };
+    if (typeof n !== 'object') return null;
+    var sugg = Array.isArray(n.suggestions) ? n.suggestions.filter(function(s){
+      return s && typeof s.label === 'string' && typeof s.query === 'string' && s.query.trim();
+    }) : [];
+    return {
+      code: String(n.code || 'info'),
+      message: typeof n.message === 'string' ? n.message : '',
+      suggestions: sugg,
+      relaxed: n.relaxed && typeof n.relaxed === 'object' ? n.relaxed : null
+    };
+  }
+
+  // ---- Koko: cm, ikä tai molemmat ----
+  function sizeInfo(c){
+    var cm = Number(c.size_cm) || null;
+    var raw = c.size_raw != null ? String(c.size_raw) : '';
+    var age = Number(c.age) || null;
+    if (!cm && /^\d{2,3}$/.test(raw) && Number(raw) >= 44) cm = Number(raw);
+    if (!cm && !age && /^\d{1,2}$/.test(raw)) age = Number(raw);
+    if (cm && !age) {
+      var best = null;
+      CM_TO_AGE.forEach(function(p){ if (Math.abs(p[0] - cm) <= 4) best = p[1]; });
+      age = best;
+    }
+    if (!cm && !age) return null;
+    var label = cm ? 'koko ' + cm + (age ? ' (≈' + age + ' v)' : '') : 'ikä ' + age + ' v';
+    return { cm: cm, age: age, label: label };
+  }
+
+  function garmentWord(c, q){
+    var type = c.garment_type;
+    if (!type || !GARMENT_LABELS[type]) return null;
+    var tokens = String(q || '').toLowerCase().split(/[\s,.;:!?]+/);
+    var stems = GARMENT_STEMS[type] || [];
+    for (var i = 0; i < tokens.length; i++) {
+      for (var j = 0; j < stems.length; j++) {
+        if (tokens[i].indexOf(stems[j]) !== -1) return tokens[i];
+      }
+    }
+    return GARMENT_LABELS[type].toLowerCase();
+  }
+
+  // Tulkinnan sirut: [{key, label}]
+  function criteriaChips(c, q){
+    var out = [];
+    if (!c || typeof c !== 'object') return out;
+    var g = garmentWord(c, q);
+    if (g) out.push({ key: 'garment', label: cap(g) });
+    var genderLabels = { 'tyttö': 'tyttö', poika: 'poika', unisex: 'unisex' };
+    if (genderLabels[c.child_gender_pref]) out.push({ key: 'gender', label: genderLabels[c.child_gender_pref] });
+    var s = sizeInfo(c);
+    if (s) out.push({ key: 'size', label: s.label });
+    if (c.waterproof) out.push({ key: 'waterproof', label: 'vedenpitävä' });
+    if (c.color) out.push({ key: 'color', label: String(c.color) });
+    (c.material_keywords || []).forEach(function(m, i){ out.push({ key: 'material:' + i, label: String(m) }); });
+    if (c.max_price && c.max_price.amount) {
+      out.push({ key: 'max_price', label: 'enintään ' + c.max_price.amount + ' ' + (c.max_price.currency === 'EUR' || !c.max_price.currency ? '€' : c.max_price.currency) });
+    }
+    (c.brand_deny || []).forEach(function(b, i){ out.push({ key: 'brand_deny:' + i, label: 'ei ' + b }); });
+    return out;
+  }
+
+  // Rakentaa hakulauseen tulkinnasta ilman poistettuja rajauksia.
+  // Lause muodostetaan sanoilla, jotka haun tulkitsija tunnistaa.
+  function rebuildQuery(c, q, removeKeys){
+    var rm = {};
+    (removeKeys || []).forEach(function(k){ rm[k] = true; });
+    var words = [], tail = [];
+    var g = garmentWord(c, q);
+    if (g && !rm.garment) words.push(g);
+    if (c.waterproof && !rm.waterproof) words.push('vedenpitävä');
+    if (c.color && !rm.color) words.push(String(c.color));
+    (c.material_keywords || []).forEach(function(m, i){ if (!rm['material:' + i]) words.push(String(m)); });
+    var s = sizeInfo(c);
+    var keepSize = s && !rm.size;
+    if (keepSize) words.push(s.cm ? s.cm + ' cm' : s.age + '-vuotiaalle');
+    var genderWords = { 'tyttö': 'tytölle', poika: 'pojalle', unisex: 'unisex' };
+    var keepGender = genderWords[c.child_gender_pref] && !rm.gender;
+    if (keepGender) words.push(genderWords[c.child_gender_pref]);
+    // Säilytetään lapsihaku, vaikka koko ja sukupuoli poistettaisiin
+    var wasChild = c.child_signal || s || genderWords[c.child_gender_pref];
+    if (wasChild && !keepSize && !keepGender) words.push('lapselle');
+    if (c.max_price && c.max_price.amount && !rm.max_price) tail.push('max ' + c.max_price.amount + ' €');
+    (c.brand_deny || []).forEach(function(b, i){ if (!rm['brand_deny:' + i]) tail.push('ei ' + b); });
+    return [words.join(' ')].concat(tail).filter(Boolean).join(', ');
+  }
+
+  var lastCriteria = null, lastQuery = '';
+
+  function renderUnderstood(c, q){
+    lastCriteria = c || null;
+    lastQuery = q;
+    var chips = criteriaChips(c, q);
+    var ul = document.getElementById('understoodChips');
+    ul.innerHTML = chips.map(function(ch){
+      return '<li class="crit-chip"><span>' + esc(ch.label) + '</span>' +
+        '<button type="button" data-remove-crit="' + esc(ch.key) + '" aria-label="Poista rajaus: ' + esc(ch.label) + '" title="Poista rajaus">×</button></li>';
+    }).join('');
+    understoodEl.hidden = chips.length === 0;
+  }
+
+  document.getElementById('understoodChips').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-remove-crit]');
+    if (!btn || !lastCriteria) return;
+    var nq = rebuildQuery(lastCriteria, lastQuery, [btn.getAttribute('data-remove-crit')]);
+    if (nq.trim()) runSearch(nq);
+  });
+
+  function actionButtons(items, primaryFirst){
+    return items.map(function(it, i){
+      return '<li><button type="button" class="chip' + (primaryFirst && i === 0 ? ' primary' : '') +
+        '" data-chip="' + esc(it.query) + '">' + esc(it.label) + '</button></li>';
+    }).join('');
+  }
+
+  function dedupe(items){
+    var seen = {};
+    return items.filter(function(it){
+      var k = it.query.trim().toLowerCase();
+      if (seen[k]) return false;
+      seen[k] = true; return true;
+    });
+  }
+
+  // Ehdotus rennostetun haun perusteella: "Näytä 12 tulosta ilman kokorajausta"
+  function relaxedSuggestion(notice){
+    var r = notice && notice.relaxed;
+    if (!r || !lastCriteria || !Array.isArray(r.dropped) || !r.dropped.length) return null;
+    var keys = r.dropped.map(function(d){ return DROP_TO_KEY[d]; }).filter(Boolean);
+    if (!keys.length) return null;
+    var q = rebuildQuery(lastCriteria, lastQuery, keys);
+    if (!q.trim() || q === rebuildQuery(lastCriteria, lastQuery, [])) return null;
+    var what = r.dropped.map(function(d){ return DROP_LABELS[d] || d; }).join(' ja ');
+    var n = Number(r.total_matches);
+    var label = n > 0 ? 'Näytä ' + n + (n === 1 ? ' tulos' : ' tulosta') + ' ilman ' + what : 'Hae ilman ' + what;
+    return { label: label, query: q };
+  }
+
+  function renderEmpty(notice, data, q){
+    var title = document.getElementById('emptyTitle');
+    var msg = document.getElementById('emptyMsg');
+    var actions = [];
+    statusEl.textContent = 'Haku: "' + q + '"';
+
+    // Ennen notice-kenttää: vaatetyypin puuttuminen näkyy tulkinnasta
+    if (!notice && lastCriteria && typeof lastCriteria === 'object' && !lastCriteria.garment_type) {
+      notice = { code: 'no_garment', message: '', suggestions: [] };
+    }
+
+    if (notice && notice.code === 'no_garment') {
+      title.textContent = 'Minkä vaatteen haet?';
+      msg.textContent = notice.message || 'Kerro vielä, mitä vaatetta etsit, niin haen sopivat vaihtoehdot.';
+      actions = NO_GARMENT_BUTTONS.map(function(label){
+        return { label: label, query: (q + ' ' + label.toLowerCase()).trim() };
+      }).concat(notice.suggestions);
+      document.getElementById('emptyChips').innerHTML = actionButtons(dedupe(actions), false);
+    } else if (notice) {
+      title.textContent = 'Emme löytäneet täysin sopivaa vaatetta';
+      msg.textContent = notice.message || 'Tällä haulla ei löytynyt sopivia tuotteita valikoimastamme.';
+      actions = notice.suggestions.slice();
+      var rs = relaxedSuggestion(notice);
+      if (rs) actions.push(rs);
+      actions = dedupe(actions).slice(0, 3);
+      if (!actions.length) actions = fallbackActions(q);
+      document.getElementById('emptyChips').innerHTML = actionButtons(actions, true);
+    } else {
+      // Vanha muoto ilman palautetta
+      title.textContent = 'Emme löytäneet tähän sopivia tuotteita vielä';
+      msg.textContent = 'Testivaiheessa mukana on vasta muutama kauppa, joten valikoima on suppea. Kokeile toista hakua tai jotain näistä:';
+      document.getElementById('emptyChips').innerHTML = actionButtons(fallbackActions(q), false);
+    }
+    emptyEl.hidden = false;
+  }
+
+  // Aina vähintään yksi seuraava askel: rajauksen poisto tai esimerkkihaku
+  function fallbackActions(q){
+    var out = [];
+    var chips = criteriaChips(lastCriteria, q);
+    ['size', 'max_price', 'gender'].forEach(function(k){
+      if (chips.some(function(ch){ return ch.key === k; }) && out.length < 2) {
+        var nq = rebuildQuery(lastCriteria, q, [k]);
+        var names = { size: 'Poista kokorajaus', max_price: 'Poista hintaraja', gender: 'Näytä kaikille sukupuolille' };
+        if (nq.trim()) out.push({ label: names[k], query: nq });
+      }
+    });
+    seasonalChips().forEach(function(t){
+      if (out.length < 4 && t.toLowerCase() !== q.toLowerCase()) out.push({ label: t, query: t });
+    });
+    return dedupe(out);
+  }
+
+  function renderInlineNotice(notice){
+    if (!notice || (!notice.message && !notice.suggestions.length)) { noticeInlineEl.hidden = true; return; }
+    var hintOnly = notice.code === 'limited_coverage' || notice.code === 'info';
+    var html = '<div class="' + (hintOnly ? 'notice-hint' : 'notice-soft') + '" data-code="' + esc(notice.code) + '">' +
+      (notice.message ? '<p>' + esc(notice.message) + '</p>' : '');
+    if (notice.suggestions.length) {
+      html += '<ul class="notice-actions">' + actionButtons(dedupe(notice.suggestions).slice(0, 3), false) + '</ul>';
+    }
+    noticeInlineEl.innerHTML = html + '</div>';
+    noticeInlineEl.hidden = false;
+  }
+
+  // Aikuisten kirjainkoot tuotekortissa (nuoret 13+). Ei merkintää, jos
+  // tuotteella on myös lasten cm-kokoja.
+  var ADULT_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL'];
+  function adultSizes(p){
+    // Lasten tuote (Kids/Junior) -> lasten S/M/L, ei aikuisten koko
+    if (/\b(kids?|junior|jr|youth|lasten|barn|girls'?|boys'?)\b/i.test(String(p.title || ''))) return [];
+    var tokens = (p.size_available || []).join(',').split(/[\/,;|]+/).map(function(t){ return t.trim().toUpperCase(); });
+    // Mikä tahansa luku 50–176 (esim. "152", "S (110-116)") = lasten cm-koko.
+    // Naisten EU-koot (32–46) eivät osu tähän väliin.
+    var hasChildCm = tokens.some(function(t){
+      var nums = t.match(/\d{2,3}/g) || [];
+      return nums.some(function(n){ n = parseInt(n, 10); return n >= 50 && n <= 176; });
+    });
+    if (hasChildCm) return [];
+    var found = {};
+    tokens.forEach(function(t){
+      var m = t.match(/^(XXS|XS|S|M|L|XL|XXL)\b/);
+      if (m) found[m[1]] = true;
+    });
+    return ADULT_ORDER.filter(function(s){ return found[s]; });
+  }
+
+  // ---------- ESIMERKKISIRUT (vaihtuvat vuodenajan mukaan) ----------
+  // Jokaisessa on ikä, koko tai tytölle/pojalle, jotta haku tunnistaa
+  // lapsihaun ja rajaa aikuisten tuotteet pois.
+  var CHIPS_BY_SEASON = {
+    autumn: ['Talvihaalari 110 cm', 'Kurahousut 2-vuotiaalle', 'Pipo 4-vuotiaalle', 'Villasukat 6-vuotiaalle', 'Välikausitakki pojalle', 'Mekko tytölle'],
+    winter: ['Talvihaalari 104 cm', 'Lapaset 3-vuotiaalle', 'Villakerrasto 6-vuotiaalle', 'Talvisaappaat 5-vuotiaalle', 'Kypärämyssy 2-vuotiaalle', 'Mekko tytölle'],
+    spring: ['Kurahousut 3-vuotiaalle', 'Välikausihaalari 98 cm', 'Sadetakki tytölle', 'Kevättakki pojalle', 'Kumisaappaat 4-vuotiaalle', 'Mekko tytölle'],
+    summer: ['Uimapuku tytölle', 'Shortsit pojalle', 'Aurinkohattu 2-vuotiaalle', 'Sandaalit 5-vuotiaalle', 'Kesämekko 6-vuotiaalle', 'T-paita pojalle']
+  };
+  function seasonalChips(date){
+    var m = (date || new Date()).getMonth() + 1;
+    var season = m >= 12 || m <= 2 ? 'winter' : m <= 5 ? 'spring' : m <= 8 ? 'summer' : 'autumn';
+    return CHIPS_BY_SEASON[season];
+  }
+  function renderChips(listId, items){
+    var ul = document.getElementById(listId);
+    ul.innerHTML = items.map(function(t){
+      return '<li><button type="button" class="chip" data-chip="' + esc(t) + '">' + esc(t) + '</button></li>';
+    }).join('');
+  }
+  document.addEventListener('click', function(e){
+    var chip = e.target.closest && e.target.closest('[data-chip]');
+    if (chip) runSearch(chip.getAttribute('data-chip'));
+  });
+  renderChips('heroChips', seasonalChips().slice(0, 5));
+
+  // ---------- MIKROFONI (selaimen puheentunnistus, suomi) ----------
+  // Puhe muuttuu ensin tekstiksi kenttään. Haku käynnistyy vasta, kun
+  // käyttäjä on tarkistanut tekstin ja painaa Hae.
+  var micBtn = document.getElementById('micBtn');
+  var heroInput = document.getElementById('heroSearchInput');
+  var Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  var recognizer = null, listening = false, heard = '';
+
+  function setListening(on){
+    listening = on;
+    micBtn.classList.toggle('listening', on);
+    micBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    micBtn.setAttribute('aria-label', on ? 'Lopeta kuuntelu' : 'Sano haku ääneen');
+    micBtn.title = micBtn.getAttribute('aria-label');
+    heroInput.placeholder = on ? 'Kuuntelen…' : heroInput.getAttribute('data-placeholder');
+  }
+
+  if (Recognition) {
+    micBtn.hidden = false;
+    heroInput.setAttribute('data-placeholder', heroInput.placeholder);
+    micBtn.addEventListener('click', function(){
+      if (listening && recognizer) { recognizer.stop(); return; }
+      heard = '';
+      voiceHint.textContent = '';
+      recognizer = new Recognition();
+      recognizer.lang = 'fi-FI';
+      recognizer.interimResults = true;
+      recognizer.maxAlternatives = 1;
+      recognizer.onresult = function(ev){
+        var text = '';
+        for (var i = 0; i < ev.results.length; i++) text += ev.results[i][0].transcript;
+        heard = text.trim();
+        heroInput.value = heard;
+      };
+      recognizer.onerror = function(ev){
+        var messages = {
+          'not-allowed': 'Mikrofonin käyttö on estetty. Voit sallia sen selaimen asetuksista tai kirjoittaa haun.',
+          'service-not-allowed': 'Puheentunnistus ei ole käytettävissä tässä selaimessa. Kirjoita haku kenttään.',
+          'no-speech': 'En kuullut puhetta. Paina mikrofonia ja kokeile uudelleen.',
+          'audio-capture': 'Mikrofonia ei löytynyt. Kirjoita haku kenttään.',
+          'network': 'Puheentunnistus ei saanut yhteyttä. Kirjoita haku kenttään.',
+          'language-not-supported': 'Selain ei tunnista suomea puheesta. Kirjoita haku kenttään.'
+        };
+        if (messages[ev.error]) voiceHint.textContent = messages[ev.error];
+      };
+      recognizer.onend = function(){
+        setListening(false);
+        if (heard) {
+          voiceHint.textContent = 'Tarkista teksti ja paina Hae.';
+          heroInput.focus();
+        }
+      };
+      try {
+        recognizer.start();
+        setListening(true);
+      } catch (err) {
+        setListening(false);
+        voiceHint.textContent = 'Puheentunnistusta ei voitu käynnistää. Kirjoita haku kenttään.';
+      }
+    });
   }
 
   // ---------- KIINNITTYVÄ HAKUPALKKI ----------
