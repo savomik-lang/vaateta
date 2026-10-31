@@ -204,9 +204,18 @@ export async function importAwinStore(store: StoreDefinition & { feedId: string 
     headers: { "User-Agent": "Vaateta/1.0 (+https://vaateta.com)", Accept: "text/csv,*/*" },
   });
   if (!response.ok) {
+    // Diagnostiikka: Awin kertoo usein virheen syyn vastauksen rungossa
+    // (esim. väärä apikey, feediä ei ole liitetty julkaisijaan). API-avain
+    // peitetään, ettei se vuoda virheilmoituksen kautta.
+    let bodySnippet = "";
+    try { bodySnippet = (await response.text()).replace(/\s+/g, " ").slice(0, 300); } catch { /* ei runkoa */ }
+    const maskedUrl = url
+      .replace(/apikey\/[^/]+/, "apikey/***")
+      .replace(/(publisher\/[^/]+\/)[^/]+/, "$1***");
     throw new Error(
       `${store.displayName}: Awin-feedin lataus epäonnistui (${response.status} ${response.statusText}). ` +
-      `Tarkista AWIN_DATAFEED_API_KEY/AWIN_PUBLISHER_ID/AWIN_FEEDLIST_TOKEN ja ${store.feedIdEnvVar}.`
+      `Tarkista AWIN_DATAFEED_API_KEY/AWIN_PUBLISHER_ID/AWIN_FEEDLIST_TOKEN ja ${store.feedIdEnvVar}. ` +
+      `URL: ${maskedUrl} | Awinin vastaus: ${bodySnippet || "(tyhjä)"}`
     );
   }
 
