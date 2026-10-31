@@ -88,7 +88,7 @@ export function byFitThenPrice(ctx: FitContext) {
 
 // --- Värivaihtoehtojen yhdistäminen ----------------------------------------
 
-function baseTitle(p: Product): string {
+export function baseTitle(p: Product): string {
   let t = p.title.trim();
   const c = p.color?.trim();
   if (c && t.toLowerCase().endsWith(c.toLowerCase())) t = t.slice(0, t.length - c.length).trim();

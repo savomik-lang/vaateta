@@ -10,6 +10,18 @@ export type GarmentType =
   | "mekko" | "body" | "uimapuku" | "pyjama" | "sukat" | "pipo" | "lapaset"
   | "muu";
 
+export interface ProductOffer {
+  source: string;
+  store: string;
+  price: Money;
+  original_price: Money | null;
+  discount_percent: number | null;
+  url_affiliate: string;
+  size_available: string[];
+  color: string | null;
+  in_stock: boolean;
+}
+
 export interface Product {
   id: string;
   source: string;
@@ -48,6 +60,13 @@ export interface Product {
   // määrä (vain jos > 1), other_colors = muut värit.
   color_count?: number;
   other_colors?: string[];
+
+  // Kauppojen välinen vertailu: group_id = mainostajan tuoteperhe (Outnorth
+  // parent_product_id, sama FI/SE:ssä), ean = yksittäisen variantin EAN.
+  // other_offers = sama tuote muissa kaupoissa (vain kun sellainen löytyy).
+  group_id?: string;
+  ean?: string;
+  other_offers?: ProductOffer[];
 
   last_updated: string;
 }
