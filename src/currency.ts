@@ -14,3 +14,8 @@ const RATES_TO_EUR: Record<string, number> = {
 export function toEur(m: Money): number {
   return m.amount * (RATES_TO_EUR[m.currency] ?? 1);
 }
+
+// EUR -> valuutta (samoilla karkeilla kursseilla), esim. hintarajaviestin "halvin maksaa noin" -lukuun.
+export function fromEur(eur: number, currency: string): number {
+  return eur / (RATES_TO_EUR[currency] ?? 1);
+}

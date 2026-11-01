@@ -47,3 +47,25 @@ test("normalisointi: ei muuta tavallista tekstiä", () => {
     assert.equal(normalizeNumberWords(s), s, s);
   }
 });
+
+test("normalisointi sv: sexåring, tre år, ett år, månader", () => {
+  assert.equal(normalizeNumberWords("till en sexåring"), "till en 6 år");
+  assert.equal(normalizeNumberWords("sexåring"), "6 år");
+  assert.equal(normalizeNumberWords("tre år"), "3 år");
+  assert.equal(normalizeNumberWords("ett år"), "1 år");
+  assert.equal(normalizeNumberWords("fjorton år"), "14 år");
+  assert.equal(normalizeNumberWords("sex månader"), "6 mån");
+});
+test("normalisointi en: six year old, six-year-old, age six, months", () => {
+  assert.equal(normalizeNumberWords("six year old"), "6 years old");
+  assert.equal(normalizeNumberWords("a six-year-old"), "a 6 years old");
+  assert.equal(normalizeNumberWords("fourteen years"), "14 years old");
+  assert.equal(normalizeNumberWords("age six"), "age 6");
+  assert.equal(normalizeNumberWords("six months old"), "6 months");
+});
+test("normalisointi sv/en: ei muuta tavallista tekstiä", () => {
+  for (const s of ["en jacka", "sex jackor", "one jacket", "the year of the dragon", "jacket for the season"]) {
+    assert.equal(normalizeNumberWords(s), s, s);
+  }
+});
+

@@ -12,6 +12,7 @@ import { checkAndIncrementDailyLimit } from "../src/ai/rate-limit";
 import { searchWebForProducts } from "../src/ai/agent-search";
 import { hasBlockedKeywords } from "../src/safety/child-safety-filter";
 import { Product } from "../src/types";
+import { parseLang, parseMarket } from "../src/lang";
 import {
   Notice, findRelaxation, buildNoResultsNotice, buildPartialSizeNotice, buildLimitedCoverageNotice,
   buildNoGarmentNotice, buildRateLimitedNotice,
@@ -31,14 +32,19 @@ function filterChildSafe(products: Product[]): Product[] {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // UI:n kieli ja kävijän markkina (lang=fi|sv|en, market=FI|SE|other). Puuttuva/tuntematon -> fi / FI.
+  const lang = parseLang(req.query.lang);
+  const market = parseMarket(req.query.market);
+  const view = { lang, market };
+
   if (req.method !== "GET") {
-    res.status(405).json({ error: "Vain GET-pyynnöt tuettu" });
+    res.status(405).json({ error: { fi: "Vain GET-pyynnöt tuettu", sv: "Endast GET-förfrågningar stöds", en: "Only GET requests are supported" }[lang] });
     return;
   }
 
   const q = (req.query.q as string) || "";
   if (!q.trim()) {
-    res.status(400).json({ error: "Anna hakuteksti parametrilla ?q=..." });
+    res.status(400).json({ error: { fi: "Anna hakuteksti parametrilla ?q=...", sv: "Ange söktext med parametern ?q=...", en: "Provide the search text with the parameter ?q=..." }[lang] });
     return;
   }
 
@@ -48,7 +54,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // kutsutaan vain kun vaatetyyppi puuttuu tai teksti ei ole suomea, ja jos se
     // ei ole käytössä tai epäonnistuu, haku jatkuu sääntötuloksella (ks.
     // src/nlu/llm-interpret.ts). Lapsiturvasuodatus ajetaan tuloksille kuten ennenkin.
-    const { criteria, interpretation } = await interpretQuery(q, parseCriteriaFromText(q));
+    const { criteria, interpretation } = await interpretQuery(q, parseCriteriaFromText(q, { lang }));
 
     // RELEVANSSIKORJAUS: jos parseCriteriaFromText ei tunnistanut MITÄÄN
     // vaatetyyppiä tekstistä, haku ei saa pudota koko katalogin läpi -
@@ -61,11 +67,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!criteria.garment_type) {
       res.status(200).json({
         query: q,
+        lang,
+        market,
         source: "catalog",
         parsed_criteria: criteria,
         interpretation,
         total_matches: 0,
-        notice: buildNoGarmentNotice(),
+        notice: buildNoGarmentNotice(lang),
         results: EMPTY_RESULTS,
       });
       return;
@@ -75,12 +83,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const allProducts = await adapter.loadAllProducts();
     // LAPSITURVALLISUUS (korkea prioriteetti): viimeinen varmistus ennen
     // näyttämistä. Ks. filterChildSafe-funktion kommentti yllä.
-    const fitCtx = fitContextFromCriteria(criteria);
+    const fitCtx = fitContextFromCriteria(criteria, market);
     // Samat tuotteet eri väreissä (sama kauppa, sama hinta) näytetään kerran.
     const runSafe = (c: typeof criteria, opts = {}) =>
-      dedupeResults(filterChildSafe(allProducts.filter((p) => matchesCriteria(p, c, opts))), fitContextFromCriteria(c));
+      dedupeResults(filterChildSafe(allProducts.filter((p) => matchesCriteria(p, c, opts))), fitContextFromCriteria(c, market), view);
     const rawCatalogMatches = await adapter.search(criteria);
-    let catalogMatches = dedupeResults(filterChildSafe(rawCatalogMatches), fitCtx);
+    let catalogMatches = dedupeResults(filterChildSafe(rawCatalogMatches), fitCtx, view);
     let notice: Notice | undefined;
 
     // Vähän täsmälleen sopivia -> otetaan mukaan myös hieman pienemmät koot
@@ -89,16 +97,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const extended = runSafe(criteria, { allowSmaller: true });
       if (extended.length > catalogMatches.length) {
         catalogMatches = extended;
-        notice = buildPartialSizeNotice(criteria);
+        notice = buildPartialSizeNotice(criteria, lang);
       }
     }
 
     if (catalogMatches.length > 0) {
-      if (!notice && isTeenSearch(criteria) && catalogMatches.length <= 5) notice = buildLimitedCoverageNotice();
+      if (!notice && isTeenSearch(criteria) && catalogMatches.length <= 5) notice = buildLimitedCoverageNotice(lang);
       const ranked = rankResults(catalogMatches, fitCtx);
       const lastImported = await adapter.lastImportedAt();
       res.status(200).json({
         query: q,
+        lang,
+        market,
         source: "catalog",
         parsed_criteria: criteria,
         interpretation,
@@ -111,7 +121,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     // Ei osumia: selvitetään mikä rajaus esti tulokset (rennostettu haku).
-    const zeroNotice = buildNoResultsNotice(criteria, findRelaxation(criteria, (c) => runSafe(c)));
+    const zeroNotice = buildNoResultsNotice(criteria, findRelaxation(criteria, (c) => runSafe(c)), lang);
 
     if (rawCatalogMatches.length > 0 && catalogMatches.length === 0) {
       // Kriteerit osuivat omaan katalogiin, MUTTA jokainen osuma suodattui
@@ -121,6 +131,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       // sijaan. (Korkean prioriteetin turvallisuusvaatimus.)
       res.status(200).json({
         query: q,
+        lang,
+        market,
         source: "catalog",
         parsed_criteria: criteria,
         interpretation,
@@ -140,6 +152,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (!process.env.ANTHROPIC_API_KEY) {
       res.status(200).json({
         query: q,
+        lang,
+        market,
         source: "catalog",
         parsed_criteria: criteria,
         interpretation,
@@ -176,7 +190,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         query: q,
         source: "ai-limit-reached",
         total_matches: 0,
-        notice: buildRateLimitedNotice(),
+        notice: buildRateLimitedNotice(lang),
         results: { cheapest: [], bestValue: [], mostLoved: null },
       });
       return;

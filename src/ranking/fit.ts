@@ -16,10 +16,13 @@ export interface FitContext {
   genderPref?: "tyttö" | "poika" | "unisex";
   winter?: boolean;
   waterproof?: boolean;
+  // Kävijän markkina: SE-kävijälle Ruotsin kaupan tuotteet hieman ylemmäs (tasatilanteissa).
+  preferMarket?: "SE";
 }
 
-export function fitContextFromCriteria(c: SearchCriteria): FitContext {
+export function fitContextFromCriteria(c: SearchCriteria, viewerMarket?: "FI" | "SE" | "other"): FitContext {
   return {
+    ...(viewerMarket === "SE" ? { preferMarket: "SE" as const } : {}),
     targetCm: targetSizeCm(c),
     isShoe: c.garment_type === "kengät",
     teen: isTeenSearch(c),
@@ -67,6 +70,7 @@ export function fitScore(p: Product, ctx: FitContext): number {
   if (ctx.genderPref && ctx.genderPref !== "unisex") score += p.gender === ctx.genderPref ? 5 : 0;
   if (ctx.winter && p.winter === true) score += 3;
   if (ctx.waterproof && p.waterproof === true) score += 2;
+  if (ctx.preferMarket && p.market === ctx.preferMarket) score += 3;
   // Karkea alennusbonus (ei saa ohittaa sopivuutta tai hintajärjestystä tasatilanteissa).
   if (p.discount_percent) score += p.discount_percent >= 30 ? 2 : p.discount_percent >= 15 ? 1 : 0;
   return score;

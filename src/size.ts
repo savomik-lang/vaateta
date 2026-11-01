@@ -18,6 +18,13 @@ export function shoeEuForCm(cm: number): number {
   return best[1];
 }
 
+// Kenkien EU-koko -> karkea pituus (käänteinen shoeEuForCm), esim. "storlek 34" -> 134.
+export function cmForShoeEu(eu: number): number {
+  let best = SHOE_EU_BY_CM[0];
+  for (const e of SHOE_EU_BY_CM) if (Math.abs(e[1] - eu) < Math.abs(best[1] - eu)) best = e;
+  return best[0];
+}
+
 export type SizeToken =
   | { kind: "cm"; lo: number; hi: number }
   | { kind: "eu"; lo: number; hi: number }
