@@ -140,3 +140,29 @@ test("otsikon 'Girls' sulkee pois pojalle-haussa, 'Boys' tytölle-haussa", async
   const girls = await adapter.search({ garment_type: "takki", child_gender_pref: "tyttö" });
   assert.deepEqual(girls.map((p) => p.id).sort(), ["g:1", "n:1"]);
 });
+
+import { matchesCriteria, brandMatches } from "./multi-store-adapter";
+
+test("väri: suomenkielinen haku osuu englanninkieliseen tuotteen väriin", () => {
+  const black = makeProduct({ id: "c:1", garment_type: "takki", in_stock: true, color: "Black" });
+  const red = makeProduct({ id: "c:2", garment_type: "takki", in_stock: true, color: "Lava Red" });
+  assert.equal(matchesCriteria(black, { garment_type: "takki", color: "musta" }), true);
+  assert.equal(matchesCriteria(red, { garment_type: "takki", color: "musta" }), false);
+  assert.equal(matchesCriteria(red, { garment_type: "takki", color: "punainen" }), true);
+});
+
+test("brandMatches: taivutettu hakusana ('reimaa') osuu brändiin 'Reima'", () => {
+  assert.equal(brandMatches("Reima", "reimaa"), true);
+  assert.equal(brandMatches("Reima", "reima"), true);
+  assert.equal(brandMatches("Color Kids", "color"), true);
+  assert.equal(brandMatches("Molo", "lindex"), false);
+  assert.equal(brandMatches("Ab", "abc"), false); // alle 3 merkkiä ei laajene
+});
+
+test("liivi ei kuulu takkihakuun, ellei liiviä haeta", () => {
+  const vest = makeProduct({ id: "v:1", garment_type: "takki", in_stock: true, title: "Color Kids Kids' Waistcoat" });
+  const jacket = makeProduct({ id: "v:2", garment_type: "takki", in_stock: true, title: "Color Kids Winter Jacket" });
+  assert.equal(matchesCriteria(vest, { garment_type: "takki" }), false);
+  assert.equal(matchesCriteria(jacket, { garment_type: "takki" }), true);
+  assert.equal(matchesCriteria(vest, { garment_type: "takki", vest: true }), true);
+});

@@ -19,25 +19,32 @@ function re(src: string): RegExp {
 // Järjestys ratkaisee (ensimmäinen osuma voittaa): erikoisempi ennen yleistä.
 // "strumpbyxor" (sukkahousut) sukat ennen housut; "badbyxor" uimapuku ennen housut.
 export const SV_EN_GARMENTS: [GarmentType, RegExp][] = [
+  // kerrasto ensin: "base layer pants" ei ole housut.
+  ["kerrasto", re(`underställ\\p{L}*|${B}base\\s*-?\\s*layers?${E}`)],
   ["kurahousut", re(`regnbyx(?:or|a|an|orna)${E}|${B}rain\\s*(?:pants|trousers|bibs|overtrousers)${E}|${B}waterproof\\s+(?:pants|trousers)${E}`)],
   ["toppahousut", re(
     `vinterbyx\\p{L}*|termobyx\\p{L}*|[öo]verdragsbyx\\p{L}*|skidbyx\\p{L}*|täckbyx\\p{L}*|` +
     `${B}(?:snow|ski)\\s*(?:pants|trousers|bibs)${E}|${B}(?:winter|insulated)\\s+(?:pants|trousers)${E}|${B}salopettes?${E}`)],
   ["sukat", re(`strump(?:or|byxor|a)${E}|${B}(?:socks?|tights|stockings)${E}`)],
-  ["uimapuku", re(`baddräkt\\p{L}*|badbyx\\p{L}*|badshorts|simdräkt\\p{L}*|bikini\\p{L}*|${B}(?:swimsuits?|swimwear|swim\\s*trunks|bathing\\s*suits?|swimming\\s*costumes?)${E}`)],
-  ["housut", re(`byx(?:or|a|an|orna)${E}|${B}(?:pants|trousers|jeans|leggings|joggers|sweatpants|trackpants)${E}|${B}jeans`)],
+  ["uimapuku", re(`baddräkt\\p{L}*|badbyx\\p{L}*|badshorts|swim\\s*shorts|board\\s*shorts|uimashorts\\p{L}*|uimahousu\\p{L}*|simdräkt\\p{L}*|bikini\\p{L}*|${B}(?:swimsuits?|swimwear|swim\\s*trunks|bathing\\s*suits?|swimming\\s*costumes?)${E}`)],
+  ["housut", re(`byx(?:or|a|an|orna)${E}|${B}(?:pants|trousers|jeans|leggings|joggers|sweatpants|trackpants|shorts)${E}|${B}jeans`)],
   ["kengät", re(
     `skor${E}|${B}sko${E}|stövl\\p{L}*|kängor${E}|${B}känga${E}|sandaler|tofflor|` +
-    `${B}(?:shoes?|boots?|wellies|wellingtons|sneakers|trainers|sandals|slippers)${E}`)],
-  ["takki", re(`jack(?:a|an|or|orna)${E}|${B}(?:jackets?|coats?|parkas?|anoraks?|windbreakers?|raincoats?|puffers?)${E}|${B}parkas?${E}`)],
+    `${B}(?:shoes?|boots?|wellies|wellingtons|sneakers?|trainers|sandals?|slippers|gymp\\p{L}*)${E}`)],
+  ["takki", re(`jack(?:a|an|or|orna)${E}|${B}(?:jackets?|coats?|parkas?|anoraks?|windbreakers?|raincoats?|puffers?)${E}|${B}parkas?${E}|` +
+    `${B}(?:väst(?:en|ar|arna)?|vests?|waistcoats?|gilets?|body\\s?warmers?)${E}`)],
   ["paita", re(`tröj(?:a|an|or|orna)${E}|${B}skjorta|sweatshirt|${B}(?:shirts?|t-?shirts?|hoodies?|sweaters?|sweatshirts?|jumpers?|pullovers?)${E}`)],
-  ["haalari", re(`overall\\p{L}*|regnställ|skalställ|${B}(?:snowsuits?|overalls?|jumpsuits?|coveralls?|rain\\s*suits?|ski\\s*suits?)${E}`)],
+  ["haalari", re(`overall\\p{L}*|regnställ|skalställ|${B}shell\\s*suits?${E}|${B}(?:snowsuits?|overalls?|jumpsuits?|coveralls?|rain\\s*suits?|ski\\s*suits?)${E}`)],
   ["mekko", re(`klänning\\p{L}*|${B}(?:dress|dresses|gowns?)${E}`)],
   ["body", re(`${B}(?:bodys?|bodies|bodysuits?|rompers?)${E}`)],
   ["pyjama", re(`pyjamas\\p{L}*|nattkläder|${B}(?:pyjamas?|pajamas?|pjs|sleepwear|nightwear)${E}`)],
-  ["pipo", re(`mössa\\p{L}*|mössor|${B}(?:beanies?|hats?)${E}`)],
+  ["pipo", re(`mössa\\p{L}*|mössor|solhatt\\p{L}*|${B}hatt(?:en|ar)?${E}|${B}keps(?:en|ar)?${E}|balaklava\\p{L}*|${B}(?:beanies?|hats?|caps?|sun\\s*hats?|balaclavas?)${E}`)],
   ["lapaset", re(`vantar${E}|handskar|fingervantar|tumvantar|${B}(?:gloves?|mittens?)${E}`)],
 ];
+
+// Liivi: haetaan takkina, mutta liivit sisältävä haku merkitään erikseen (vest).
+export const VEST_QUERY_RE = re(`väst(?:en|ar|arna)?${E}|liivi\\p{L}*|${B}(?:vests?|waistcoats?|gilets?|body\\s?warmers?)${E}`);
+export const VEST_GARMENT_RE = re(`${B}(?:väst(?:en|ar|arna)?|vests?|waistcoats?|gilets?|body\\s?warmers?)${E}`);
 
 export function findGarmentSvEn(text: string): GarmentType | undefined {
   for (const [type, rx] of SV_EN_GARMENTS) if (rx.test(text)) return type;
