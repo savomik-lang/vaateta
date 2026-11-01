@@ -4,7 +4,7 @@ import { AGE_TO_CM, monthsToCm, cmForShoeEu } from "../size";
 import { normalizeNumberWords } from "./numbers";
 import {
   findGarmentSvEn, findGenderSvEn, hasChildSignalSvEn, WATERPROOF_SV_EN,
-  findSizeWord, AGE_PATTERNS, MONTH_PATTERNS, VEST_QUERY_RE,
+  findSizeWord, AGE_PATTERNS, AGE_CONTEXT_PATTERNS, MONTH_PATTERNS, VEST_QUERY_RE,
 } from "./lang-rules";
 import { detectLanguage } from "./language";
 import { findColor } from "./colors";
@@ -61,7 +61,7 @@ const LEAD_ANY =
   "maximum|below|up\\s+to|less\\s+than|at\\s+most|no\\s+more\\s+than|within)";
 const LEAD_EXPLICIT =
   "(?:max\\.?|maks\\.?|maksimissaan|maksimissa|korkeintaan|enintään|budjetti(?:na|ni|ksi)?|hintaraja(?:na)?|maximalt|maxpris|högst|budget|maximum)";
-const PRICE_LEAD = new RegExp(`(?<!\\p{L})${LEAD_ANY}\\s*(?::|on|noin|n\\.|is|of)?\\s*${AMOUNT}\\s*${CUR}`, "iu");
+const PRICE_LEAD = new RegExp(`(?<!\\p{L})${LEAD_ANY}\\s*(?::|on|noin|n\\.|is|of|är)?\\s*${AMOUNT}\\s*${CUR}`, "iu");
 const PRICE_SYMBOL = new RegExp(`(?<!\\p{L})${LEAD_ANY}\\s*€\\s*${AMOUNT}`, "iu");
 const PRICE_TRAIL = new RegExp(
   `${AMOUNT}\\s*${CUR}\\s*(?:asti|saakka|tai\\s+alle|korkeintaan|enintään|maksimissaan|max|eller\\s+(?:mindre|lägre|billigare)|or\\s+(?:less|under|below)|at\\s+most)(?!\\p{L})`, "iu");
@@ -105,6 +105,29 @@ function monthSize(text: string): { size_raw: string; size_cm: number } | undefi
   }
   return undefined;
 }
+// Poistaa tekstistä hinnat ("max 80", "80 €", "alle 800 kr"), jotta hintaa ei luulla kooksi.
+const ANY_MONEY = new RegExp(`${AMOUNT}\\s*${CUR}`, "giu");
+function stripPrices(text: string): string {
+  const g = (rx: RegExp) => new RegExp(rx.source, "giu");
+  return text
+    .replace(g(PRICE_LEAD), " ").replace(g(PRICE_SYMBOL), " ").replace(g(PRICE_TRAIL), " ").replace(g(PRICE_BARE), " ")
+    .replace(ANY_MONEY, " ");
+}
+// Pelkkä luku vaatteen perässä ("talvitakki 116", "winter jacket 116"): koko senteissä,
+// kengillä EU-koko. Hakee 2-3 numeron luvun, jonka edessä tai perässä ei ole yksikköä, ikämerkintää tai desimaalia.
+const BARE_NUMBER = /(?<![\d.,#/\p{L}-])(\d{2,3})(?![\d%]|[.,]\d|\s*[-/]?\s*(?:vuo|v(?!\p{L})|år|y(?!\p{L})|kk|mån|month|year))/u;
+function findBareSize(text: string, garmentType?: GarmentType): { size_raw: string; size_cm: number } | undefined {
+  const m = stripPrices(text).match(BARE_NUMBER);
+  if (!m) return undefined;
+  const n = parseInt(m[1], 10);
+  if (n >= 44 && n <= 190) return { size_raw: String(n), size_cm: n };
+  if (garmentType === "kengät" && n >= 18 && n <= 45) {
+    const cm = cmForShoeEu(n);
+    return { size_raw: String(cm), size_cm: cm };
+  }
+  return undefined;
+}
+
 function findSize(text: string, garmentType?: GarmentType): { size_raw?: string; size_cm?: number; age?: number } {
   const cmMatch = text.match(/(\d{2,3})\s*(?:cm|sentti\p{L}*)/u);
   if (cmMatch) return { size_raw: cmMatch[1], size_cm: parseInt(cmMatch[1], 10) };
@@ -123,6 +146,10 @@ function findSize(text: string, garmentType?: GarmentType): { size_raw?: string;
   const agePatterns = [
     /(?<!\d)(\d{1,2})[\s-]?(?:vuotia\p{L}*|vuotta|vuoden|v)(?!\p{L})/u,
     ...AGE_PATTERNS,
+    // Amerikkalaiset taaperokoot: 2T-5T = ikä 2-5 vuotta (kirjain heti numeron perässä).
+    /(?<![\p{L}\d])([1-5])t(?![\p{L}\d-])/u,
+    // Ikä lauseyhteydestä vain lapsisignaalin kanssa ("dotter som är 6").
+    ...(hasChildSignalSvEn(text) || CHILD_SIGNAL_KEYWORDS.some((kw) => text.includes(kw)) ? AGE_CONTEXT_PATTERNS : []),
   ];
   for (const rx of agePatterns) {
     const m = text.match(rx);
@@ -134,7 +161,7 @@ function findSize(text: string, garmentType?: GarmentType): { size_raw?: string;
       return { size_raw: String(cm), size_cm: cm, age };
     }
   }
-  return {};
+  return findBareSize(text, garmentType) ?? {};
 }
 // Kieltosanat: fi "ei (halua)", sv "inte/ej/utan (ha)", en "not/no/without".
 const BRAND_DENY_RE = /(?<![\p{L}])(?:ei|inte|ej|utan|not|no|without)\s+(?:(?:halua|ha|vill\s+ha|want|wanting)\s+)?([A-Za-zäöåÄÖÅ]+)/giu;

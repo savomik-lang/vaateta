@@ -371,3 +371,57 @@ test("UI:n lausemuodot tunnistuvat (regressio)", () => {
   assert.equal(parseCriteriaFromText("rain jacket waterproof", { lang: "en" }).waterproof, true);
   assert.deepEqual(parseCriteriaFromText("winter jacket max 80 €", { lang: "en" }).max_price, { amount: 80, currency: "EUR" });
 });
+
+test("koko: pelkkä luku vaatteen perässä", () => {
+  const a = parseCriteriaFromText("winter jacket 116", { lang: "en" });
+  assert.equal(a.garment_type, "takki");
+  assert.equal(a.size_cm, 116);
+  assert.equal(a.size_raw, "116");
+  const b = parseCriteriaFromText("talvitakki 116");
+  assert.equal(b.size_cm, 116);
+  assert.equal(b.season, "winter");
+  assert.equal(parseCriteriaFromText("vinterjacka 128", { lang: "sv" }).size_cm, 128);
+  // kengillä pieni luku on EU-koko
+  assert.equal(parseCriteriaFromText("kengät 32").size_cm, 122);
+});
+
+test("koko: pelkkä luku ei sekoitu hintaan, ikään tai muihin lukuihin", () => {
+  const a = parseCriteriaFromText("talvitakki 116 max 80");
+  assert.equal(a.size_cm, 116);
+  assert.deepEqual(a.max_price, { amount: 80, currency: "EUR" });
+  const b = parseCriteriaFromText("talvitakki max 80");
+  assert.equal(b.size_cm, undefined);
+  assert.deepEqual(b.max_price, { amount: 80, currency: "EUR" });
+  assert.equal(parseCriteriaFromText("talvitakki 80 €").size_cm, undefined);
+  assert.equal(parseCriteriaFromText("vinterjacka under 800 kr", { lang: "sv" }).size_cm, undefined);
+  assert.equal(parseCriteriaFromText("winter jacket 100%").size_cm, undefined);
+  assert.equal(parseCriteriaFromText("takki 2024").size_cm, undefined);
+  // ikä voittaa: 8 ei ole koko
+  assert.equal(parseCriteriaFromText("talvitakki 8-vuotiaalle").age, 8);
+  // cm-yksikkö pysyy ennallaan
+  assert.equal(parseCriteriaFromText("talvitakki 110 cm").size_cm, 110);
+});
+
+test("ikä: 6y, 3T ja lauseyhteys", () => {
+  const a = parseCriteriaFromText("winter jacket 6y", { lang: "en" });
+  assert.equal(a.age, 6);
+  assert.equal(a.size_cm, 116);
+  assert.equal(parseCriteriaFromText("rain jacket for 8y", { lang: "en" }).age, 8);
+  const t = parseCriteriaFromText("3T winter jacket", { lang: "en" });
+  assert.equal(t.age, 3);
+  assert.equal(parseCriteriaFromText("winter coat size 4T", { lang: "en" }).age, 4);
+  assert.equal(parseCriteriaFromText("3 t-shirts", { lang: "en" }).age, undefined);
+  const c = parseCriteriaFromText("vinterjacka till min dotter som är 6", { lang: "sv" });
+  assert.equal(c.age, 6);
+  assert.equal(c.size_cm, 116);
+  assert.equal(c.child_gender_pref, "tyttö");
+  assert.equal(parseCriteriaFromText("winter jacket for my daughter who is 6", { lang: "en" }).age, 6);
+  assert.equal(parseCriteriaFromText("talvitakki tytölle joka on 6").age, 6);
+});
+
+test("ikä lauseyhteydestä vaatii lapsisignaalin eikä lue hintaa ikänä", () => {
+  assert.equal(parseCriteriaFromText("jacka som är 6", { lang: "sv" }).age, undefined);
+  const p = parseCriteriaFromText("vinterjacka till min dotter, budget är 80 kr", { lang: "sv" });
+  assert.equal(p.age, undefined);
+  assert.deepEqual(p.max_price, { amount: 80, currency: "SEK" });
+});
