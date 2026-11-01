@@ -166,3 +166,24 @@ test("liivi ei kuulu takkihakuun, ellei liiviä haeta", () => {
   assert.equal(matchesCriteria(jacket, { garment_type: "takki" }), true);
   assert.equal(matchesCriteria(vest, { garment_type: "takki", vest: true }), true);
 });
+
+test("body-haku ei palauta koruja eikä sanan 'body' sisältäviä muita tuotteita", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "v:1", garment_type: "body", in_stock: true, title: "1PC 16G Belly Ring Body Jewelry" }),
+    makeProduct({ id: "v:2", garment_type: "body", in_stock: true, title: "TOPGRILLZ Gold Grillz" }),
+    makeProduct({ id: "v:3", garment_type: "body", in_stock: true, title: "Kids Crossbody Bag" }),
+    makeProduct({ id: "v:4", garment_type: "body", in_stock: true, title: "Baby Bodysuit Organic Cotton" }),
+    makeProduct({ id: "v:5", garment_type: "body", in_stock: true, title: "Vauvan body 2-pack" }),
+  ]);
+  const results = await new MultiStoreAdapter([store]).search({ garment_type: "body", child_signal: true });
+  assert.deepEqual(results.map((p) => p.id).sort(), ["v:4", "v:5"]);
+});
+
+test("korut suodatetaan myös ilman vaatetyyppiä", async () => {
+  const store = new InMemoryProductStore([
+    makeProduct({ id: "j:1", garment_type: "muu", in_stock: true, title: "Gold Earrings Kids Jewelry" }),
+    makeProduct({ id: "j:2", garment_type: "takki", in_stock: true, title: "Kids Jacket" }),
+  ]);
+  const results = await new MultiStoreAdapter([store]).search({});
+  assert.deepEqual(results.map((p) => p.id), ["j:2"]);
+});

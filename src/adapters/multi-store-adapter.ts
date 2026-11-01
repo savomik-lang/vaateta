@@ -2,6 +2,7 @@ import { Product, SearchCriteria } from "../types";
 import { RedisProductStore, InMemoryProductStore, IProductStore } from "../store/product-store";
 import { toEur } from "../currency";
 import { colorMatches } from "../nlu/colors";
+import { looksLikeNonClothing, NOT_A_BODY_REGEX } from "../nlu/non-clothing";
 import { productSizeFit, inferSizeFromTitle } from "../size";
 import { hasChildMarkers } from "../safety/child-safety-filter";
 import { guessWinter, SEASON_FILTERED_GARMENTS } from "../season";
@@ -100,6 +101,9 @@ export interface MatchOptions {
 
 export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOptions = {}): boolean {
   if (!p.in_stock) return false;
+  // Korut ja vartalotuotteet eivät kuulu lastenvaatehakuun (myös jo tuonnissa väärin luokitellut).
+  if (looksLikeNonClothing(p.title)) return false;
+  if (p.garment_type === "body" && NOT_A_BODY_REGEX.test(p.title)) return false;
   const teenTrusted = isTeenSearch(c) && isTrustedForTeen(p.source);
   if (hasChildSignal(c) && looksLikeAdultProduct(p.title)) {
     // Nuorelle luotetusta kaupasta aikuisten tuote sallitaan (koko tarkistetaan

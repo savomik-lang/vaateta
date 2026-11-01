@@ -425,3 +425,14 @@ test("ikä lauseyhteydestä vaatii lapsisignaalin eikä lue hintaa ikänä", () 
   assert.equal(p.age, undefined);
   assert.deepEqual(p.max_price, { amount: 80, currency: "SEK" });
 });
+
+test("body-haut tunnistetaan vaatetyypiksi body (fi, sv, en)", () => {
+  const g = (q: string, lang?: "fi" | "sv" | "en") => parseCriteriaFromText(q, { lang });
+  assert.equal(g("vauvan body").garment_type, "body");
+  assert.equal(g("potkupuku").garment_type, "body");
+  assert.equal(g("body till bebis", "sv").garment_type, "body");
+  assert.equal(g("baby bodysuit", "en").garment_type, "body");
+  assert.equal(g("vauvan body").child_signal, true);
+  assert.equal(g("body till bebis", "sv").child_signal, true);
+  assert.equal(g("baby bodysuit", "en").child_signal, true);
+});
