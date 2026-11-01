@@ -2513,13 +2513,15 @@
     body: { icon: 'body', q: { fi: 'body', sv: 'body', en: 'bodysuit' } }
   };
   var CATS = {
-    talvi: { img: 'talvi-ulkoilu', def: 'talvihaalari', opts: ['talvihaalari', 'talvitakki', 'toppahousut', 'pipo', 'lapaset', 'kerrasto', 'villasukat', 'talvikengat'] },
+    talvi: { img: 'talvi-ulkoilu', def: 'talvihaalari', opts: ['talvihaalari', 'talvitakki', 'toppahousut', 'pipo', 'lapaset', 'villasukat', 'talvikengat'] },
     sade: { img: 'sade-kura', def: 'kurahousut', opts: ['kurahousut', 'sadetakki', 'sadeasu', 'kurakengat', 'kuralapaset'] },
     kengat: { img: 'kengat', def: 'talvikengat', opts: ['talvikengat', 'kurakengat', 'kengat'] },
     pipot: { img: 'pipot-lapaset', def: 'pipo', opts: ['pipo', 'lapaset', 'kuralapaset', 'villasukat'] },
-    arki: { img: 'arki-paivakoti', def: 'takki', opts: ['takki', 'paita', 'housut', 'mekko', 'haalari', 'sukat', 'pyjama', 'kerrasto'] },
-    vauvat: { img: 'vauvat', def: 'haalari', baby: true, opts: ['body', 'haalari', 'pyjama', 'housut', 'paita', 'pipo', 'sukat', 'lapaset'] }
+    arki: { img: 'arki-paivakoti', def: 'takki', opts: ['takki', 'paita', 'housut', 'mekko', 'haalari', 'sukat', 'pipo', 'kengat'] },
+    vauvat: { img: 'vauvat', def: 'haalari', baby: true, opts: ['haalari', 'takki', 'housut', 'paita', 'pipo', 'lapaset', 'sukat'] }
   };
+  // Kerrasto, body ja pyjama ovat valmiina (OPTS), mutta katalogissa ei ole niitä vielä
+  // (live-tarkistus 1.11.2026: 0–1 tuotetta). Lisätään kategorioihin, kun tuotteita on.
   var SIZES = [50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 110, 116, 122, 128, 134, 140, 146, 152, 158, 164, 170, 176];
   var BABY_MAX = 92, SHOE_MIN = 18, SHOE_MAX = 42;
   // Ikäarvio koon alle: [cm, alku, loppu, 'm' = kuukautta | 'y' = vuotta]
