@@ -174,6 +174,7 @@ test("body-haku ei palauta koruja eikä sanan 'body' sisältäviä muita tuottei
     makeProduct({ id: "v:3", garment_type: "body", in_stock: true, title: "Kids Crossbody Bag" }),
     makeProduct({ id: "v:4", garment_type: "body", in_stock: true, title: "Baby Bodysuit Organic Cotton" }),
     makeProduct({ id: "v:5", garment_type: "body", in_stock: true, title: "Vauvan body 2-pack" }),
+    makeProduct({ id: "v:6", garment_type: "body", in_stock: true, title: "Louis Vuitton Women's Bag NANO SPEEDY Mini Shoulder Bag Handbag" }),
   ]);
   const results = await new MultiStoreAdapter([store]).search({ garment_type: "body", child_signal: true });
   assert.deepEqual(results.map((p) => p.id).sort(), ["v:4", "v:5"]);

@@ -24,9 +24,6 @@ export function looksLikeNonClothing(...texts: (string | null | undefined)[]): b
   return NON_CLOTHING_REGEX.test(texts.filter(Boolean).join(" "));
 }
 
-// Sanat, joissa "body" on vain osamerkkijono (kantaan jo "body"-tyyppisenä tallennetut väärät osumat).
-export const NOT_A_BODY_REGEX = /(?:cross|some|any|no|every|anti|busy)body|bodycon|bodybuild/i;
-
 // Aito body/potkupuku/romper-tuote. "Body" ei saa osua osaksi muita sanoja (crossbody, somebody, bodycon).
 export const BODY_PRODUCT_REGEX =
-  /(?<!cross|some|any|no|every|anti|busy)body(?:s|suits?)?(?!\p{L})|potkupuku|bodysuit/iu;
+  /(?<!cross|some|any|no|every|anti|busy)body(?:s|suits?)?(?!\p{L})|potkupuku|bodysuit|vauvanbody|kietaisu|romper|babygrow/iu;
