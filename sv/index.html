@@ -78,7 +78,10 @@
   /* ---------- HEADER (floats over hero photo) ---------- */
   header{
     position: relative;
-    z-index: 2;
+    /* Hero-sisällön (z-index 2) yläpuolella: mobiilissa .hero-content alkaa heti
+       otsakkeen alta (padding-top kuvan korkeuden verran) ja peitti kielivalikon.
+       Kiinnittyvä hakupalkki (20) ja puhehaku (60) pysyvät tämän päällä. */
+    z-index: 10;
     padding: 16px 0 0;
   }
   header .wrap{
