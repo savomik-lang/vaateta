@@ -10,7 +10,7 @@
   "nav.how": "How it works",
   "nav.shops": "Shops",
   "nav.about": "About",
-  "lang.toggle": "Language: English",
+  "lang.toggle": "Language: EN, English",
   "lang.code": "EN",
   "lang.label": "Language",
   "hero.eyebrow": "Kids' clothing search",
@@ -75,5 +75,8 @@
   "cat.daily": "Everyday and nursery",
   "cat.daily.q": "spring jacket",
   "cat.baby": "Baby 50–80 cm",
-  "cat.baby.q": "snowsuit 68 cm"
+  "cat.baby.q": "snowsuit 68 cm",
+  "search.form": "Search",
+  "search.formSticky": "Search, sticky bar",
+  "a11y.logoBeta": "Vaateta beta, back to top"
 }

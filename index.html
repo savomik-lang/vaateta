@@ -10,21 +10,32 @@
 <link rel="alternate" hreflang="sv" href="https://www.vaateta.com/sv/">
 <link rel="alternate" hreflang="en" href="https://www.vaateta.com/en/">
 <link rel="alternate" hreflang="x-default" href="https://www.vaateta.com/">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preload" href="/fonts/inter-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/fraunces-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="/fonts/fonts.css">
 <style>
+  /* Suunnittelujärjestelmä: design-system/vaateta/MASTER.md (vaihe 1, 1.11.2026).
+     Kontrastit WCAG-kaavalla pohjaa #F7F5F0 / valkoista vasten. */
   :root{
-    --paper: #EDEAE2;
-    --paper-raised: #F6F4EE;
-    --ink: #23262B;
-    --ink-soft: #55585F;
-    --mustard: #C98A2B;
-    --berry: #A83D34;
-    --sage: #57654C;
+    --paper: #F7F5F0;          /* sivun pohja */
+    --paper-raised: #FFFFFF;   /* kortit, hakukenttä, vaalea teksti tummalla */
+    --paper-alt: #EFECE5;      /* osion tausta, kuvaruudut */
+    --ink: #1F2124;            /* teksti 14,8:1, pääpainike */
+    --ink-soft: #5B5E64;       /* toissijainen teksti 6,0:1 */
+    --accent: #E7A94A;         /* korostus taustana / tummalla (musta teksti 7,8:1) */
+    --accent-text: #9A6418;    /* korostus tekstinä vaalealla 4,6:1 */
+    --berry: #A83D34;          /* ale 5,7:1 */
+    --sage: #4E5B44;           /* sopivuus, kohdistusrengas */
+    --fit-bg: #E6EBDF;         /* sopivuusmerkin tausta (teksti #4E5B44: 6,0:1) */
     --blue: #33505C;
-    --line: rgba(35,38,43,0.16);
-    --radius: 2px;
+    --line: rgba(31,33,36,0.14);
+    --radius: 12px;            /* kortit ja kuvat */
+    --r-field: 14px;           /* hakukenttä */
+    --r-btn: 10px;             /* painikkeet */
+    --r-sm: 6px;               /* pienet merkit */
+    --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+    --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --h2-size: clamp(26px, 2.6vw, 32px);
   }
 
   *{ box-sizing: border-box; }
@@ -36,8 +47,10 @@
     margin:0;
     background: var(--paper);
     color: var(--ink);
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
+    font-size: 16px;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
     line-height: 1.5;
   }
 
@@ -55,10 +68,9 @@
   }
 
   .eyebrow{
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: 500;
     color: var(--ink-soft);
   }
 
@@ -74,7 +86,7 @@
     justify-content: space-between;
   }
   .logo{
-    font-family:'Fraunces', serif;
+    font-family:var(--font-display);
     font-weight: 600;
     font-size: 22px;
     letter-spacing: -0.01em;
@@ -84,11 +96,11 @@
   a.logo{ text-decoration: none; display:inline-flex; align-items: baseline; }
   .logo .beta{
     margin-left: 6px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 10px; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase;
+    font-family:var(--font-ui);
+    font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
     color: rgba(246,244,238,0.8);
     border: 1px solid rgba(246,244,238,0.4);
-    border-radius: 2px; padding: 1px 5px;
+    border-radius: var(--r-sm); padding: 1px 6px;
     position: relative; top: -3px;
   }
   .nav{ display:flex; gap: 4px; margin:0; padding:0; list-style:none; }
@@ -97,7 +109,7 @@
     font-size: 14.5px; font-weight: 500; text-decoration: none;
     color: rgba(246,244,238,0.92);
     text-shadow: 0 1px 8px rgba(0,0,0,0.35);
-    border-radius: 2px;
+    border-radius: 8px;
   }
   .nav a:hover{ color: #fff; text-decoration: underline; text-underline-offset: 4px; }
   .nav a:focus-visible{ outline: 2px solid #E7A94A; outline-offset: 0; }
@@ -112,8 +124,8 @@
   .lang-list{ display:flex; margin:0; padding:0 0 0 8px; list-style:none; border-left: 1px solid rgba(246,244,238,0.35); }
   .lang-list a{
     display:inline-flex; align-items:center; justify-content:center; min-width: 36px; min-height: 44px; padding: 0 6px;
-    font-family:'IBM Plex Mono', monospace; font-size: 13px; letter-spacing: 0.06em; text-decoration:none;
-    color: rgba(246,244,238,0.78); text-shadow: 0 1px 8px rgba(0,0,0,0.35); border-radius: 2px;
+    font-family:var(--font-ui); font-size: 13px; font-weight: 500; letter-spacing: 0.04em; text-decoration:none;
+    color: rgba(255,255,255,0.8); text-shadow: 0 1px 8px rgba(0,0,0,0.35); border-radius: 8px;
   }
   .lang-list a:hover{ color:#fff; }
   .lang-list a[aria-current]{ color:#fff; font-weight: 500; text-decoration: underline; text-decoration-color: #E7A94A; text-decoration-thickness: 2px; text-underline-offset: 6px; }
@@ -124,19 +136,19 @@
     .header-right{ gap: 2px; }
     .lang-toggle{
       display:inline-flex; align-items:center; gap: 4px; min-height: 44px; min-width: 44px; padding: 0 8px;
-      font: 500 13px 'IBM Plex Mono', monospace; letter-spacing: 0.06em;
-      color:#fff; background: rgba(35,38,43,0.28); border: 1px solid rgba(246,244,238,0.4); border-radius: 2px; cursor:pointer;
+      font: 500 13px var(--font-ui); letter-spacing: 0.04em;
+      color:#fff; background: rgba(31,33,36,0.3); border: 1px solid rgba(255,255,255,0.4); border-radius: 8px; cursor:pointer;
     }
     .lang-toggle svg{ width: 12px; height: 12px; transition: transform .15s; }
     .lang-toggle[aria-expanded="true"] svg{ transform: rotate(180deg); }
     .lang-list{
       display:none; position:absolute; right:0; top: calc(100% + 4px); z-index: 30; flex-direction: column;
-      min-width: 140px; padding: 4px; border: 1px solid var(--line); border-radius: 2px;
+      min-width: 150px; padding: 6px; border: 1px solid var(--line); border-radius: var(--radius);
       background: var(--paper-raised); box-shadow: 0 8px 24px rgba(0,0,0,0.18);
     }
     .lang.open .lang-list{ display:flex; }
     .lang-list a{ justify-content:flex-start; color: var(--ink); text-shadow:none; padding: 0 12px; }
-    .lang-list a::after{ content: attr(aria-label); margin-left: 10px; font-family:'Space Grotesk', sans-serif; letter-spacing: 0; color: var(--ink-soft); }
+    .lang-list a::after{ content: attr(data-name); margin-left: 10px; font-family:var(--font-ui); letter-spacing: 0; color: var(--ink-soft); }
     .lang-list a:hover{ color: var(--ink); background: rgba(35,38,43,0.06); }
     .lang-list a[aria-current]{ color: var(--ink); }
   }
@@ -151,7 +163,7 @@
     display: flex;
     flex-direction: column;
     min-height: 640px;
-    background: #23262B url('/images/ensinakyma-metsapolku-1408.jpg') center 38%/cover no-repeat;
+    background: #1F2124 url('/images/ensinakyma-metsapolku-1408.jpg') center 38%/cover no-repeat;
     background-image: image-set(url('/images/ensinakyma-metsapolku-1408.webp') type('image/webp'), url('/images/ensinakyma-metsapolku-1408.jpg') type('image/jpeg'));
   }
   .hero-photo::before{
@@ -173,11 +185,11 @@
     width: 100%;
   }
   .hero-content h1{
-    font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: clamp(32px, 4.4vw, 50px);
-    line-height: 1.08;
-    letter-spacing: -0.01em;
+    font-family:var(--font-display);
+    font-weight: 400;
+    font-size: clamp(36px, 4.4vw, 56px);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
     margin: 14px 0 18px;
     color: var(--paper-raised);
   }
@@ -185,14 +197,14 @@
     font-style: italic;
     color: #E7A94A;
   }
-  .hero-content .eyebrow{ color: rgba(246,244,238,0.8); }
+  .hero-content .eyebrow{ color: rgba(255,255,255,0.82); }
   @media (max-width: 480px){
     .search-form .btn{ padding: 12px 16px; }
   }
   .hero-content > *{ max-width: 600px; }
   .hero-content h1{ text-wrap: balance; }
   .hero-content p.lede{
-    font-size: 16.5px;
+    font-size: 17px;
     color: rgba(246,244,238,0.88);
     max-width: 44ch;
     margin: 0 0 26px;
@@ -205,16 +217,16 @@
     gap: 0;
     background: var(--paper-raised);
     border: 1px solid var(--ink);
-    border-radius: 6px;
+    border-radius: var(--r-field);
     padding: 6px;
-    box-shadow: 0 18px 40px -20px rgba(0,0,0,0.55);
+    box-shadow: 0 16px 36px -18px rgba(0,0,0,0.45);
     max-width: 640px;
   }
   .search-form:focus-within{ outline: 3px solid rgba(231,169,74,0.75); outline-offset: 2px; }
   .search-form input{
     flex: 1;
     min-width: 0;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-ui);
     font-size: 17px; /* ≥16px: iOS ei zoomaa kenttään */
     padding: 12px 12px;
     border: none;
@@ -222,8 +234,8 @@
     color: var(--ink);
   }
   .search-form input:focus{ outline: none; }
-  .search-form input::placeholder{ color: #7A7D84; }
-  .search-form .btn{ border-radius: 4px; padding: 12px 22px; white-space: nowrap; }
+  .search-form input::placeholder{ color: #6B6E75; }
+  .search-form .btn{ border-radius: var(--r-btn); padding: 12px 22px; white-space: nowrap; }
 
   /* ---------- MIKROFONI ---------- */
   .mic-btn{
@@ -233,7 +245,7 @@
     display:flex; align-items:center; justify-content:center;
     background: transparent;
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: var(--r-btn);
     color: var(--ink);
     cursor: pointer;
   }
@@ -279,7 +291,7 @@
   }
   .voice-close:hover{ background: rgba(35,38,43,0.08); color: var(--ink); }
   .voice-close:focus-visible, .voice-mic:focus-visible, .voice-type:focus-visible{ outline: 3px solid var(--sage); outline-offset: 3px; }
-  .voice-title{ font-family:'Fraunces', serif; font-weight: 500; font-size: 26px; margin: 4px 0 4px; }
+  .voice-title{ font-family:var(--font-display); font-weight: 500; font-size: 26px; margin: 4px 0 4px; }
   .voice-status{ font-size: 15px; color: var(--ink-soft); margin: 0 0 22px; min-height: 1.5em; }
   .voice-mic{
     position: relative;
@@ -319,7 +331,7 @@
   .voice-overlay:not([data-state="listening"]) .voice-example{ display:none; }
   .voice-type{
     margin-top: 14px;
-    font-family:'Space Grotesk', sans-serif; font-size: 14.5px; font-weight: 500;
+    font-family:var(--font-ui); font-size: 14.5px; font-weight: 500;
     background: transparent; border: none; color: var(--blue);
     text-decoration: underline; text-underline-offset: 3px;
     min-height: 44px; padding: 0 10px; cursor: pointer;
@@ -336,11 +348,10 @@
   .chips-label{
     display:block;
     margin: 18px 0 8px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: rgba(246,244,238,0.75);
+    font-family:var(--font-ui);
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.78);
   }
   .chips{
     display:flex;
@@ -349,7 +360,7 @@
     margin: 0; padding: 0; list-style: none;
   }
   .chip{
-    font-family:'Space Grotesk', sans-serif;
+    font-family:var(--font-ui);
     font-size: 14px;
     line-height: 1.2;
     padding: 9px 14px;
@@ -389,18 +400,18 @@
     max-width: 620px;
     background: var(--paper-raised);
     border: 1px dashed var(--ink);
-    border-radius: 6px;
-    padding: 20px 22px;
+    border-radius: var(--radius);
+    padding: 22px 24px;
     margin-top: 8px;
   }
   .empty-state[hidden]{ display:none; }
   .empty-state h3{
-    font-family:'Fraunces', serif;
+    font-family:var(--font-display);
     font-weight: 500;
     font-size: 21px;
     margin: 0 0 6px;
   }
-  .empty-state p{ margin: 0 0 14px; font-size: 14.5px; color: var(--ink-soft); }
+  .empty-state p{ margin: 0 0 14px; font-size: 15px; color: var(--ink-soft); }
   .empty-state .chips .chip.primary,
   .notice-actions .chip.primary{ background: var(--ink); color: var(--paper-raised); }
   .empty-state .chips .chip.primary:hover,
@@ -415,10 +426,9 @@
     margin: 4px 0 14px;
   }
   .understood-label{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-family:var(--font-ui);
+    font-size: 13px;
+    font-weight: 500;
     color: var(--ink-soft);
   }
   .understood ul{ display:flex; flex-wrap: wrap; gap: 8px; margin:0; padding:0; list-style:none; }
@@ -427,8 +437,8 @@
     align-items:center;
     gap: 2px;
     font-size: 14px;
-    background: rgba(87,101,76,0.12);
-    border: 1px solid rgba(87,101,76,0.35);
+    background: var(--fit-bg);
+    border: 1px solid rgba(78,91,68,0.3);
     border-radius: 999px;
     padding: 0 2px 0 12px;
     min-height: 36px;
@@ -449,10 +459,10 @@
   /* ---------- HAUN PALAUTE TULOSTEN YLLÄ ---------- */
   .notice-inline{ max-width: 680px; margin: 0 0 6px; }
   .notice-soft{
-    background: #F5EAD2;
-    border-left: 3px solid var(--mustard);
-    border-radius: 2px;
-    padding: 12px 14px;
+    background: #F6ECD8;
+    border-left: 3px solid var(--accent);
+    border-radius: var(--r-sm);
+    padding: 12px 16px;
     font-size: 14.5px;
     color: var(--ink);
   }
@@ -481,7 +491,7 @@
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 20;
-    background: rgba(246,244,238,0.97);
+    background: rgba(247,245,240,0.97);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
     padding: 8px 0;
@@ -502,11 +512,11 @@
   }
 
   .btn{
-    font-family:'Space Grotesk', sans-serif;
+    font-family:var(--font-ui);
     font-weight: 500;
     font-size: 15px;
     padding: 13px 22px;
-    border-radius: var(--radius);
+    border-radius: var(--r-btn);
     border: 1px solid var(--ink);
     background: var(--ink);
     color: var(--paper-raised);
@@ -523,14 +533,14 @@
   .btn.ghost:hover{ background: rgba(246,244,238,0.14); transform:none; }
 
   /* ---------- KATEGORIAT (kuvaruudut, ruutu tekee haun) ---------- */
-  .categories{ padding: 56px 0 8px; scroll-margin-top: 70px; }
-  .categories h2{ font-family:'Fraunces', serif; font-weight: 500; font-size: 28px; margin: 0 0 24px; }
+  .categories{ padding: 88px 0 16px; scroll-margin-top: 70px; }
+  .categories h2{ font-family:var(--font-display); font-weight: 400; font-size: var(--h2-size); margin: 0 0 28px; letter-spacing: -0.01em; }
   .cat-grid{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns: repeat(3, 1fr); gap: 24px 20px; }
   .cat-tile{
     display:block; width:100%; padding:0; margin:0; border:0; background:none; cursor:pointer;
     font: inherit; color: var(--ink); text-align:left; border-radius: 12px;
   }
-  .cat-media{ display:block; overflow:hidden; border-radius: 12px; background: #E4E0D6; aspect-ratio: 4 / 3; }
+  .cat-media{ display:block; overflow:hidden; border-radius: var(--radius); background: var(--paper-alt); aspect-ratio: 4 / 3; }
   .cat-media img{ display:block; width:100%; height:100%; object-fit: cover; transition: transform .25s ease-out; }
   .cat-name{ display:flex; align-items:center; justify-content:space-between; gap: 8px; min-height: 44px; font-size: 16px; font-weight: 500; }
   .cat-name::after{ content:'→'; color: var(--ink-soft); transition: transform .25s ease-out; }
@@ -548,14 +558,15 @@
 
   /* ---------- HOW IT WORKS ---------- */
   .steps{
-    padding: 28px 0 64px;
+    padding: 72px 0 88px;
     scroll-margin-top: 70px;
   }
   .steps h2{
-    font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: 28px;
-    margin: 28px 0 34px;
+    font-family:var(--font-display);
+    font-weight: 400;
+    font-size: var(--h2-size);
+    letter-spacing: -0.01em;
+    margin: 0 0 28px;
   }
   .step-row{
     display:grid;
@@ -566,24 +577,26 @@
     background: var(--paper-raised);
     border: 1px solid var(--line);
     border-radius: var(--radius);
-    padding: 22px 20px;
+    padding: 24px 22px;
     position: relative;
   }
   .step .num{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12px;
-    color: var(--mustard);
+    font-family:var(--font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent-text);
     display:block;
     margin-bottom: 10px;
   }
   .step h3{
-    font-family:'Space Grotesk', sans-serif;
-    font-size: 16.5px;
-    font-weight: 700;
+    font-family:var(--font-ui);
+    font-size: 17px;
+    font-weight: 600;
     margin: 0 0 8px;
   }
   .step p{
-    font-size: 14px;
+    font-size: 15px;
     color: var(--ink-soft);
     margin: 0;
   }
@@ -594,20 +607,22 @@
     border-top: 1px solid var(--line);
   }
   .live-search h2{
-    font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: 28px;
+    font-family:var(--font-display);
+    font-weight: 400;
+    font-size: var(--h2-size);
+    letter-spacing: -0.01em;
     margin: 12px 0 8px;
   }
   .live-search-hint{
-    font-size: 14px;
+    font-size: 15px;
     color: var(--ink-soft);
     margin: 0 0 22px;
   }
   .live-search{ scroll-margin-top: 70px; }
   .live-search-status{
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 13px;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    font-weight: 500;
     color: var(--ink-soft);
     min-height: 20px;
     margin-bottom: 10px;
@@ -626,7 +641,7 @@
   .tabs::-webkit-scrollbar{ display:none; }
   .tab{
     flex: none;
-    font-family:'Space Grotesk', sans-serif;
+    font-family:var(--font-ui);
     font-size: 15px;
     font-weight: 500;
     color: var(--ink-soft);
@@ -639,9 +654,9 @@
     white-space: nowrap;
   }
   .tab:hover{ color: var(--ink); }
-  .tab[aria-selected="true"]{ color: var(--ink); border-bottom-color: var(--mustard); font-weight: 700; }
+  .tab[aria-selected="true"]{ color: var(--ink); border-bottom-color: var(--accent-text); font-weight: 600; }
   .tab:focus-visible{ outline: 2px solid var(--sage); outline-offset: -2px; }
-  .tab-desc{ font-size: 13.5px; color: var(--ink-soft); margin: 10px 0 14px; }
+  .tab-desc{ font-size: 14px; color: var(--ink-soft); margin: 10px 0 14px; }
   .result-grid{
     display:grid;
     grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -655,8 +670,8 @@
     position: relative;
     background: var(--paper-raised);
     border: 1px solid var(--line);
-    border-radius: 4px;
-    padding: 10px 10px 12px;
+    border-radius: var(--radius);
+    padding: 10px 10px 14px;
     display:flex;
     flex-direction: column;
     gap: 5px;
@@ -668,19 +683,19 @@
   .result-card .rc-img{
     display:block;
     width: 100%; aspect-ratio: 1 / 1; object-fit: contain;
-    border-radius: 2px; background: #fff;
+    border-radius: 8px; background: #fff;
   }
-  .rc-media.noimg{ aspect-ratio: 1 / 1; background: var(--paper); border-radius: 2px; }
+  .rc-media.noimg{ aspect-ratio: 1 / 1; background: var(--paper-alt); border-radius: 8px; }
   .rc-discount{
     position:absolute; top: 6px; left: 6px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12px; font-weight: 500;
+    font-family:var(--font-ui);
+    font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
     background: var(--berry); color: #fff;
-    border-radius: 2px; padding: 2px 6px;
+    border-radius: var(--r-sm); padding: 2px 7px;
   }
   .result-card .rc-store{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-family:var(--font-ui);
+    font-size: 12px; font-weight: 500;
     color: var(--ink-soft);
     overflow:hidden; text-overflow: ellipsis; white-space: nowrap;
   }
@@ -689,16 +704,16 @@
     display:-webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow:hidden;
   }
   .result-card .rc-price{ display:flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-top: 2px; }
-  .rc-price .now{ font-family:'IBM Plex Mono', monospace; font-size: 16px; font-weight: 500; color: var(--ink); }
+  .rc-price .now{ font-family:var(--font-ui); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
   .rc-price .now.sale{ color: var(--berry); }
-  .rc-price .was{ font-family:'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--ink-soft); text-decoration: line-through; }
+  .rc-price .was{ font-family:var(--font-ui); font-size: 13px; font-variant-numeric: tabular-nums; color: var(--ink-soft); text-decoration: line-through; }
   .rc-price .approx{ flex-basis: 100%; font-size: 12px; color: var(--ink-soft); }
   .rc-why{ list-style: none; margin: 2px 0 0; padding: 0; display:flex; flex-wrap: wrap; gap: 4px; }
   .rc-why li{
-    font-size: 11.5px; line-height: 1.3;
+    font-size: 12px; font-weight: 500; line-height: 1.3;
     color: var(--sage);
-    background: rgba(87,101,76,0.1);
-    border-radius: 2px; padding: 2px 6px;
+    background: var(--fit-bg);
+    border-radius: var(--r-sm); padding: 3px 7px;
   }
   .rc-why li.adult{ color: var(--blue); background: rgba(51,80,92,0.1); }
   .result-card .rc-colors{ font-size: 12px; color: var(--ink-soft); }
@@ -709,12 +724,12 @@
   .result-card .rc-link{
     margin-top: auto;
     padding-top: 6px;
-    font-family:'Space Grotesk', sans-serif;
-    font-size: 13.5px; font-weight: 500;
-    color: var(--berry); text-decoration: none;
+    font-family:var(--font-ui);
+    font-size: 14px; font-weight: 600;
+    color: var(--ink); text-decoration: none;
   }
   /* Koko kortti on klikattava (linkki venytetään kortin päälle) */
-  .result-card .rc-link::after{ content:""; position:absolute; inset:0; border-radius: 4px; }
+  .result-card .rc-link::after{ content:""; position:absolute; inset:0; border-radius: var(--radius); }
   .result-card .rc-link:focus-visible{ outline: none; }
   .result-card .rc-link:focus-visible::after{ outline: 2px solid var(--sage); outline-offset: 2px; }
   .result-card:hover .rc-link{ text-decoration: underline; }
@@ -722,8 +737,8 @@
   .refine{ margin-top: 22px; }
   .refine-label{
     display:block;
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 11.5px; letter-spacing: 0.08em; text-transform: uppercase;
+    font-family:var(--font-ui);
+    font-size: 13px; font-weight: 500;
     color: var(--ink-soft);
   }
 
@@ -738,9 +753,8 @@
     flex-wrap: wrap;
   }
   .swatch{
-    font-family:'IBM Plex Mono', monospace;
-    font-size: 12.5px;
-    letter-spacing: 0.04em;
+    font-family:var(--font-ui);
+    font-size: 13px;
     border: 1px solid var(--ink);
     padding: 8px 14px;
     border-radius: 999px;
@@ -749,14 +763,14 @@
 
   /* ---------- ABOUT ---------- */
   .about{
-    padding: 8px 0 64px;
+    padding: 72px 0 88px;
     border-top: 1px solid var(--line);
     scroll-margin-top: 70px;
   }
   #kaupat{ scroll-margin-top: 90px; }
   .about h3{
-    font-family:'Space Grotesk', sans-serif;
-    font-size: 15.5px; font-weight: 700;
+    font-family:var(--font-ui);
+    font-size: 16px; font-weight: 600;
     margin: 0 0 6px;
   }
   .about .small{ font-size: 13px; margin-top: 8px; }
@@ -767,10 +781,11 @@
     padding: 4px 11px;
   }
   .about h2{
-    font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: 28px;
-    margin: 28px 0 26px;
+    font-family:var(--font-display);
+    font-weight: 400;
+    font-size: var(--h2-size);
+    letter-spacing: -0.01em;
+    margin: 0 0 28px;
   }
   .about-grid{
     display:grid;
@@ -778,7 +793,7 @@
     gap: 26px;
   }
   .about-grid p{
-    font-size: 14.5px;
+    font-size: 15.5px;
     color: var(--ink-soft);
     margin: 0;
   }
@@ -790,7 +805,7 @@
   .cta{
     background: var(--ink);
     color: var(--paper-raised);
-    padding: 40px 0;
+    padding: 56px 0;
   }
   .cta .wrap{
     display:grid;
@@ -799,9 +814,10 @@
     align-items:center;
   }
   .cta h2{
-    font-family:'Fraunces', serif;
-    font-weight: 500;
-    font-size: 26px;
+    font-family:var(--font-display);
+    font-weight: 400;
+    font-size: var(--h2-size);
+    letter-spacing: -0.01em;
     margin: 0 0 8px;
   }
   .cta p{
@@ -814,11 +830,11 @@
     gap: 10px;
   }
   .cta .btn{
-    background: var(--mustard);
-    border-color: var(--mustard);
+    background: var(--accent);
+    border-color: var(--accent);
     color: var(--ink);
   }
-  .cta .btn:hover{ background: #E0A548; border-color:#E0A548; }
+  .cta .btn:hover{ background: #F0BA66; border-color:#F0BA66; }
 
   /* ---------- FOOTER ---------- */
   footer{
@@ -846,9 +862,12 @@
       background-image: image-set(url('/images/ensinakyma-metsapolku-800.webp') type('image/webp'), url('/images/ensinakyma-metsapolku-1408.jpg') type('image/jpeg'));
     }
     .hero-photo::before{
-      background: linear-gradient(180deg, rgba(35,38,43,0.55) 0, rgba(35,38,43,0) 16vw, rgba(35,38,43,0) 36vw, #23262B 54.5vw, #23262B 100%);
+      background: linear-gradient(180deg, rgba(31,33,36,0.55) 0, rgba(31,33,36,0) 16vw, rgba(31,33,36,0) 36vw, #1F2124 54.5vw, #1F2124 100%);
     }
     .wrap{ padding: 0 18px; }
+    .categories{ padding-top: 56px; }
+    .steps, .about{ padding: 56px 0 64px; }
+    .cta{ padding: 44px 0; }
     .step-row{ grid-template-columns: 1fr; }
     .cta .wrap{ grid-template-columns: 1fr; }
   }
@@ -856,10 +875,11 @@
 </head>
 <body>
 
+<main id="main">
 <section class="hero-photo" id="top">
   <header>
     <div class="wrap">
-      <a class="logo" href="#top" aria-label="Vaateta, sivun alkuun" data-i18n-attr="aria-label:a11y.logo">vaateta<span class="dot">.</span><span class="beta" aria-label="beetaversio" data-i18n-attr="aria-label:a11y.beta">beta</span></a>
+      <a class="logo" href="#top" aria-label="Vaateta beta, sivun alkuun" data-i18n-attr="aria-label:a11y.logoBeta">vaateta<span class="dot">.</span><span class="beta" aria-label="beetaversio" data-i18n-attr="aria-label:a11y.beta">beta</span></a>
       <div class="header-right">
         <nav aria-label="Päävalikko" data-i18n-attr="aria-label:a11y.mainNav">
           <ul class="nav">
@@ -869,11 +889,11 @@
           </ul>
         </nav>
         <div class="lang" id="langSwitch">
-          <button type="button" class="lang-toggle" id="langToggle" aria-expanded="false" aria-controls="langList" aria-label="Kieli: suomi" data-i18n-attr="aria-label:lang.toggle"><span data-i18n="lang.code">FI</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+          <button type="button" class="lang-toggle" id="langToggle" aria-expanded="false" aria-controls="langList" aria-label="Kieli: FI, suomi" data-i18n-attr="aria-label:lang.toggle"><span data-i18n="lang.code">FI</span><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
           <ul class="lang-list" id="langList" aria-label="Kieli" data-i18n-attr="aria-label:lang.label">
-            <li><a href="/" hreflang="fi" lang="fi" data-lang="fi" aria-label="Suomi" aria-current="page">FI</a></li>
-            <li><a href="/sv/" hreflang="sv" lang="sv" data-lang="sv" aria-label="Svenska">SV</a></li>
-            <li><a href="/en/" hreflang="en" lang="en" data-lang="en" aria-label="English">EN</a></li>
+            <li><a href="/" hreflang="fi" lang="fi" data-lang="fi" aria-label="FI – Suomi" data-name="Suomi" aria-current="page">FI</a></li>
+            <li><a href="/sv/" hreflang="sv" lang="sv" data-lang="sv" aria-label="SV – Svenska" data-name="Svenska">SV</a></li>
+            <li><a href="/en/" hreflang="en" lang="en" data-lang="en" aria-label="EN – English" data-name="English">EN</a></li>
           </ul>
         </div>
       </div>
@@ -884,7 +904,7 @@
     <span class="eyebrow" data-i18n="hero.eyebrow">Lastenvaatehaku</span>
     <h1 data-i18n="hero.title">Lastenvaatteet monesta kaupasta.<br><em>Yhdellä haulla.</em></h1>
     <p class="lede" data-i18n="hero.lede">Vertaamme kaupat koon, hinnan ja laadun mukaan.</p>
-    <form class="search-form" id="heroSearchForm" role="search" data-search-form>
+    <form class="search-form" id="heroSearchForm" role="search" aria-label="Haku" data-i18n-attr="aria-label:search.form" data-search-form>
       <label for="heroSearchInput" class="visually-hidden" data-i18n="search.label">Mitä lapsi tarvitsee?</label>
       <input
         type="search"
@@ -909,7 +929,7 @@
 <div class="sticky-search" id="stickySearch" aria-hidden="true">
   <div class="wrap">
     <div class="logo">vaateta<span class="dot">.</span></div>
-    <form class="search-form" role="search" data-search-form>
+    <form class="search-form" role="search" aria-label="Haku, kiinnitetty palkki" data-i18n-attr="aria-label:search.formSticky" data-search-form>
       <label for="stickySearchInput" class="visually-hidden" data-i18n="search.label">Mitä lapsi tarvitsee?</label>
       <input type="search" id="stickySearchInput" name="q" placeholder="Mitä lapsi tarvitsee?" data-i18n-attr="placeholder:search.label" autocomplete="off" enterkeyhint="search" tabindex="-1">
       <button type="button" class="mic-btn" id="stickyMicBtn" data-input="stickySearchInput" data-hint="stickyVoiceHint" aria-label="Sano haku ääneen" title="Sano haku ääneen" data-i18n-attr="aria-label:search.mic title:search.mic" tabindex="-1" hidden>
@@ -1049,6 +1069,8 @@
     </div>
   </div>
 </section>
+
+</main>
 
 <footer>
   <div class="wrap">

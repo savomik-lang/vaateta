@@ -10,7 +10,7 @@
   "nav.how": "Så funkar det",
   "nav.shops": "Butiker",
   "nav.about": "Om oss",
-  "lang.toggle": "Språk: svenska",
+  "lang.toggle": "Språk: SV, svenska",
   "lang.code": "SV",
   "lang.label": "Språk",
   "hero.eyebrow": "Barnklädessök",
@@ -75,5 +75,8 @@
   "cat.daily": "Vardag och förskola",
   "cat.daily.q": "vårjacka",
   "cat.baby": "Bebis 50–80 cm",
-  "cat.baby.q": "overall 68 cm"
+  "cat.baby.q": "overall 68 cm",
+  "search.form": "Sökning",
+  "search.formSticky": "Sökning, fast fält",
+  "a11y.logoBeta": "Vaateta beta, till början av sidan"
 }
