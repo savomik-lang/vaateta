@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title data-i18n="meta.title">Vaateta — Lapsen vaatteet, ilman selaustuntia</title>
+<title data-i18n="meta.title">Vaateta — Lastenvaatteet monesta kaupasta yhdellä haulla</title>
 <meta name="description" content="Kerro mitä lapsi tarvitsee. Vaateta hakee parhaat löydöt pohjoismaisista verkkokaupoista ja näyttää, miksi juuri ne sopivat." data-i18n-attr="content:meta.description">
 <link rel="canonical" href="https://www.vaateta.com/" data-i18n-attr="href:meta.canonical">
 <link rel="alternate" hreflang="fi" href="https://www.vaateta.com/">
@@ -151,7 +151,8 @@
     display: flex;
     flex-direction: column;
     min-height: 640px;
-    background: url('/images/hero-family.jpg') center 32%/cover no-repeat;
+    background: #23262B url('/images/ensinakyma-metsapolku-1408.jpg') center 38%/cover no-repeat;
+    background-image: image-set(url('/images/ensinakyma-metsapolku-1408.webp') type('image/webp'), url('/images/ensinakyma-metsapolku-1408.jpg') type('image/jpeg'));
   }
   .hero-photo::before{
     content:"";
@@ -166,7 +167,7 @@
     margin-top: auto;
     padding-top: 40px;
     padding-bottom: 110px;
-    max-width: 700px;
+    max-width: 1120px;
     margin-left: auto;
     margin-right: auto;
     width: 100%;
@@ -188,6 +189,8 @@
   @media (max-width: 480px){
     .search-form .btn{ padding: 12px 16px; }
   }
+  .hero-content > *{ max-width: 600px; }
+  .hero-content h1{ text-wrap: balance; }
   .hero-content p.lede{
     font-size: 16.5px;
     color: rgba(246,244,238,0.88);
@@ -519,6 +522,30 @@
   }
   .btn.ghost:hover{ background: rgba(246,244,238,0.14); transform:none; }
 
+  /* ---------- KATEGORIAT (kuvaruudut, ruutu tekee haun) ---------- */
+  .categories{ padding: 56px 0 8px; scroll-margin-top: 70px; }
+  .categories h2{ font-family:'Fraunces', serif; font-weight: 500; font-size: 28px; margin: 0 0 24px; }
+  .cat-grid{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns: repeat(3, 1fr); gap: 24px 20px; }
+  .cat-tile{
+    display:block; width:100%; padding:0; margin:0; border:0; background:none; cursor:pointer;
+    font: inherit; color: var(--ink); text-align:left; border-radius: 12px;
+  }
+  .cat-media{ display:block; overflow:hidden; border-radius: 12px; background: #E4E0D6; aspect-ratio: 4 / 3; }
+  .cat-media img{ display:block; width:100%; height:100%; object-fit: cover; transition: transform .25s ease-out; }
+  .cat-name{ display:flex; align-items:center; justify-content:space-between; gap: 8px; min-height: 44px; font-size: 16px; font-weight: 500; }
+  .cat-name::after{ content:'→'; color: var(--ink-soft); transition: transform .25s ease-out; }
+  .cat-tile:focus-visible{ outline: 2px solid var(--ink); outline-offset: 4px; }
+  @media (hover: hover){
+    .cat-tile:hover .cat-media img{ transform: scale(1.04); }
+    .cat-tile:hover .cat-name::after{ transform: translateX(4px); color: var(--ink); }
+  }
+  @media (prefers-reduced-motion: reduce){ .cat-media img, .cat-name::after{ transition: none; } }
+  @media (max-width: 720px){
+    .categories{ padding-top: 40px; }
+    .cat-grid{ grid-template-columns: repeat(2, 1fr); gap: 12px 12px; }
+    .cat-name{ font-size: 15px; min-height: 40px; }
+  }
+
   /* ---------- HOW IT WORKS ---------- */
   .steps{
     padding: 28px 0 64px;
@@ -811,10 +838,15 @@
   footer .fineprint{ font-size: 12.5px; color: var(--ink-soft); margin: 0 0 6px; max-width: 70ch; }
 
   @media (max-width: 860px){
-    .hero-photo .hero-content{ padding-top: 150px; padding-bottom: 40px; }
-    .hero-photo{ min-height: 0; background-position: center 20%; }
+    /* Mobiilissa kuva on yläreunan nauha (koko kuva, 1408:768 = 54,5vw korkea),
+       ja teksti + haku tummalla pohjalla sen alla: teksti ei peitä lasta. */
+    .hero-photo .hero-content{ padding-top: calc(54.5vw - 8px); padding-bottom: 40px; }
+    .hero-photo{
+      min-height: 0; background-size: 100% auto; background-position: center top;
+      background-image: image-set(url('/images/ensinakyma-metsapolku-800.webp') type('image/webp'), url('/images/ensinakyma-metsapolku-1408.jpg') type('image/jpeg'));
+    }
     .hero-photo::before{
-      background: linear-gradient(180deg, rgba(35,38,43,0.55) 0%, rgba(35,38,43,0.15) 22%, rgba(35,38,43,0.70) 48%, rgba(35,38,43,0.88) 100%);
+      background: linear-gradient(180deg, rgba(35,38,43,0.55) 0, rgba(35,38,43,0) 16vw, rgba(35,38,43,0) 36vw, #23262B 54.5vw, #23262B 100%);
     }
     .wrap{ padding: 0 18px; }
     .step-row{ grid-template-columns: 1fr; }
@@ -850,8 +882,8 @@
 
   <div class="wrap hero-content">
     <span class="eyebrow" data-i18n="hero.eyebrow">Lastenvaatehaku</span>
-    <h1 data-i18n="hero.title">Lapsen vaatteet,<br>ilman <em>iltakymmenen</em><br>selaustuntia.</h1>
-    <p class="lede" data-i18n="hero.lede">Kerro yhdellä lauseella, mitä lapsi tarvitsee. Vaateta vertaa verkkokauppoja ja näyttää sopivimmat – sinä valitset.</p>
+    <h1 data-i18n="hero.title">Lastenvaatteet monesta kaupasta.<br><em>Yhdellä haulla.</em></h1>
+    <p class="lede" data-i18n="hero.lede">Vertaamme kaupat koon, hinnan ja laadun mukaan.</p>
     <form class="search-form" id="heroSearchForm" role="search" data-search-form>
       <label for="heroSearchInput" class="visually-hidden" data-i18n="search.label">Mitä lapsi tarvitsee?</label>
       <input
@@ -888,6 +920,38 @@
   </div>
   <div class="wrap"><p class="voice-hint sticky-hint" id="stickyVoiceHint" aria-live="polite"></p></div>
 </div>
+
+<section class="categories" id="kategoriat" aria-labelledby="catHeading">
+  <div class="wrap">
+    <h2 id="catHeading" data-i18n="cat.title">Kategoriat</h2>
+    <ul class="cat-grid">
+      <li><button type="button" class="cat-tile" data-chip="talvihaalari" data-i18n-attr="data-chip:cat.winter.q">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-talvi-ulkoilu-480.webp 480w, /images/kategoria-talvi-ulkoilu-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-talvi-ulkoilu-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.winter">Talvi ja ulkoilu</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-chip="kurahousut" data-i18n-attr="data-chip:cat.rain.q">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-sade-kura-480.webp 480w, /images/kategoria-sade-kura-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-sade-kura-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.rain">Sade ja kura</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-chip="kengät" data-i18n-attr="data-chip:cat.shoes.q">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-kengat-480.webp 480w, /images/kategoria-kengat-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-kengat-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.shoes">Kengät</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-chip="pipo" data-i18n-attr="data-chip:cat.hats.q">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-pipot-lapaset-480.webp 480w, /images/kategoria-pipot-lapaset-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-pipot-lapaset-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.hats">Pipot ja lapaset</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-chip="välikausitakki" data-i18n-attr="data-chip:cat.daily.q">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-arki-paivakoti-480.webp 480w, /images/kategoria-arki-paivakoti-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-arki-paivakoti-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.daily">Arki ja päiväkoti</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-chip="haalari 68 cm" data-i18n-attr="data-chip:cat.baby.q">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-vauvat-480.webp 480w, /images/kategoria-vauvat-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-vauvat-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.baby">Vauvat 50–80 cm</span>
+      </button></li>
+    </ul>
+  </div>
+</section>
 
 <section class="steps" id="miten-toimii">
   <div class="wrap">
@@ -999,7 +1063,7 @@
         </ul>
       </nav>
     </div>
-    <p class="fineprint" data-i18n="footer.fineprint">Hinnat ja saatavuus päivittyvät kerran päivässä, joten tarkista lopullinen hinta kaupasta. Tuotelinkit ovat kumppanilinkkejä. Etusivun kuva on luotu tekoälyllä.</p>
+    <p class="fineprint" data-i18n="footer.fineprint">Hinnat ja saatavuus päivittyvät kerran päivässä, joten tarkista lopullinen hinta kaupasta. Tuotelinkit ovat kumppanilinkkejä. Kuvat on luotu tekoälyllä.</p>
     <p class="fineprint">&copy; 2026 Vaateta · beta</p>
   </div>
 </footer>
