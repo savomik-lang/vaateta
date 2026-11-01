@@ -65,6 +65,19 @@ Kielletty: #C98A2B (vanha sinappi) tekstinä, kontrasti 2,7:1.
 - Varjo vain hakukentässä (`0 16px 36px -18px rgba(0,0,0,.45)`) ja korttien hover-tilassa.
 - Sivun leveys 1120 px, sivureunat 28 px (mobiili 18 px).
 
+## Kerrokset (z-index)
+
+| Arvo | Elementti |
+|---|---|
+| 2 | `.hero-content` (ensinäkymän teksti ja haku) |
+| 10 | `header` (logo, valikko, kielivalitsin ja sen pudotusvalikko) |
+| 20 | `.sticky-search` (kiinnittyvä hakupalkki) |
+| 60 | Puhehaun ikkuna |
+
+- Otsakkeen täytyy olla ensinäkymän sisällön yläpuolella: mobiilissa `.hero-content` alkaa heti otsakkeen alta
+  (yläpadding kuvan korkeuden verran) ja peitti kielivalikon, kun molemmilla oli sama arvo (korjattu 1.11.2026).
+- Uusi pudotusvalikko tai ponnahdus: tarkista mobiilissa, että se on päällimmäisenä (`document.elementFromPoint`).
+
 ## Kuvat
 
 - Ensinäkymä: `images/ensinakyma-metsapolku-*` (WebP 1408/800 + JPG). Kategoriat: `images/kategoria-*` (4:3, WebP 480/960 + JPG).
