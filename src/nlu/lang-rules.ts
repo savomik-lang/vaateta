@@ -79,8 +79,17 @@ export function findSizeWord(text: string): number | undefined {
 // "6 yo", "6 years", "age 6". Lukusanat on muunnettu numeroiksi jo ennen tätä (numbers.ts).
 export const AGE_PATTERNS: RegExp[] = [
   re(`(?<!\\d)(\\d{1,2})\\s*-?\\s*(?:åring\\p{L}*|årig\\p{L}*|års?)${E}`),
-  re(`(?<!\\d)(\\d{1,2})\\s*-?\\s*(?:years?|yrs?|yo|y\\/o)(?:\\s*-?\\s*old)?${E}`),
+  re(`(?<!\\d)(\\d{1,2})\\s*-?\\s*(?:years?|yrs?|yo|y\\/o|y)(?:\\s*-?\\s*old)?${E}`),
   re(`${B}(?:aged?|ages)\\s+(\\d{1,2})(?!\\d|\\s*[-–]\\s*\\d)`),
+];
+
+// Ikä lauseyhteydestä, vain kun haussa on lapsisignaali: "dotter som är 6", "daughter is 6",
+// "who is 6", "joka on 6". Luku saa olla enintään kaksinumeroinen eikä sen perässä yksikköä tai valuuttaa.
+const NO_UNIT = "(?!\\d|[.,]\\d|\\s*(?:cm|kr|kronor|sek|€|eur|euro\\p{L}*|%|:-))";
+export const AGE_CONTEXT_PATTERNS: RegExp[] = [
+  re(`${B}(?:som\\s+)?(?:är|blir|fyller)\\s+(\\d{1,2})${NO_UNIT}`),
+  re(`${B}(?:who\\s+is|who's|(?:she|he)\\s+is|turns|turning|will\\s+be|(?:daughter|son|child|kid|girl|boy|toddler)\\s+is)\\s+(\\d{1,2})${NO_UNIT}`),
+  re(`${B}(?:joka\\s+on|täyttää)\\s+(\\d{1,2})${NO_UNIT}`),
 ];
 
 // Kuukaudet (vauvat): "6 månader", "6 mån", "6 months", "6 mo".
