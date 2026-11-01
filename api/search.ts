@@ -12,7 +12,7 @@ import { checkAndIncrementDailyLimit } from "../src/ai/rate-limit";
 import { searchWebForProducts } from "../src/ai/agent-search";
 import { hasBlockedKeywords } from "../src/safety/child-safety-filter";
 import { Product } from "../src/types";
-import { parseLang, parseMarket } from "../src/lang";
+import { parseLang, resolveMarket } from "../src/lang";
 import {
   Notice, findRelaxation, buildNoResultsNotice, buildPartialSizeNotice, buildLimitedCoverageNotice,
   buildNoGarmentNotice, buildRateLimitedNotice,
@@ -34,7 +34,7 @@ function filterChildSafe(products: Product[]): Product[] {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // UI:n kieli ja kävijän markkina (lang=fi|sv|en, market=FI|SE|other). Puuttuva/tuntematon -> fi / FI.
   const lang = parseLang(req.query.lang);
-  const market = parseMarket(req.query.market);
+  const market = resolveMarket(req.query.market, req.headers["x-vercel-ip-country"]);
   const view = { lang, market };
 
   if (req.method !== "GET") {

@@ -1,6 +1,7 @@
 import { Product, SearchCriteria } from "../types";
 import { RedisProductStore, InMemoryProductStore, IProductStore } from "../store/product-store";
 import { toEur } from "../currency";
+import { colorMatches } from "../nlu/colors";
 import { productSizeFit, inferSizeFromTitle } from "../size";
 import { hasChildMarkers } from "../safety/child-safety-filter";
 import { guessWinter, SEASON_FILTERED_GARMENTS } from "../season";
@@ -69,11 +70,26 @@ function isTrustedForTeen(source: string): boolean {
   return AWIN_STORES.some((s) => s.storeKey === source && s.trustedForTeen);
 }
 
+// Liivi: "Waistcoat", "Vest", "Gilet", "Bodywarmer", "Väst", "Liivi". "Vest" ei saa osua sanaan
+// "Harvest" (sanaraja) eikä "Vest" kuulu aliasana "Invest".
+const VEST_TITLE_REGEX = /(?<!\p{L})(?:waistcoats?|vests?|gilets?|body\s?warmers?|liivi\p{L}*|väst(?:en|ar)?|puffer\s+vests?)(?!\p{L})/iu;
+
 const MENS_TITLE_REGEX = /\b(men|man|mens|herr|miesten|miehet)\b/i;
 const WOMENS_TITLE_REGEX = /\b(women|woman|womens|ladies|lady|dam|naisten|naiset)\b/i;
 
 function looksLikeAdultProduct(title: string): boolean {
   return ADULT_GENDER_MARKER_REGEX.test(title) || ADULT_SIZE_RANGE_REGEX.test(title);
+}
+
+// Brändivertailu: hakusana voi olla taivutettu ("reimaa", "reimalta") tai brändi voi olla
+// pidempi ("Color Kids"). Osuu, jos brändi sisältää hakusanan TAI hakusana alkaa brändin
+// nimellä (vähintään 3 merkkiä, jottei "ca" tms. osu kaikkeen).
+export function brandMatches(productBrand: string, wanted: string): boolean {
+  const pb = productBrand.toLowerCase().trim();
+  const w = wanted.toLowerCase().trim();
+  if (!pb || !w) return false;
+  if (pb.includes(w)) return true;
+  return pb.length >= 3 && w.startsWith(pb);
 }
 
 export interface MatchOptions {
@@ -95,6 +111,8 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
     if (c.child_gender_pref === "poika" && WOMENS_TITLE_REGEX.test(p.title) && !MENS_TITLE_REGEX.test(p.title)) return false;
   }
   if (c.garment_type && p.garment_type !== c.garment_type) return false;
+  // Liivi ei ole takki: takkihaku ei näytä liivejä, ellei liiviä haeta nimenomaan.
+  if (c.garment_type === "takki" && !c.vest && VEST_TITLE_REGEX.test(p.title)) return false;
   // Vertailu EUR:ssa, jotta SEK/NOK/DKK-hintaiset tuotteet (Outnorth SE)
   // eivät livahda hintarajan ohi pelkän valuuttaeron vuoksi.
   if (c.max_price && toEur(p.price) > toEur(c.max_price)) return false;
@@ -102,16 +120,16 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
   // tuote ei kuulu pojalle/tytölle-hakuun, vaikka feedin gender-kenttä olisi tyhjä.
   if (c.child_gender_pref === "poika" && GIRL_TITLE_REGEX.test(p.title) && !BOY_TITLE_REGEX.test(p.title)) return false;
   if (c.child_gender_pref === "tyttö" && BOY_TITLE_REGEX.test(p.title) && !GIRL_TITLE_REGEX.test(p.title)) return false;
-  if (c.brand_deny?.some((b) => p.brand.toLowerCase().includes(b.toLowerCase()))) return false;
+  if (c.brand_deny?.some((b) => brandMatches(p.brand, b))) return false;
   if (c.brand_allow?.length) {
-    const allowed = c.brand_allow.some((b) => p.brand.toLowerCase().includes(b.toLowerCase()));
+    const allowed = c.brand_allow.some((b) => brandMatches(p.brand, b));
     if (!allowed) return false;
   }
   if (c.waterproof === true && p.waterproof !== true) return false;
   if (c.child_gender_pref && p.gender && p.gender !== "unisex") {
     if (c.child_gender_pref !== "unisex" && p.gender !== c.child_gender_pref) return false;
   }
-  if (c.color && p.color && p.color.toLowerCase() !== c.color.toLowerCase()) return false;
+  if (c.color && p.color && !colorMatches(p.color, c.color)) return false;
   if (c.material_keywords?.length) {
     const haystack = (p.material || "").toLowerCase();
     if (!c.material_keywords.some((kw) => haystack.includes(kw.toLowerCase()))) return false;

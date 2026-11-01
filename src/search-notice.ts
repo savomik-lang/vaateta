@@ -80,34 +80,34 @@ const GARMENT_WORD: Record<Lang, Record<GarmentType, string>> = {
   fi: {
     takki: "takki", kurahousut: "kurahousut", toppahousut: "toppahousut", housut: "housut", kengät: "kengät",
     paita: "paita", haalari: "haalari", mekko: "mekko", body: "body", uimapuku: "uimapuku", pyjama: "pyjama",
-    sukat: "sukat", pipo: "pipo", lapaset: "lapaset", muu: "vaate",
+    sukat: "sukat", pipo: "pipo", lapaset: "lapaset", kerrasto: "kerrasto", muu: "vaate",
   },
   sv: {
     takki: "jacka", kurahousut: "regnbyxor", toppahousut: "vinterbyxor", housut: "byxor", kengät: "skor",
     paita: "tröja", haalari: "overall", mekko: "klänning", body: "body", uimapuku: "baddräkt", pyjama: "pyjamas",
-    sukat: "strumpor", pipo: "mössa", lapaset: "vantar", muu: "kläder",
+    sukat: "strumpor", pipo: "mössa", lapaset: "vantar", kerrasto: "underställ", muu: "kläder",
   },
   en: {
     takki: "jacket", kurahousut: "rain pants", toppahousut: "snow pants", housut: "pants", kengät: "shoes",
     paita: "shirt", haalari: "overall", mekko: "dress", body: "body", uimapuku: "swimsuit", pyjama: "pyjamas",
-    sukat: "socks", pipo: "beanie", lapaset: "mittens", muu: "clothes",
+    sukat: "socks", pipo: "beanie", lapaset: "mittens", kerrasto: "base layer", muu: "clothes",
   },
 };
 const GARMENT_PLURAL: Record<Lang, Record<GarmentType, string>> = {
   fi: {
     takki: "takkeja", kurahousut: "kurahousuja", toppahousut: "toppahousuja", housut: "housuja", kengät: "kenkiä",
     paita: "paitoja", haalari: "haalareita", mekko: "mekkoja", body: "bodyja", uimapuku: "uimapukuja", pyjama: "pyjamia",
-    sukat: "sukkia", pipo: "pipoja", lapaset: "lapasia", muu: "vaatteita",
+    sukat: "sukkia", pipo: "pipoja", lapaset: "lapasia", kerrasto: "kerrastoja", muu: "vaatteita",
   },
   sv: {
     takki: "jackor", kurahousut: "regnbyxor", toppahousut: "vinterbyxor", housut: "byxor", kengät: "skor",
     paita: "tröjor", haalari: "overaller", mekko: "klänningar", body: "bodys", uimapuku: "baddräkter", pyjama: "pyjamas",
-    sukat: "strumpor", pipo: "mössor", lapaset: "vantar", muu: "kläder",
+    sukat: "strumpor", pipo: "mössor", lapaset: "vantar", kerrasto: "underställ", muu: "kläder",
   },
   en: {
     takki: "jackets", kurahousut: "rain pants", toppahousut: "snow pants", housut: "pants", kengät: "shoes",
     paita: "shirts", haalari: "overalls", mekko: "dresses", body: "bodysuits", uimapuku: "swimsuits", pyjama: "pyjamas",
-    sukat: "socks", pipo: "beanies", lapaset: "mittens", muu: "clothes",
+    sukat: "socks", pipo: "beanies", lapaset: "mittens", kerrasto: "base layers", muu: "clothes",
   },
 };
 const WINTER_PREFIX_GARMENTS = new Set<GarmentType>(["takki", "haalari", "kengät"]);

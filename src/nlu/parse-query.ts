@@ -4,9 +4,10 @@ import { AGE_TO_CM, monthsToCm, cmForShoeEu } from "../size";
 import { normalizeNumberWords } from "./numbers";
 import {
   findGarmentSvEn, findGenderSvEn, hasChildSignalSvEn, WATERPROOF_SV_EN,
-  findSizeWord, AGE_PATTERNS, MONTH_PATTERNS,
+  findSizeWord, AGE_PATTERNS, MONTH_PATTERNS, VEST_QUERY_RE,
 } from "./lang-rules";
 import { detectLanguage } from "./language";
+import { findColor } from "./colors";
 import { Currency } from "../types";
 import { Lang } from "../lang";
 import { isKnownBrandWord } from "../ranking/brand-tiers";
@@ -27,11 +28,11 @@ const CHILD_SIGNAL_KEYWORDS = [
   "taaperolle", "taaperon", "taapero",
   "pikkulapsi", "pikkulapselle", "tytölle", "pojalle",
 ];
-export const COLOR_KEYWORDS = ["musta", "sininen", "punainen", "vihreä", "keltainen", "vaaleanpunainen", "harmaa", "valkoinen", "ruskea", "oranssi"];
+export { COLOR_KEYWORDS } from "./colors";
 const SEASON_WINTER_REGEX = /talvi|untuva|vinter|winter/;
 const SEASON_TOPPA_GARMENTS = new Set<GarmentType>(["takki", "haalari", "kengät"]);
 // Sanat jotka "ei ..." -rakenteessa eivät ole brändejä ("ei liian kallis").
-const NOT_BRAND_WORDS = new Set(["liian", "kovin", "kovinkaan", "yhtään", "mitään", "mikään", "ollenkaan", "paljon", "tosi", "hirveän", "mitenkään", "välttämättä", "ihan", "aivan", "vielä", "tarvitse", "pakko", "vain", "vaan", "sitä", "sen", "tämä", "nämä", "joku", "jokin", "kallis", "kallista", "halpa", "iso", "pieni"]);
+const NOT_BRAND_WORDS = new Set(["liian", "kovin", "kovinkaan", "yhtään", "mitään", "mikään", "ollenkaan", "paljon", "tosi", "hirveän", "mitenkään", "välttämättä", "ihan", "aivan", "vielä", "tarvitse", "pakko", "vain", "vaan", "sitä", "sen", "tämä", "nämä", "joku", "jokin", "kallis", "kallista", "halpa", "iso", "pieni", "för", "så", "mycket", "alltför", "någon", "något", "dyr", "dyra", "billig", "too", "very", "so", "any", "more", "really", "the", "that", "this", "expensive", "cheap", "big", "small", "waterproof", "just", "only", "one", "other", "than"]);
 
 function findGarmentType(text: string): GarmentType | undefined {
   // Ruotsin- ja englanninkieliset sanat sanarajoilla ensin; sitten vanha osamerkkijonolista.
@@ -135,11 +136,13 @@ function findSize(text: string, garmentType?: GarmentType): { size_raw?: string;
   }
   return {};
 }
+// Kieltosanat: fi "ei (halua)", sv "inte/ej/utan (ha)", en "not/no/without".
+const BRAND_DENY_RE = /(?<![\p{L}])(?:ei|inte|ej|utan|not|no|without)\s+(?:(?:halua|ha|vill\s+ha|want|wanting)\s+)?([A-Za-zäöåÄÖÅ]+)/giu;
 function findBrandDeny(rawText: string): string[] {
-  const denyMatches = [...rawText.matchAll(/\bei\s+(?:halua\s+)?([A-Za-zäöåÄÖÅ]+)/gi)];
+  const denyMatches = [...rawText.matchAll(BRAND_DENY_RE)];
   return denyMatches
     .map((m) => m[1])
-    .filter((w) => w.length > 2 && !["ole", "voi", "saa"].includes(w.toLowerCase()) && !NOT_BRAND_WORDS.has(w.toLowerCase()))
+    .filter((w) => w.length > 2 && !["ole", "voi", "saa", "ett", "att", "and", "but", "for", "are", "was"].includes(w.toLowerCase()) && !NOT_BRAND_WORDS.has(w.toLowerCase()))
     // Brändi = isolla alkukirjaimella kirjoitettu tai tunnettu brändi.
     .filter((w) => /^[A-ZÄÖÅ]/.test(w) || isKnownBrandWord(w))
     .map((w) => w.toLowerCase());
@@ -160,10 +163,11 @@ export function parseCriteriaFromText(rawText: string, hint: { lang?: Lang } = {
   if (WATERPROOF_KEYWORDS.some((kw) => text.includes(kw))) criteria.waterproof = true;
   const materialMatches = MATERIAL_KEYWORDS.filter((kw) => new RegExp(`\\b${kw}`, "i").test(text));
   if (materialMatches.length > 0) criteria.material_keywords = materialMatches;
+  if (VEST_QUERY_RE.test(text)) criteria.vest = true;
   const gender = findGender(text);
   if (gender) criteria.child_gender_pref = gender;
   if (CHILD_SIGNAL_KEYWORDS.some((kw) => text.includes(kw)) || hasChildSignalSvEn(text)) criteria.child_signal = true;
-  const color = COLOR_KEYWORDS.find((c) => text.includes(c));
+  const color = findColor(text);
   if (color) criteria.color = color;
   const { size_raw, size_cm, age } = findSize(text, garmentType);
   if (size_raw) criteria.size_raw = size_raw;

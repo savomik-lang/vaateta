@@ -15,6 +15,23 @@ export function parseLang(v: unknown): Lang {
   return t === "sv" || t === "en" ? t : "fi";
 }
 
+/** Kävijän maa Vercelin x-vercel-ip-country-otsakkeesta: FI/AX -> FI, SE -> SE, muu maa -> other, puuttuu -> FI. */
+export function marketFromCountry(header: unknown): ViewerMarket {
+  const s = Array.isArray(header) ? header[0] : header;
+  const cc = typeof s === "string" ? s.trim().toUpperCase() : "";
+  if (!cc) return "FI";
+  if (cc === "FI" || cc === "AX") return "FI";
+  if (cc === "SE") return "SE";
+  return "other";
+}
+
+/** Eksplisiittinen ?market voittaa; muuten maa-otsake; muuten FI. */
+export function resolveMarket(query: unknown, countryHeader: unknown): ViewerMarket {
+  const q = Array.isArray(query) ? query[0] : query;
+  if (typeof q === "string" && q.trim()) return parseMarket(q);
+  return marketFromCountry(countryHeader);
+}
+
 export function parseMarket(v: unknown): ViewerMarket {
   const s = (Array.isArray(v) ? v[0] : v);
   const t = typeof s === "string" ? s.trim().toLowerCase() : "";

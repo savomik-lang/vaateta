@@ -295,3 +295,79 @@ test("suomenkielinen haku käyttäytyy ennallaan sv/en-sääntöjen lisäyksen j
   assert.equal(parseCriteriaFromText("kengät koko 34").size_cm, 134);
 });
 
+
+test("brändikielto: inte / not / ej / without / utan", () => {
+  assert.deepEqual(parseCriteriaFromText("regnjacka inte Reima", { lang: "sv" }).brand_deny, ["reima"]);
+  assert.deepEqual(parseCriteriaFromText("rain jacket not Reima", { lang: "en" }).brand_deny, ["reima"]);
+  assert.deepEqual(parseCriteriaFromText("jacka ej Molo", { lang: "sv" }).brand_deny, ["molo"]);
+  assert.deepEqual(parseCriteriaFromText("jacket without Lindex", { lang: "en" }).brand_deny, ["lindex"]);
+  assert.deepEqual(parseCriteriaFromText("jacka utan Molo", { lang: "sv" }).brand_deny, ["molo"]);
+  assert.deepEqual(parseCriteriaFromText("takki ei Reimaa").brand_deny, ["reimaa"]);
+});
+
+test("brändikielto: 'not waterproof' ja 'inte för dyr' eivät ole brändejä", () => {
+  assert.equal(parseCriteriaFromText("jacket not waterproof", { lang: "en" }).brand_deny, undefined);
+  assert.equal(parseCriteriaFromText("jacka inte för dyr", { lang: "sv" }).brand_deny, undefined);
+  assert.equal(parseCriteriaFromText("takki ei liian kallis").brand_deny, undefined);
+});
+
+test("uudet vaatesanat haussa", () => {
+  const g = (q: string, lang?: "fi" | "sv" | "en") => parseCriteriaFromText(q, { lang }).garment_type;
+  assert.equal(g("shorts till pojke", "sv"), "housut");
+  assert.equal(g("solhatt till barn", "sv"), "pipo");
+  assert.equal(g("keps storlek 52", "sv"), "pipo");
+  assert.equal(g("balaklava", "sv"), "pipo");
+  assert.equal(g("underställ 110", "sv"), "kerrasto");
+  assert.equal(g("shorts for a boy", "en"), "housut");
+  assert.equal(g("swim shorts for kids", "en"), "uimapuku");
+  assert.equal(g("cap for a 6-year-old", "en"), "pipo");
+  assert.equal(g("shell suit 110", "en"), "haalari");
+  assert.equal(g("base layer for kids", "en"), "kerrasto");
+  assert.equal(g("sandaalit 6-vuotiaalle"), "kengät");
+  assert.equal(g("lenkkarit koko 32"), "kengät");
+  assert.equal(g("shortsit pojalle"), "housut");
+  assert.equal(g("aurinkohattu lapselle"), "pipo");
+  assert.equal(g("villakerrasto 110 cm"), "kerrasto");
+});
+
+test("liivihaku asettaa vest-lipun, takkihaku ei", () => {
+  assert.equal(parseCriteriaFromText("väst till 6-åring", { lang: "sv" }).vest, true);
+  assert.equal(parseCriteriaFromText("väst till 6-åring", { lang: "sv" }).garment_type, "takki");
+  assert.equal(parseCriteriaFromText("kids vest", { lang: "en" }).vest, true);
+  assert.equal(parseCriteriaFromText("toppaliivi 6-vuotiaalle").vest, true);
+  assert.equal(parseCriteriaFromText("vinterjacka till 6-åring", { lang: "sv" }).vest, undefined);
+});
+
+test("UI:n lausemuodot tunnistuvat (regressio)", () => {
+  const a = parseCriteriaFromText("vinterjacka 110 cm till flicka, max 800 kr", { lang: "sv" });
+  assert.equal(a.garment_type, "takki");
+  assert.equal(a.season, "winter");
+  assert.equal(a.size_cm, 110);
+  assert.equal(a.child_gender_pref, "tyttö");
+  assert.deepEqual(a.max_price, { amount: 800, currency: "SEK" });
+
+  const b = parseCriteriaFromText("vinterjacka till 6-åring", { lang: "sv" });
+  assert.equal(b.garment_type, "takki");
+  assert.equal(b.age, 6);
+  assert.equal(b.season, "winter");
+
+  const c = parseCriteriaFromText("vinterjacka till barn", { lang: "sv" });
+  assert.equal(c.garment_type, "takki");
+  assert.equal(c.child_signal, true);
+
+  assert.equal(parseCriteriaFromText("regnjacka vattentät", { lang: "sv" }).waterproof, true);
+
+  const d = parseCriteriaFromText("winter jacket for a 6-year-old", { lang: "en" });
+  assert.equal(d.garment_type, "takki");
+  assert.equal(d.age, 6);
+  assert.equal(d.season, "winter");
+
+  const e = parseCriteriaFromText("winter jacket for a girl", { lang: "en" });
+  assert.equal(e.child_gender_pref, "tyttö");
+
+  const f = parseCriteriaFromText("winter jacket for kids", { lang: "en" });
+  assert.equal(f.child_signal, true);
+
+  assert.equal(parseCriteriaFromText("rain jacket waterproof", { lang: "en" }).waterproof, true);
+  assert.deepEqual(parseCriteriaFromText("winter jacket max 80 €", { lang: "en" }).max_price, { amount: 80, currency: "EUR" });
+});

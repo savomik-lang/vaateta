@@ -7,7 +7,7 @@ export interface Money {
 
 export type GarmentType =
   | "takki" | "kurahousut" | "toppahousut" | "housut" | "kengät" | "paita" | "haalari"
-  | "mekko" | "body" | "uimapuku" | "pyjama" | "sukat" | "pipo" | "lapaset"
+  | "mekko" | "body" | "uimapuku" | "pyjama" | "sukat" | "pipo" | "lapaset" | "kerrasto"
   | "muu";
 
 export interface ProductOffer {
@@ -87,6 +87,8 @@ export interface SearchCriteria {
   age?: number;
   // Kausirajaus: "talvi"/"untuva"/"toppa" haussa -> "winter".
   season?: "winter";
+  // Liivi haetaan nimenomaan: ilman tätä liivit eivät kuulu takkihakuun.
+  vest?: boolean;
   child_gender_pref?: "tyttö" | "poika" | "unisex";
   // Kuvaileeko haku lasta ("lapselle", "vauvalle", "taaperolle"...) vaikka
   // ikää, kokoa tai sukupuolta ei mainittaisi. Aktivoi aikuissuodatuksen.
