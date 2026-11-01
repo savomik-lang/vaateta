@@ -560,6 +560,129 @@
     .cat-name{ font-size: 15px; min-height: 40px; }
   }
 
+  /* ---------- KATEGORIAPANEELI (ruutu suurenee paneeliksi: vaatteet, lapsi, koko) ---------- */
+  .cat-panel{
+    padding: 0; border: 0; color: var(--ink); background: var(--paper-raised);
+    width: 100%; max-width: 100%; height: 100%; max-height: 100%; margin: 0;
+    height: 100dvh; max-height: 100dvh;   /* näkyvä alue: painike ei jää selaimen palkin alle */
+    overflow: hidden; overscroll-behavior: contain;
+  }
+  .cat-panel[open]{ display:flex; flex-direction: column; }
+  .cat-panel::backdrop{ background: rgba(31,33,36,0.55); }
+  .cp-form{ display:flex; flex-direction: column; flex: 1 1 auto; min-height: 0; margin: 0; }
+  .cp-head{ position: relative; flex: 0 0 auto; height: 132px; overflow: hidden; background: var(--paper-alt); }
+  .cp-head img{ display:block; width:100%; height:100%; object-fit: cover; object-position: center 42%; }
+  .cp-head::after{ content:""; position:absolute; inset:0; background: linear-gradient(180deg, rgba(31,33,36,0) 30%, rgba(31,33,36,0.72) 100%); }
+  .cp-head h2{
+    position:absolute; left: 18px; right: 64px; bottom: 12px; z-index: 1; margin: 0;
+    font-family: var(--font-display); font-weight: 400; font-size: 26px; line-height: 1.1; color: #fff;
+    text-shadow: 0 1px 10px rgba(0,0,0,0.35);
+  }
+  .cp-close{
+    position:absolute; top: 10px; right: 10px; z-index: 1; width: 44px; height: 44px;
+    display:inline-flex; align-items:center; justify-content:center; border: 0; border-radius: 50%;
+    background: rgba(255,255,255,0.92); color: var(--ink); cursor: pointer;
+  }
+  .cp-close svg{ width: 20px; height: 20px; }
+  .cp-close:focus-visible{ outline: 2px solid var(--ink); outline-offset: 2px; }
+  .cp-body{ flex: 1 1 auto; min-height: 0; overflow-x: hidden; overflow-y: auto; padding: 14px 18px 8px; }
+  .cp-group{ border: 0; margin: 0 0 16px; padding: 0; min-width: 0; }
+  .cp-group legend, .cp-label{ display:block; padding: 0; margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--ink); }
+  .cp-group legend span{ font-weight: 400; color: var(--ink-soft); }
+  .cp-opts{ list-style:none; margin:0; padding:0; display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .cp-opt span:not(.cp-check){ max-width: 100%; overflow-wrap: anywhere; hyphens: manual; }
+  .cp-opt{
+    position: relative; width: 100%; min-height: 84px; padding: 10px 4px 8px; margin: 0;
+    display:flex; flex-direction: column; align-items:center; justify-content: flex-start; gap: 4px;
+    font: 500 12.5px/1.2 var(--font-ui); color: var(--ink-soft); text-align: center;
+    background: var(--paper-alt); border: 1px solid transparent; border-radius: var(--radius); cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .15s ease, border-color .15s ease, color .15s ease;
+  }
+  .cp-opt svg{ width: 36px; height: 36px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .cp-opt[aria-pressed="true"]{ background: var(--paper-raised); border: 2px solid var(--ink); color: var(--ink); padding: 9px 3px 7px; }
+  .cp-check{
+    position:absolute; top: 5px; right: 5px; width: 20px; height: 20px; border-radius: 50%;
+    display:none; align-items:center; justify-content:center; background: var(--accent); color: var(--ink);
+  }
+  .cp-opt .cp-check svg{ width: 12px; height: 12px; stroke-width: 2.6; }
+  .cp-opt[aria-pressed="true"] .cp-check{ display:inline-flex; }
+  .cp-opt:focus-visible{ outline: 2px solid var(--ink); outline-offset: 2px; }
+  @media (hover: hover){ .cp-opt:hover{ border-color: var(--ink-soft); color: var(--ink); } }
+  .cp-seg{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .cp-seg label{ position: relative; }
+  .cp-seg input{ position:absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+  .cp-seg span{
+    display:flex; align-items:center; justify-content:center; min-height: 44px; padding: 0 8px;
+    border: 1px solid var(--ink-soft); border-radius: var(--r-btn); font-size: 15px; font-weight: 500; background: var(--paper-raised);
+  }
+  .cp-seg input:checked + span{ background: var(--ink); border-color: var(--ink); color: var(--paper-raised); }
+  .cp-seg input:focus-visible + span{ outline: 2px solid var(--ink); outline-offset: 2px; }
+  .cp-size-head{ display:flex; align-items: baseline; gap: 10px; margin: 0 0 4px; }
+  .cp-size-value{ font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .cp-size-hint{ font-size: 14px; color: var(--ink-soft); }
+  .cp-size-clear{
+    margin-left: auto; min-height: 44px; padding: 0 4px; border: 0; background: none; cursor: pointer;
+    font: 500 14px var(--font-ui); color: var(--ink); text-decoration: underline; text-underline-offset: 3px;
+  }
+  .cp-slider{ display:flex; align-items:center; gap: 8px; }
+  .cp-step{
+    flex: 0 0 auto; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--ink-soft);
+    background: var(--paper-raised); color: var(--ink); font-size: 22px; line-height: 1; cursor: pointer;
+    display:inline-flex; align-items:center; justify-content:center;
+  }
+  .cp-step:disabled{ opacity: .4; cursor: default; }
+  .cp-step:focus-visible{ outline: 2px solid var(--ink); outline-offset: 2px; }
+  .cp-range{ flex: 1 1 auto; min-width: 0; height: 44px; margin: 0; accent-color: var(--ink); cursor: pointer; }
+  .cp-range.unset{ opacity: .45; }
+  .cp-memory{ margin: 4px 0 8px; font-size: 13px; color: var(--ink-soft); }
+  .cp-memory button{
+    min-height: 32px; padding: 0 2px; border: 0; background: none; cursor: pointer;
+    font: inherit; color: var(--ink); text-decoration: underline; text-underline-offset: 3px;
+  }
+  .cp-foot{ flex: 0 0 auto; padding: 12px 18px calc(12px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--paper-raised); }
+  .cp-show{ width: 100%; min-height: 50px; font-size: 16px; font-weight: 600; cursor: pointer; }
+  .cp-show:disabled{ background: var(--paper-alt); border-color: var(--paper-alt); color: var(--ink-soft); cursor: default; transform: none; }
+  @media (max-width: 360px){ .cp-opt{ font-size: 12px; } .cp-opts{ gap: 6px; } }
+  @media (min-width: 721px){
+    .cat-panel{
+      width: min(680px, calc(100% - 48px)); height: auto; max-height: min(860px, calc(100% - 48px));
+      margin: auto; border-radius: 16px; box-shadow: 0 24px 60px -20px rgba(0,0,0,0.45);
+    }
+    .cp-head{ height: 180px; }
+    .cp-head h2{ left: 24px; font-size: 32px; bottom: 16px; }
+    .cp-body{ padding: 20px 24px 8px; }
+    .cp-foot{ padding: 14px 24px; }
+    .cp-opt{ min-height: 96px; font-size: 13.5px; }
+    .cp-opt svg{ width: 40px; height: 40px; }
+  }
+  /* Avautuminen: View Transitions (kuva liukuu ruudusta paneeliin); muuten lyhyt häivytys */
+  ::view-transition-group(cat-media){ animation-duration: .32s; animation-timing-function: cubic-bezier(.2,.7,.2,1); }
+  ::view-transition-old(root), ::view-transition-new(root){ animation-duration: .24s; }
+  .cat-panel.cp-fade{ animation: cpFade .2s ease-out; }
+  @keyframes cpFade{ from{ opacity: 0; transform: translateY(12px); } to{ opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce){
+    .cat-panel.cp-fade{ animation: none; }
+    ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*){ animation: none !important; }
+    .cp-opt{ transition: none; }
+  }
+
+  /* Valinnat tuloksissa: vaatesuodatin + muokkaa */
+  .cat-filter{ margin: 0 0 12px; }
+  .cat-filter[hidden]{ display:none; }
+  .cat-filter .chip{ display:inline-flex; align-items:center; gap: 6px; }
+  .cat-filter .chip .n{ color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .cat-filter .chip[aria-pressed="true"]{ background: var(--ink); color: var(--paper-raised); }
+  .cat-filter .chip[aria-pressed="true"] .n{ color: rgba(255,255,255,0.75); }
+  .cat-filter .chip:disabled{ opacity: .5; cursor: default; background: var(--paper-raised); color: var(--ink); }
+  .crit-edit{
+    min-height: 36px; padding: 0 14px; border: 1px solid var(--ink); border-radius: 999px;
+    background: var(--paper-raised); color: var(--ink); font: 500 14px var(--font-ui); cursor: pointer;
+  }
+  .crit-edit:hover{ background: var(--ink); color: var(--paper-raised); }
+  .crit-edit:focus-visible{ outline: 2px solid var(--sage); outline-offset: 2px; }
+  .crit-edit[hidden]{ display:none; }
+
   /* ---------- HOW IT WORKS ---------- */
   .steps{
     padding: 72px 0 88px;
@@ -949,33 +1072,111 @@
   <div class="wrap">
     <h2 id="catHeading" data-i18n="cat.title">Kategorier</h2>
     <ul class="cat-grid">
-      <li><button type="button" class="cat-tile" data-chip="vinteroverall" data-i18n-attr="data-chip:cat.winter.q">
+      <li><button type="button" class="cat-tile" data-cat="talvi" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-talvi-ulkoilu-480.webp 480w, /images/kategoria-talvi-ulkoilu-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-talvi-ulkoilu-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
         <span class="cat-name" data-i18n="cat.winter">Vinter och utomhus</span>
       </button></li>
-      <li><button type="button" class="cat-tile" data-chip="regnbyxor" data-i18n-attr="data-chip:cat.rain.q">
+      <li><button type="button" class="cat-tile" data-cat="sade" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-sade-kura-480.webp 480w, /images/kategoria-sade-kura-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-sade-kura-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
         <span class="cat-name" data-i18n="cat.rain">Regn och lera</span>
       </button></li>
-      <li><button type="button" class="cat-tile" data-chip="skor" data-i18n-attr="data-chip:cat.shoes.q">
+      <li><button type="button" class="cat-tile" data-cat="kengat" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-kengat-480.webp 480w, /images/kategoria-kengat-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-kengat-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
         <span class="cat-name" data-i18n="cat.shoes">Skor</span>
       </button></li>
-      <li><button type="button" class="cat-tile" data-chip="mössa" data-i18n-attr="data-chip:cat.hats.q">
+      <li><button type="button" class="cat-tile" data-cat="pipot" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-pipot-lapaset-480.webp 480w, /images/kategoria-pipot-lapaset-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-pipot-lapaset-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
         <span class="cat-name" data-i18n="cat.hats">Mössor och vantar</span>
       </button></li>
-      <li><button type="button" class="cat-tile" data-chip="vårjacka" data-i18n-attr="data-chip:cat.daily.q">
+      <li><button type="button" class="cat-tile" data-cat="arki" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-arki-paivakoti-480.webp 480w, /images/kategoria-arki-paivakoti-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-arki-paivakoti-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
         <span class="cat-name" data-i18n="cat.daily">Vardag och förskola</span>
       </button></li>
-      <li><button type="button" class="cat-tile" data-chip="overall 68 cm" data-i18n-attr="data-chip:cat.baby.q">
+      <li><button type="button" class="cat-tile" data-cat="vauvat" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-vauvat-480.webp 480w, /images/kategoria-vauvat-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-vauvat-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
         <span class="cat-name" data-i18n="cat.baby">Bebis 50–80 cm</span>
       </button></li>
     </ul>
   </div>
 </section>
+
+<dialog class="cat-panel" id="catPanel" aria-labelledby="cpTitle">
+  <form class="cp-form" id="cpForm" method="dialog" novalidate>
+    <div class="cp-head" id="cpHead">
+      <img id="cpImg" src="" alt="" width="960" height="720" decoding="async">
+      <h2 id="cpTitle"></h2>
+      <button type="button" class="cp-close" id="cpClose" aria-label="Stäng" data-i18n-attr="aria-label:cp.close"><svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><use href="#ic-close"/></svg></button>
+    </div>
+    <div class="cp-body">
+      <fieldset class="cp-group">
+        <legend><span class="cp-legend-main" data-i18n="cp.garments">Plagg</span> <span data-i18n="cp.garmentsHint">(välj ett eller flera)</span></legend>
+        <ul class="cp-opts" id="cpOpts"></ul>
+      </fieldset>
+      <fieldset class="cp-group">
+        <legend data-i18n="cp.child">Barn</legend>
+        <div class="cp-seg">
+          <label><input type="radio" name="cpGender" value="tyttö"><span data-i18n="cp.girl">Flicka</span></label>
+          <label><input type="radio" name="cpGender" value="poika"><span data-i18n="cp.boy">Pojke</span></label>
+          <label><input type="radio" name="cpGender" value="" checked><span data-i18n="cp.all">Alla</span></label>
+        </div>
+      </fieldset>
+      <div class="cp-group" id="cpSizeGroup" role="group" aria-labelledby="cpSizeLabel">
+        <div class="cp-size-head">
+          <span class="cp-label" id="cpSizeLabel" data-i18n="cp.size">Storlek</span>
+          <span class="cp-size-value" id="cpSizeValue" aria-hidden="true"></span>
+          <span class="cp-size-hint" id="cpSizeHint" aria-hidden="true"></span>
+          <button type="button" class="cp-size-clear" id="cpSizeClear" data-i18n="cp.anySize">Alla storlekar</button>
+        </div>
+        <div class="cp-slider">
+          <button type="button" class="cp-step" id="cpSizeDec" aria-label="Mindre storlek" data-i18n-attr="aria-label:cp.smaller">−</button>
+          <input type="range" class="cp-range" id="cpSize" min="0" max="21" step="1" value="10" aria-label="Storlek i centimeter" data-i18n-attr="aria-label:cp.sizeRange">
+          <button type="button" class="cp-step" id="cpSizeInc" aria-label="Större storlek" data-i18n-attr="aria-label:cp.larger">+</button>
+        </div>
+      </div>
+      <div class="cp-group" id="cpShoeGroup" role="group" aria-labelledby="cpShoeLabel" hidden>
+        <div class="cp-size-head">
+          <span class="cp-label" id="cpShoeLabel" data-i18n="cp.shoe">Skostorlek</span>
+          <span class="cp-size-value" id="cpShoeValue" aria-hidden="true"></span>
+          <button type="button" class="cp-size-clear" id="cpShoeClear" data-i18n="cp.anyShoe">Alla storlekar</button>
+        </div>
+        <div class="cp-slider">
+          <button type="button" class="cp-step" id="cpShoeDec" aria-label="Mindre skostorlek" data-i18n-attr="aria-label:cp.shoeSmaller">−</button>
+          <input type="range" class="cp-range" id="cpShoe" min="18" max="42" step="1" value="30" aria-label="Skostorlek (EU)" data-i18n-attr="aria-label:cp.shoeRange">
+          <button type="button" class="cp-step" id="cpShoeInc" aria-label="Större skostorlek" data-i18n-attr="aria-label:cp.shoeLarger">+</button>
+        </div>
+      </div>
+      <p class="cp-memory" id="cpMemory"><span data-i18n="cp.memory">Storlek och barn sparas på den här enheten.</span> <button type="button" id="cpForget" data-i18n="cp.forget">Glöm</button></p>
+    </div>
+    <div class="cp-foot">
+      <button type="submit" class="btn cp-show" id="cpShow" data-i18n="cp.show">Visa produkter</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Vaatekuvakkeet (oma piirros, 32x32 ääriviiva): kategoriapaneeli -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="ic-pipo" viewBox="0 0 32 32"><path d="M7 21.5C7 13.5 11 8.5 16 8.5s9 5 9 13"/><rect x="5.5" y="21.5" width="21" height="5" rx="1.6"/><circle cx="16" cy="5.6" r="2.2"/><path d="M10.5 21.5v5M16 21.5v5M21.5 21.5v5"/></symbol>
+  <symbol id="ic-lapaset" viewBox="0 0 32 32"><path d="M12.5 26.5V14.6C12.5 10.2 14.8 7 18 7s5.5 3.2 5.5 7.6v11.9z"/><path d="M12.5 15.6c-2.7-1.4-4.8.5-3.8 3l3.8 4.6"/><path d="M12.5 22.6h11"/></symbol>
+  <symbol id="ic-sukat" viewBox="0 0 32 32"><path d="M12 4.5h8.5v12.3l4.3 4.2c2.2 2.2 1 6-2.1 6h-5.4c-3 0-5.3-2.3-5.3-5.3z"/><path d="M12 9h8.5"/></symbol>
+  <symbol id="ic-takki" viewBox="0 0 32 32"><path d="M11.5 5.5 6.8 8C5.6 8.7 5 9.8 4.9 11.2L4 22.5h3.6L9 14.5V27h14V14.5l1.4 8h3.6l-.9-11.3c-.1-1.4-.7-2.5-1.9-3.2l-4.7-2.5"/><path d="M11.5 5.5 16 9l4.5-3.5M16 9v18M11 19.5h3M18 19.5h3"/></symbol>
+  <symbol id="ic-sadetakki" viewBox="0 0 32 32"><path d="M11.5 7 6.8 9.4C5.6 10 5 11.1 4.9 12.5L4 23.5h3.6L9 15.5V28h14V15.5l1.4 8h3.6l-.9-11c-.1-1.4-.7-2.5-1.9-3.1L20.5 7"/><path d="M11.5 7c0-3.4 2-5.2 4.5-5.2s4.5 1.8 4.5 5.2l-2 3h-5z"/><path d="M16 10v18M11 20h3M18 20h3"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
+  <symbol id="ic-haalari" viewBox="0 0 32 32"><path d="M12 5c1 2 7 2 8 0l5.2 2.6c1 .5 1.6 1.4 1.8 2.5l1.3 9.4h-3.6L23 13v15h-5l-2-9-2 9H9V13l-1.7 6.5H3.7L5 10.1c.2-1.1.8-2 1.8-2.5z"/><path d="M16 6.5V18M4 17.5h3.6M24.4 17.5h3.6"/></symbol>
+  <symbol id="ic-sadeasu" viewBox="0 0 32 32"><path d="M12 5c1 2 7 2 8 0l5.2 2.6c1 .5 1.6 1.4 1.8 2.5l1.3 9.4h-3.6L23 13v15h-5l-2-9-2 9H9V13l-1.7 6.5H3.7L5 10.1c.2-1.1.8-2 1.8-2.5z"/><path d="M12 5c0-2.4 1.8-3.6 4-3.6S20 2.6 20 5M16 6.5V18M4 17.5h3.6M24.4 17.5h3.6"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
+  <symbol id="ic-toppahousut" viewBox="0 0 32 32"><path d="M10.5 4.5V12M21.5 4.5V12"/><path d="M9.5 12h13l1.2 16H18l-2-11-2 11H8.3z"/><path d="M8.9 20.5h5.6M17.5 20.5h5.6"/></symbol>
+  <symbol id="ic-kurahousut" viewBox="0 0 32 32"><path d="M10.5 4.5V12M21.5 4.5V12"/><path d="M9.5 12h13l1.2 16H18l-2-11-2 11H8.3z"/><path d="M12.5 15h7"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
+  <symbol id="ic-housut" viewBox="0 0 32 32"><path d="M9 5h14l1.5 23h-5.8L16 13.5 13.3 28H7.5z"/><path d="M8.8 8.5h14.4"/></symbol>
+  <symbol id="ic-paita" viewBox="0 0 32 32"><path d="M12 5c1 2 7 2 8 0l6 3.2 2.8 15.3h-3.6L23.5 13v14h-15V13l-1.7 10.5H3.2L6 8.2z"/><path d="M3.6 21.3h3.5M24.9 21.3h3.5"/></symbol>
+  <symbol id="ic-mekko" viewBox="0 0 32 32"><path d="M12 4.5v4c0 1.6-1.6 2.6-2.3 4L6.5 27.5h19l-3.2-15c-.7-1.4-2.3-2.4-2.3-4v-4"/><path d="M12 4.5c1.5 2.5 6.5 2.5 8 0M10 14h12"/></symbol>
+  <symbol id="ic-body" viewBox="0 0 32 32"><path d="M11.5 5c1.5 2.4 7.5 2.4 9 0l5 3 1.6 5.2-3.6 1.1V21c0 3.4-3.2 6-6.5 6s-6.5-2.6-6.5-6v-6.7l-3.6-1.1L6.5 8z"/><path d="M13.5 27c0-1.6 1.1-2.5 2.5-2.5s2.5.9 2.5 2.5"/></symbol>
+  <symbol id="ic-pyjama" viewBox="0 0 32 32"><path d="M12 3.5c1 1.6 7 1.6 8 0l5 2.6 2 8.2h-3l-1-4.6v6.8H9v-6.8l-1 4.6H5l2-8.2z"/><path d="M16 4.8v11.7"/><circle cx="18" cy="8.6" r=".55"/><circle cx="18" cy="12.6" r=".55"/><path d="M10 18.5h12l.8 10.5h-4.3L16 22l-2.5 7H9.2z"/></symbol>
+  <symbol id="ic-kerrasto" viewBox="0 0 32 32"><path d="M12 3.5c1 1.6 7 1.6 8 0l5 2.6 2 8.2h-3l-1-4.6v6.8H9v-6.8l-1 4.6H5l2-8.2z"/><path d="M5.5 12.2h2.9M23.6 12.2h2.9M9 14.3h14"/><path d="M10.5 18.5h11l.6 10.5h-3.8L16 22l-2.3 7H9.9z"/><path d="M10.4 20.6h11.2"/></symbol>
+  <symbol id="ic-talvikenka" viewBox="0 0 32 32"><path d="M8.5 5h10v11.5l6 2c2.5.8 3.5 2.5 3.5 4.5v2H6.5z"/><path d="M8.2 8.5h10.6M6 25h22.5v2.8H6z"/></symbol>
+  <symbol id="ic-saappaat" viewBox="0 0 32 32"><path d="M10 4h9v15l5.5 1.8c2.2.7 3.3 2.2 3.3 4.2v1H8.5z"/><path d="M8.5 26h19.3v2.5H8.5zM10 7.5h9"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
+  <symbol id="ic-kengat" viewBox="0 0 32 32"><path d="M4 22c0-3.6 1.8-5.8 4.2-6.1l5-.7 3.8-4c.8-.8 2.2-.7 2.8.3l2 4c3.3 1 6.2 3 6.2 6.5v2H4z"/><path d="M4 24h24v2.6H4zM14.6 13.8l2 2M16.8 11.9l2 2"/></symbol>
+  <symbol id="ic-lapaset_wp" viewBox="0 0 32 32"><path d="M10.5 26.5V14.6C10.5 10.2 12.8 7 16 7s5.5 3.2 5.5 7.6v11.9z"/><path d="M10.5 15.6c-2.7-1.4-4.8.5-3.8 3l3.8 4.6"/><path d="M10.5 22.6h11"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
+  <symbol id="ic-check" viewBox="0 0 16 16"><path d="M3.5 8.3l3 3 6-6.6"/></symbol>
+  <symbol id="ic-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+</svg>
 
 <section class="steps" id="miten-toimii">
   <div class="wrap">
@@ -1008,6 +1209,7 @@
     <div class="understood" id="understood" hidden>
       <span class="understood-label" id="understoodLabel" data-i18n="results.understood">Så här tolkade jag sökningen</span>
       <ul id="understoodChips" aria-labelledby="understoodLabel"></ul>
+      <button type="button" class="crit-edit" id="catEdit" aria-haspopup="dialog" hidden data-i18n="cp.edit">Ändra val</button>
     </div>
 
     <div id="liveSearchStatus" class="live-search-status" aria-live="polite"></div>
@@ -1021,6 +1223,9 @@
     <div class="notice-inline" id="noticeInline" hidden aria-live="polite"></div>
 
     <div id="liveSearchResults" class="results" hidden>
+      <div class="cat-filter" id="catFilter" hidden>
+        <ul class="chips on-paper" id="catFilterChips" aria-label="Visa plagg" data-i18n-attr="aria-label:cp.filter"></ul>
+      </div>
       <div class="tabs" role="tablist" aria-label="Sortering av resultat" data-i18n-attr="aria-label:tabs.label">
         <button type="button" class="tab" role="tab" id="tab-bestMatch" data-list="bestMatch" aria-selected="false" aria-controls="resultGrid" tabindex="-1" hidden data-i18n="tabs.bestMatch">Passar bäst</button>
         <button type="button" class="tab" role="tab" id="tab-cheapest" data-list="cheapest" aria-selected="true" aria-controls="resultGrid" data-i18n="tabs.cheapest">Billigast</button>
@@ -1157,7 +1362,19 @@
       'mic.network': 'Puheentunnistus ei saanut yhteyttä. Tarkista verkkoyhteys ja yritä uudelleen.',
       'mic.language-not-supported': 'Selain ei tunnista suomea puheesta. Kirjoita haku kenttään.',
       'mic.generic': 'Puhetta ei voitu tunnistaa. Yritä uudelleen tai kirjoita haku.',
-      'mic.start': 'Puheentunnistusta ei voitu käynnistää. Kirjoita haku kenttään.'
+      'mic.start': 'Puheentunnistusta ei voitu käynnistää. Kirjoita haku kenttään.',
+      'cat.selection': 'Valintasi', 'size.any': 'Kaikki koot', 'size.cm': '{cm} cm',
+      'size.eu': 'EU {n}', 'size.months': 'n. {lo}–{hi} kk', 'size.years': 'n. {lo}–{hi} v',
+      'size.sr': '{cm} senttimetriä, {hint}', 'shoe.sr': 'EU-koko {n}', 'filter.all': 'Kaikki',
+      'cat.emptyMsg': 'Näillä valinnoilla ei löytynyt tuotteita. Kokeile toista kokoa tai poista rajaus.', 'cat.noSize': 'Näytä kaikki koot', 'cat.noGender': 'Näytä kaikille',
+      'cat.edit': 'Muokkaa valintoja', 'opt.talvihaalari': 'Haalari', 'opt.talvitakki': 'Takki',
+      'opt.toppahousut': 'Toppa\u00adhousut', 'opt.pipo': 'Pipo', 'opt.lapaset': 'Lapaset',
+      'opt.kuralapaset': 'Kura\u00adlapaset', 'opt.kerrasto': 'Kerrasto', 'opt.villasukat': 'Villa\u00adsukat',
+      'opt.talvikengat': 'Talvi\u00adkengät', 'opt.kurahousut': 'Kura\u00adhousut', 'opt.sadetakki': 'Sadetakki',
+      'opt.sadeasu': 'Sadeasu', 'opt.kurakengat': 'Kura\u00adkengät', 'opt.kengat': 'Kaikki kengät',
+      'opt.takki': 'Takki', 'opt.paita': 'Paita', 'opt.housut': 'Housut',
+      'opt.mekko': 'Mekko', 'opt.haalari': 'Haalari', 'opt.sukat': 'Sukat',
+      'opt.pyjama': 'Pyjama', 'opt.body': 'Body'
     },
     sv: {
       'price.now': 'Pris ', 'price.was': 'Förut ', 'card.view': 'Visa i butiken',
@@ -1201,7 +1418,19 @@
       'notice.no_results': 'Vi hittade inga produkter med de här villkoren. Prova en bredare sökning eller ett annat plagg.',
       'notice.partial_size': 'En del resultat är lite mindre än storleken du sökte. Kontrollera storleken innan du beställer.',
       'notice.limited_coverage': 'Det finns ännu få produkter i den här storleken. Vi lägger till fler butiker hela tiden.',
-      'notice.rate_limited': 'Dagens sökgräns är nådd. Försök igen i morgon.'
+      'notice.rate_limited': 'Dagens sökgräns är nådd. Försök igen i morgon.',
+      'cat.selection': 'Dina val', 'size.any': 'Alla storlekar', 'size.cm': '{cm} cm',
+      'size.eu': 'EU {n}', 'size.months': 'ca {lo}–{hi} mån', 'size.years': 'ca {lo}–{hi} år',
+      'size.sr': '{cm} centimeter, {hint}', 'shoe.sr': 'EU-storlek {n}', 'filter.all': 'Alla',
+      'cat.emptyMsg': 'Inga produkter hittades med de här valen. Prova en annan storlek eller ta bort ett filter.', 'cat.noSize': 'Visa alla storlekar', 'cat.noGender': 'Visa för alla',
+      'cat.edit': 'Ändra val', 'opt.talvihaalari': 'Overall', 'opt.talvitakki': 'Jacka',
+      'opt.toppahousut': 'Täck\u00adbyxor', 'opt.pipo': 'Mössa', 'opt.lapaset': 'Vantar',
+      'opt.kuralapaset': 'Regn\u00advantar', 'opt.kerrasto': 'Under\u00adställ', 'opt.villasukat': 'Ull\u00adstrumpor',
+      'opt.talvikengat': 'Vinter\u00adkängor', 'opt.kurahousut': 'Regn\u00adbyxor', 'opt.sadetakki': 'Regnjacka',
+      'opt.sadeasu': 'Regn\u00adställ', 'opt.kurakengat': 'Vatten\u00adtäta skor', 'opt.kengat': 'Alla skor',
+      'opt.takki': 'Jacka', 'opt.paita': 'Tröja', 'opt.housut': 'Byxor',
+      'opt.mekko': 'Klänning', 'opt.haalari': 'Overall', 'opt.sukat': 'Strumpor',
+      'opt.pyjama': 'Pyjamas', 'opt.body': 'Body'
     },
     en: {
       'price.now': 'Price ', 'price.was': 'Was ', 'card.view': 'View in shop',
@@ -1245,7 +1474,19 @@
       'notice.no_results': 'We found no products with these filters. Try a broader search or a different item.',
       'notice.partial_size': 'Some results are slightly smaller than the size you searched for. Check sizes before ordering.',
       'notice.limited_coverage': 'There are still few products in this size. We’re adding more shops all the time.',
-      'notice.rate_limited': 'Today’s search limit has been reached. Please try again tomorrow.'
+      'notice.rate_limited': 'Today’s search limit has been reached. Please try again tomorrow.',
+      'cat.selection': 'Your selection', 'size.any': 'All sizes', 'size.cm': '{cm} cm',
+      'size.eu': 'EU {n}', 'size.months': 'approx. {lo}–{hi} months', 'size.years': 'approx. {lo}–{hi} years',
+      'size.sr': '{cm} centimetres, {hint}', 'shoe.sr': 'EU size {n}', 'filter.all': 'All',
+      'cat.emptyMsg': 'No products found with these choices. Try another size or remove a filter.', 'cat.noSize': 'Show all sizes', 'cat.noGender': 'Show for everyone',
+      'cat.edit': 'Edit choices', 'opt.talvihaalari': 'Snowsuit', 'opt.talvitakki': 'Jacket',
+      'opt.toppahousut': 'Snow trousers', 'opt.pipo': 'Hat', 'opt.lapaset': 'Mittens',
+      'opt.kuralapaset': 'Rain mittens', 'opt.kerrasto': 'Base layer', 'opt.villasukat': 'Wool socks',
+      'opt.talvikengat': 'Winter boots', 'opt.kurahousut': 'Rain trousers', 'opt.sadetakki': 'Rain jacket',
+      'opt.sadeasu': 'Rain suit', 'opt.kurakengat': 'Waterproof shoes', 'opt.kengat': 'All shoes',
+      'opt.takki': 'Jacket', 'opt.paita': 'Top', 'opt.housut': 'Trousers',
+      'opt.mekko': 'Dress', 'opt.haalari': 'Overall', 'opt.sukat': 'Socks',
+      'opt.pyjama': 'Pyjamas', 'opt.body': 'Bodysuit'
     }
   };
   var LANG = String(document.documentElement.lang || 'fi').slice(0, 2).toLowerCase();
@@ -1262,7 +1503,7 @@
   // kirjoitettu muotoon, jonka backendin tulkinta tunnistaa (sopimus Data-chatin kanssa).
   var LOCALES = {
     fi: {
-      locale: 'fi-FI', speech: 'fi-FI', home: 'EUR', priceStep: 10,
+      locale: 'fi-FI', speech: 'fi-FI', home: 'EUR', priceStep: 10, shoeSize: 'koko {n}',
       stores: { 'outnorth-se': 'Outnorth SE', 'outnorth-fi': 'Outnorth FI', 'voghion-global': 'Voghion' },
       garments: { takki: 'Takki', kurahousut: 'Kurahousut', toppahousut: 'Toppahousut', housut: 'Housut',
         'kengät': 'Kengät', paita: 'Paita', haalari: 'Haalari', mekko: 'Mekko', body: 'Body',
@@ -1279,7 +1520,7 @@
            gender: { 'tyttö': 'tytölle', poika: 'pojalle', unisex: 'unisex' } }
     },
     sv: {
-      locale: 'sv-SE', speech: 'sv-SE', home: 'SEK', priceStep: 100,
+      locale: 'sv-SE', speech: 'sv-SE', home: 'SEK', priceStep: 100, shoeSize: 'storlek {n}',
       stores: { 'outnorth-se': 'Outnorth Sverige', 'outnorth-fi': 'Outnorth Finland', 'voghion-global': 'Voghion' },
       garments: { takki: 'Jacka', kurahousut: 'Regnbyxor', toppahousut: 'Täckbyxor', housut: 'Byxor',
         'kengät': 'Skor', paita: 'Tröja', haalari: 'Overall', mekko: 'Klänning', body: 'Body',
@@ -1297,7 +1538,7 @@
            gender: { 'tyttö': 'till flicka', poika: 'till pojke', unisex: 'unisex' } }
     },
     en: {
-      locale: 'en-GB', speech: 'en-GB', home: 'EUR', priceStep: 10,
+      locale: 'en-GB', speech: 'en-GB', home: 'EUR', priceStep: 10, shoeSize: 'size {n}',
       stores: { 'outnorth-se': 'Outnorth Sweden', 'outnorth-fi': 'Outnorth Finland', 'voghion-global': 'Voghion' },
       garments: { takki: 'Jacket', kurahousut: 'Rain trousers', toppahousut: 'Snow trousers', housut: 'Trousers',
         'kengät': 'Shoes', paita: 'Top', haalari: 'Snowsuit', mekko: 'Dress', body: 'Bodysuit',
@@ -1630,6 +1871,7 @@
 
   function runSearch(q){
     var mySeq = ++searchSeq;
+    exitCatMode();
     setAllInputs(q);
     searchSection.hidden = false;
     statusEl.textContent = t('status.searching');
@@ -2239,6 +2481,487 @@
       setSticky(!entries[0].isIntersecting && entries[0].boundingClientRect.top < 0);
     }).observe(heroForm);
   }
+
+  // =====================================================================
+  // KATEGORIAPANEELI (premium-UX, vaihe A): ruutu suurenee paneeliksi, jossa
+  // valitaan vaatteet (monivalinta), lapsi ja koko. Jokaisesta vaatteesta
+  // tehdään oma haku nykyiseen /api/search-rajapintaan rinnakkain, ja tulokset
+  // yhdistetään. Hakulauseet on tarkistettu backendin parserilla (fi/sv/en).
+  // Vaihe B (Data-chat): rakenteinen haku, määrät kuvakkeisiin, brändit.
+  // =====================================================================
+  var OPTS = {
+    talvihaalari: { icon: 'haalari', q: { fi: 'talvihaalari', sv: 'vinteroverall', en: 'winter snowsuit' } },
+    talvitakki: { icon: 'takki', q: { fi: 'talvitakki', sv: 'vinterjacka', en: 'winter jacket' } },
+    toppahousut: { icon: 'toppahousut', q: { fi: 'toppahousut', sv: 'täckbyxor', en: 'snow trousers' } },
+    pipo: { icon: 'pipo', q: { fi: 'pipo', sv: 'mössa', en: 'beanie' } },
+    lapaset: { icon: 'lapaset', q: { fi: 'lapaset', sv: 'vantar', en: 'mittens' } },
+    kuralapaset: { icon: 'lapaset_wp', q: { fi: 'vedenpitävät lapaset', sv: 'vattentäta vantar', en: 'waterproof mittens' } },
+    kerrasto: { icon: 'kerrasto', q: { fi: 'kerrasto', sv: 'underställ', en: 'base layer' } },
+    villasukat: { icon: 'sukat', q: { fi: 'villasukat', sv: 'ullstrumpor', en: 'wool socks' } },
+    talvikengat: { icon: 'talvikenka', shoe: true, q: { fi: 'talvikengät', sv: 'vinterkängor', en: 'winter boots' } },
+    kurahousut: { icon: 'kurahousut', q: { fi: 'kurahousut', sv: 'regnbyxor', en: 'rain trousers' } },
+    sadetakki: { icon: 'sadetakki', q: { fi: 'sadetakki', sv: 'vattentät jacka', en: 'waterproof jacket' } },
+    sadeasu: { icon: 'sadeasu', q: { fi: 'sadeasu', sv: 'vattentät regnställ', en: 'waterproof rain suit' } },
+    kurakengat: { icon: 'saappaat', shoe: true, q: { fi: 'vedenpitävät kumisaappaat', sv: 'vattentäta gummistövlar', en: 'waterproof wellies' } },
+    kengat: { icon: 'kengat', shoe: true, q: { fi: 'kengät', sv: 'skor', en: 'shoes' } },
+    takki: { icon: 'takki', q: { fi: 'takki', sv: 'jacka', en: 'jacket' } },
+    paita: { icon: 'paita', q: { fi: 'paita', sv: 'tröja', en: 'shirt' } },
+    housut: { icon: 'housut', q: { fi: 'housut', sv: 'byxor', en: 'trousers' } },
+    mekko: { icon: 'mekko', q: { fi: 'mekko', sv: 'klänning', en: 'dress' } },
+    haalari: { icon: 'haalari', q: { fi: 'haalari', sv: 'overall', en: 'overall' } },
+    sukat: { icon: 'sukat', q: { fi: 'sukat', sv: 'strumpor', en: 'socks' } },
+    pyjama: { icon: 'pyjama', q: { fi: 'pyjama', sv: 'pyjamas', en: 'pyjamas' } },
+    body: { icon: 'body', q: { fi: 'body', sv: 'body', en: 'bodysuit' } }
+  };
+  var CATS = {
+    talvi: { img: 'talvi-ulkoilu', def: 'talvihaalari', opts: ['talvihaalari', 'talvitakki', 'toppahousut', 'pipo', 'lapaset', 'kerrasto', 'villasukat', 'talvikengat'] },
+    sade: { img: 'sade-kura', def: 'kurahousut', opts: ['kurahousut', 'sadetakki', 'sadeasu', 'kurakengat', 'kuralapaset'] },
+    kengat: { img: 'kengat', def: 'talvikengat', opts: ['talvikengat', 'kurakengat', 'kengat'] },
+    pipot: { img: 'pipot-lapaset', def: 'pipo', opts: ['pipo', 'lapaset', 'kuralapaset', 'villasukat'] },
+    arki: { img: 'arki-paivakoti', def: 'takki', opts: ['takki', 'paita', 'housut', 'mekko', 'haalari', 'sukat', 'pyjama', 'kerrasto'] },
+    vauvat: { img: 'vauvat', def: 'haalari', baby: true, opts: ['body', 'haalari', 'pyjama', 'housut', 'paita', 'pipo', 'sukat', 'lapaset'] }
+  };
+  var SIZES = [50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 110, 116, 122, 128, 134, 140, 146, 152, 158, 164, 170, 176];
+  var BABY_MAX = 92, SHOE_MIN = 18, SHOE_MAX = 42;
+  // Ikäarvio koon alle: [cm, alku, loppu, 'm' = kuukautta | 'y' = vuotta]
+  var SIZE_AGE = { 50: [0, 1, 'm'], 56: [1, 2, 'm'], 62: [2, 4, 'm'], 68: [4, 6, 'm'], 74: [6, 9, 'm'], 80: [9, 12, 'm'],
+    86: [1, 1.5, 'y'], 92: [1.5, 2, 'y'], 98: [2, 3, 'y'], 104: [3, 4, 'y'], 110: [4, 5, 'y'], 116: [5, 6, 'y'], 122: [6, 7, 'y'],
+    128: [7, 8, 'y'], 134: [8, 9, 'y'], 140: [9, 10, 'y'], 146: [10, 11, 'y'], 152: [11, 12, 'y'], 158: [12, 13, 'y'],
+    164: [13, 14, 'y'], 170: [14, 15, 'y'], 176: [15, 16, 'y'] };
+  var GENDER_URL = { 'tyttö': 'tytto', poika: 'poika' };
+  var MEMORY_KEY = 'vaateta_lapsi';
+
+  function numWord(n){ return LANG === 'en' ? String(n) : String(n).replace('.', ','); }
+  function sizeHint(cm){
+    var a = SIZE_AGE[cm];
+    return a ? t(a[2] === 'm' ? 'size.months' : 'size.years', { lo: numWord(a[0]), hi: numWord(a[1]) }) : '';
+  }
+  function optLabel(id){ return t('opt.' + id); }
+  function catTitle(cat){
+    var tile = document.querySelector('.cat-tile[data-cat="' + cat + '"] .cat-name');
+    return tile ? tile.textContent.trim() : cat;
+  }
+  function loadMemory(){
+    try { var m = JSON.parse(localStorage.getItem(MEMORY_KEY) || 'null'); return m && typeof m === 'object' ? m : {}; }
+    catch (e) { return {}; }
+  }
+  function saveMemory(st){
+    try {
+      var m = loadMemory();
+      // Vauvaosiossa valittu koko ei korvaa isomman lapsen kokoa, ellei sitä valittu
+      if (st.cm != null || !CATS[st.cat].baby) m.cm = st.cm;
+      if (st.shoe != null || hasShoe(st)) m.shoe = st.shoe;
+      m.gender = st.gender || '';
+      localStorage.setItem(MEMORY_KEY, JSON.stringify(m));
+    } catch (e) { /* selaimen muisti estetty: valinnat toimivat silti tässä haussa */ }
+  }
+  function forgetMemory(){ try { localStorage.removeItem(MEMORY_KEY); } catch (e) {} }
+  function hasShoe(st){ return st.opts.some(function(o){ return OPTS[o].shoe; }); }
+  function hasClothes(st){ return st.opts.some(function(o){ return !OPTS[o].shoe; }); }
+  function validCm(cm, cat){
+    cm = Number(cm);
+    if (SIZES.indexOf(cm) === -1) return null;
+    return CATS[cat] && CATS[cat].baby && cm > BABY_MAX ? null : cm;
+  }
+  function validShoe(n){ n = Number(n); return n >= SHOE_MIN && n <= SHOE_MAX && Math.round(n) === n ? n : null; }
+
+  // Hakulause yhdelle vaatteelle: muoto, jonka backendin parseri tunnistaa
+  function catQuery(id, st){
+    var V = LOC.q, o = OPTS[id], w = [o.q[LANG] || o.q.fi], sized = false;
+    if (o.shoe && st.shoe) { w.push(fill(LOC.shoeSize, { n: st.shoe })); sized = true; }
+    else if (st.cm) { w.push(st.cm + ' cm'); sized = true; }   // kengillä pituus -> EU-koko backendissä
+    if (st.gender && V.gender[st.gender]) w.push(V.gender[st.gender]);
+    else if (!sized) w.push(V.child);
+    return w.join(' ');
+  }
+
+  // ---------- PANEELI ----------
+  var catPanel = document.getElementById('catPanel');
+  var cpOpts = document.getElementById('cpOpts');
+  var cpImg = document.getElementById('cpImg');
+  var cpHead = document.getElementById('cpHead');
+  var cpShow = document.getElementById('cpShow');
+  var cpSize = document.getElementById('cpSize'), cpShoe = document.getElementById('cpShoe');
+  var panelState = null, panelTile = null, pendingCatSearch = null;
+  var supportsDialog = typeof catPanel.showModal === 'function';
+
+  function sizeList(){ return CATS[panelState.cat].baby ? SIZES.filter(function(c){ return c <= BABY_MAX; }) : SIZES; }
+
+  function renderOpts(){
+    var cat = CATS[panelState.cat];
+    cpOpts.innerHTML = cat.opts.map(function(id){
+      var on = panelState.opts.indexOf(id) !== -1;
+      return '<li><button type="button" class="cp-opt" data-opt="' + id + '" aria-pressed="' + on + '">' +
+        '<svg aria-hidden="true"><use href="#ic-' + OPTS[id].icon + '"/></svg>' +
+        '<span>' + esc(optLabel(id)) + '</span>' +
+        '<span class="cp-check" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-check"/></svg></span>' +
+        '</button></li>';
+    }).join('');
+  }
+  function renderSize(){
+    var st = panelState, list = sizeList();
+    var showClothes = hasClothes(st) || !hasShoe(st);
+    document.getElementById('cpSizeGroup').hidden = !showClothes;
+    document.getElementById('cpShoeGroup').hidden = !hasShoe(st);
+    // Vaatekoko
+    cpSize.max = list.length - 1;
+    var idx = st.cm ? list.indexOf(st.cm) : Math.floor(list.length / 2);
+    cpSize.value = idx;
+    cpSize.classList.toggle('unset', !st.cm);
+    document.getElementById('cpSizeValue').textContent = st.cm ? t('size.cm', { cm: st.cm }) : t('size.any');
+    document.getElementById('cpSizeHint').textContent = st.cm ? sizeHint(st.cm) : '';
+    cpSize.setAttribute('aria-valuetext', st.cm ? t('size.sr', { cm: st.cm, hint: sizeHint(st.cm) }) : t('size.any'));
+    document.getElementById('cpSizeClear').hidden = !st.cm;
+    document.getElementById('cpSizeDec').disabled = !!st.cm && idx <= 0;
+    document.getElementById('cpSizeInc').disabled = !!st.cm && idx >= list.length - 1;
+    // Kenkäkoko (EU)
+    cpShoe.value = st.shoe || 30;
+    cpShoe.classList.toggle('unset', !st.shoe);
+    document.getElementById('cpShoeValue').textContent = st.shoe ? t('size.eu', { n: st.shoe }) : t('size.any');
+    cpShoe.setAttribute('aria-valuetext', st.shoe ? t('shoe.sr', { n: st.shoe }) : t('size.any'));
+    document.getElementById('cpShoeClear').hidden = !st.shoe;
+    document.getElementById('cpShoeDec').disabled = !!st.shoe && st.shoe <= SHOE_MIN;
+    document.getElementById('cpShoeInc').disabled = !!st.shoe && st.shoe >= SHOE_MAX;
+  }
+  function renderPanel(){
+    renderOpts();
+    catPanel.querySelectorAll('input[name="cpGender"]').forEach(function(r){ r.checked = r.value === (panelState.gender || ''); });
+    renderSize();
+    cpShow.disabled = panelState.opts.length === 0;
+  }
+
+  function stateFromMemory(cat){
+    var m = loadMemory();
+    return { cat: cat, opts: [CATS[cat].def], cm: validCm(m.cm, cat), shoe: validShoe(m.shoe), gender: GENDER_URL[m.gender] ? m.gender : '' };
+  }
+
+  function openCatPanel(cat, tile, preset){
+    if (!CATS[cat]) return;
+    panelState = preset ? JSON.parse(JSON.stringify(preset)) : stateFromMemory(cat);
+    panelState.cat = cat;
+    panelTile = tile || document.querySelector('.cat-tile[data-cat="' + cat + '"]');
+    var tileImg = panelTile && panelTile.querySelector('img');
+    cpImg.src = tileImg ? (tileImg.currentSrc || tileImg.src) : '/images/kategoria-' + CATS[cat].img + '-960.jpg';
+    document.getElementById('cpTitle').textContent = catTitle(cat);
+    renderPanel();
+    if (!supportsDialog) { catPanel.setAttribute('open', ''); return; }
+    var media = panelTile && panelTile.querySelector('.cat-media');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function show(){
+      catPanel.showModal();
+      var first = cpOpts.querySelector('[aria-pressed="true"]') || cpOpts.querySelector('.cp-opt');
+      if (first) first.focus();
+    }
+    if (document.startViewTransition && media && !reduce) {
+      media.style.viewTransitionName = 'cat-media';
+      var vt = document.startViewTransition(function(){
+        media.style.viewTransitionName = '';
+        cpHead.style.viewTransitionName = 'cat-media';
+        show();
+      });
+      trackTransition(vt, function(){ cpHead.style.viewTransitionName = ''; });
+    } else {
+      catPanel.classList.toggle('cp-fade', !reduce);
+      show();
+    }
+    // Taaksepainike sulkee paneelin (ei poistu sivulta). Selaimen oma vierityksen
+    // palautus pois päältä, ettei sulkeminen hyppää takaisin ruudun kohdalle haun jälkeen.
+    try {
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      history.pushState({ vtCat: 1 }, '');
+    } catch (e) {}
+  }
+
+  // Siirtymän ajan juuressa on luokka vt-run (testit odottavat sen poistumista)
+  function trackTransition(vt, done){
+    var root = document.documentElement;
+    root.classList.add('vt-run');
+    function end(){ root.classList.remove('vt-run'); done(); }
+    vt.finished.then(end, end);
+  }
+  function finishClose(){
+    if (!catPanel.open) return;
+    var media = panelTile && panelTile.querySelector('.cat-media');
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var search = pendingCatSearch; pendingCatSearch = null;
+    function hide(){
+      if (supportsDialog) catPanel.close(); else catPanel.removeAttribute('open');
+      catPanel.classList.remove('cp-fade');
+    }
+    // Haku: ei paluuanimaatiota, siirrytään suoraan tuloksiin
+    if (!search && document.startViewTransition && media && !reduce && isInView(media)) {
+      cpHead.style.viewTransitionName = 'cat-media';
+      var vt = document.startViewTransition(function(){
+        cpHead.style.viewTransitionName = '';
+        media.style.viewTransitionName = 'cat-media';
+        hide();
+      });
+      trackTransition(vt, function(){ media.style.viewTransitionName = ''; });
+    } else {
+      hide();
+    }
+    if (search) runCatSearch(search);
+    else if (panelTile) panelTile.focus({ preventScroll: true });
+    setTimeout(function(){ try { history.scrollRestoration = 'auto'; } catch (e) {} }, 0);
+  }
+  function isInView(el){
+    var r = el.getBoundingClientRect();
+    return r.bottom > 0 && r.top < window.innerHeight;
+  }
+  // Sulkeminen käyttöliittymästä: peruu paneelin historiamerkinnän (popstate sulkee)
+  function closeCatPanel(){
+    if (history.state && history.state.vtCat) history.back();
+    else finishClose();
+  }
+  window.addEventListener('popstate', function(){ if (catPanel.open) finishClose(); });
+
+  document.querySelectorAll('.cat-tile[data-cat]').forEach(function(tile){
+    tile.addEventListener('click', function(){ openCatPanel(tile.getAttribute('data-cat'), tile, null); });
+  });
+  document.getElementById('cpClose').addEventListener('click', closeCatPanel);
+  catPanel.addEventListener('cancel', function(e){ e.preventDefault(); closeCatPanel(); });
+  // Napautus paneelin ulkopuolelle (taustalle) sulkee
+  catPanel.addEventListener('click', function(e){ if (e.target === catPanel) closeCatPanel(); });
+
+  cpOpts.addEventListener('click', function(e){
+    var btn = e.target.closest('.cp-opt');
+    if (!btn) return;
+    var id = btn.getAttribute('data-opt');
+    var i = panelState.opts.indexOf(id);
+    if (i === -1) panelState.opts.push(id); else panelState.opts.splice(i, 1);
+    // Järjestys aina kategorian mukaan (tulokset ja sirut samassa järjestyksessä)
+    var order = CATS[panelState.cat].opts;
+    panelState.opts.sort(function(a, b){ return order.indexOf(a) - order.indexOf(b); });
+    btn.setAttribute('aria-pressed', i === -1 ? 'true' : 'false');
+    renderSize();
+    cpShow.disabled = panelState.opts.length === 0;
+  });
+  catPanel.querySelectorAll('input[name="cpGender"]').forEach(function(r){
+    r.addEventListener('change', function(){ if (r.checked) panelState.gender = r.value; });
+  });
+  cpSize.addEventListener('input', function(){ panelState.cm = sizeList()[Number(cpSize.value)]; renderSize(); });
+  cpShoe.addEventListener('input', function(){ panelState.shoe = Number(cpShoe.value); renderSize(); });
+  function stepSize(d){
+    var list = sizeList(), i = panelState.cm ? list.indexOf(panelState.cm) : Math.floor(list.length / 2) - (d > 0 ? 1 : 0);
+    i = Math.max(0, Math.min(list.length - 1, i + d));
+    panelState.cm = list[i]; renderSize();
+  }
+  function stepShoe(d){
+    var n = panelState.shoe ? panelState.shoe + d : 30;
+    panelState.shoe = Math.max(SHOE_MIN, Math.min(SHOE_MAX, n)); renderSize();
+  }
+  document.getElementById('cpSizeDec').addEventListener('click', function(){ stepSize(-1); });
+  document.getElementById('cpSizeInc').addEventListener('click', function(){ stepSize(1); });
+  document.getElementById('cpShoeDec').addEventListener('click', function(){ stepShoe(-1); });
+  document.getElementById('cpShoeInc').addEventListener('click', function(){ stepShoe(1); });
+  document.getElementById('cpSizeClear').addEventListener('click', function(){ panelState.cm = null; renderSize(); cpSize.focus(); });
+  document.getElementById('cpShoeClear').addEventListener('click', function(){ panelState.shoe = null; renderSize(); cpShoe.focus(); });
+  document.getElementById('cpForget').addEventListener('click', function(){
+    forgetMemory();
+    panelState.cm = null; panelState.shoe = null; panelState.gender = '';
+    renderPanel();
+  });
+  document.getElementById('cpForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    if (!panelState.opts.length) return;
+    saveMemory(panelState);
+    pendingCatSearch = JSON.parse(JSON.stringify(panelState));
+    closeCatPanel();
+  });
+
+  // ---------- HAKU JA TULOKSET ----------
+  var catMode = null, catGroups = [], catFilterId = '';
+  var catFilterEl = document.getElementById('catFilter');
+  var catEditBtn = document.getElementById('catEdit');
+  var understoodLabelEl = document.getElementById('understoodLabel');
+  var understoodLabelDefault = understoodLabelEl.textContent;
+
+  function exitCatMode(){
+    if (!catMode) return;
+    catMode = null; catGroups = []; catFilterId = '';
+    catFilterEl.hidden = true;
+    catEditBtn.hidden = true;
+    understoodLabelEl.textContent = understoodLabelDefault;
+    setCatUrl(null);
+  }
+
+  function setCatUrl(st){
+    try {
+      var p = new URLSearchParams(location.search);
+      ['kat', 'v', 'koko', 'kenka', 'lapsi'].forEach(function(k){ p.delete(k); });
+      if (st) {
+        p.set('kat', st.cat); p.set('v', st.opts.join(','));
+        if (st.cm) p.set('koko', st.cm);
+        if (st.shoe && hasShoe(st)) p.set('kenka', st.shoe);
+        if (GENDER_URL[st.gender]) p.set('lapsi', GENDER_URL[st.gender]);
+      }
+      var qs = p.toString();
+      history.replaceState(history.state, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+    } catch (e) {}
+  }
+  function stateFromUrl(){
+    var p = new URLSearchParams(location.search), cat = p.get('kat');
+    if (!CATS[cat]) return null;
+    var opts = String(p.get('v') || '').split(',').filter(function(o){ return CATS[cat].opts.indexOf(o) !== -1; });
+    if (!opts.length) opts = [CATS[cat].def];
+    var g = p.get('lapsi') === 'tytto' ? 'tyttö' : p.get('lapsi') === 'poika' ? 'poika' : '';
+    return { cat: cat, opts: opts, cm: validCm(p.get('koko'), cat), shoe: validShoe(p.get('kenka')), gender: g };
+  }
+
+  // Sopivimmat, Paras hinta-laatu ja Suosituimmat: vuorotellen vaatteittain,
+  // jotta jokaista valittua vaatetta näkyy heti alussa. Halvimmat: hinnan mukaan.
+  function mergeLists(groups, key){
+    var lists = groups.map(function(g){
+      var r = g.data && g.data.results;
+      return dedupeProducts(r && r[key]).map(function(p){ p.__g = g.id; return p; });
+    });
+    var out = [];
+    if (key === 'cheapest') {
+      lists.forEach(function(l){ out = out.concat(l); });
+      out.sort(function(a, b){ return (toHome(a.price) || 1e9) - (toHome(b.price) || 1e9); });
+    } else {
+      for (var i = 0; lists.some(function(l){ return i < l.length; }); i++) {
+        lists.forEach(function(l){ if (i < l.length) out.push(l[i]); });
+      }
+    }
+    return dedupeProducts(out);
+  }
+  function renderCatResults(){
+    var groups = catFilterId ? catGroups.filter(function(g){ return g.id === catFilterId; }) : catGroups;
+    renderResults({
+      bestMatch: mergeLists(groups, 'bestMatch'), cheapest: mergeLists(groups, 'cheapest'),
+      bestValue: mergeLists(groups, 'bestValue'), mostLoved: mergeLists(groups, 'mostLoved')
+    });
+    var withHits = catGroups.filter(function(g){ return g.total > 0; });
+    if (catGroups.length > 1) {
+      var total = catGroups.reduce(function(s, g){ return s + g.total; }, 0);
+      var chip = function(id, label, n){
+        return '<li><button type="button" class="chip" data-cat-filter="' + id + '" aria-pressed="' + (catFilterId === id) + '"' + (n ? '' : ' disabled') + '>' +
+          esc(label) + ' <span class="n">' + n + '</span></button></li>';
+      };
+      document.getElementById('catFilterChips').innerHTML = chip('', t('filter.all'), total) +
+        catGroups.map(function(g){ return chip(g.id, optLabel(g.id), g.total); }).join('');
+      catFilterEl.hidden = withHits.length < 1;
+    } else {
+      catFilterEl.hidden = true;
+    }
+  }
+  document.getElementById('catFilterChips').addEventListener('click', function(e){
+    var b = e.target.closest('[data-cat-filter]');
+    if (!b || b.disabled) return;
+    catFilterId = b.getAttribute('data-cat-filter');
+    renderCatResults();
+    var again = document.querySelector('[data-cat-filter="' + catFilterId + '"]');
+    if (again) again.focus();
+  });
+
+  function renderCatUnderstood(st){
+    understoodLabelEl.textContent = t('cat.selection');
+    var chips = st.opts.map(function(id){ return { key: 'opt:' + id, label: optLabel(id) }; });
+    if (st.cm && hasClothes(st)) chips.push({ key: 'cm', label: t('size.cm', { cm: st.cm }) });
+    if (st.shoe && hasShoe(st)) chips.push({ key: 'shoe', label: t('size.eu', { n: st.shoe }) });
+    var gl = { 'tyttö': t('crit.girl'), poika: t('crit.boy') };
+    if (gl[st.gender]) chips.push({ key: 'gender', label: cap(gl[st.gender]) });
+    document.getElementById('understoodChips').innerHTML = chips.map(function(ch){
+      return '<li class="crit-chip"><span>' + esc(ch.label) + '</span>' +
+        '<button type="button" data-cat-remove="' + esc(ch.key) + '" aria-label="' + esc(t('crit.remove')) + ': ' + esc(ch.label) + '" title="' + esc(t('crit.remove')) + '">×</button></li>';
+    }).join('');
+    understoodEl.hidden = false;
+    catEditBtn.hidden = false;
+  }
+  document.getElementById('understoodChips').addEventListener('click', function(e){
+    var btn = e.target.closest('[data-cat-remove]');
+    if (!btn || !catMode) return;
+    var key = btn.getAttribute('data-cat-remove');
+    var st = JSON.parse(JSON.stringify(catMode));
+    if (key.indexOf('opt:') === 0) {
+      st.opts = st.opts.filter(function(o){ return o !== key.slice(4); });
+      if (!st.opts.length) { openCatPanel(st.cat, null, st); return; }
+    } else if (key === 'cm') st.cm = null;
+    else if (key === 'shoe') st.shoe = null;
+    else if (key === 'gender') st.gender = '';
+    runCatSearch(st);
+  });
+  catEditBtn.addEventListener('click', function(){ if (catMode) openCatPanel(catMode.cat, null, catMode); });
+
+  function renderCatEmpty(st){
+    document.getElementById('emptyTitle').textContent = t('empty.noticeTitle');
+    document.getElementById('emptyMsg').textContent = t('cat.emptyMsg');
+    var acts = [];
+    if ((st.cm && hasClothes(st)) || (st.shoe && hasShoe(st))) acts.push({ act: 'nosize', label: t('cat.noSize') });
+    if (st.gender) acts.push({ act: 'nogender', label: t('cat.noGender') });
+    acts.push({ act: 'edit', label: t('cat.edit') });
+    document.getElementById('emptyChips').innerHTML = acts.map(function(a, i){
+      return '<li><button type="button" class="chip' + (i === 0 ? ' primary' : '') + '" data-cat-act="' + a.act + '">' + esc(a.label) + '</button></li>';
+    }).join('');
+    emptyEl.hidden = false;
+  }
+  document.getElementById('emptyChips').addEventListener('click', function(e){
+    var b = e.target.closest('[data-cat-act]');
+    if (!b || !catMode) return;
+    var st = JSON.parse(JSON.stringify(catMode)), act = b.getAttribute('data-cat-act');
+    if (act === 'edit') { openCatPanel(st.cat, null, st); return; }
+    if (act === 'nosize') { st.cm = null; st.shoe = null; }
+    if (act === 'nogender') st.gender = '';
+    runCatSearch(st);
+  });
+
+  function runCatSearch(st){
+    var mySeq = ++searchSeq;
+    catMode = st; catFilterId = ''; catGroups = [];
+    setCatUrl(st);
+    setAllInputs('');
+    searchSection.hidden = false;
+    statusEl.textContent = t('status.searching');
+    statusEl.classList.remove('error');
+    resultsEl.hidden = true;
+    emptyEl.hidden = true;
+    noticeInlineEl.hidden = true;
+    catFilterEl.hidden = true;
+    clearVoiceHints();
+    renderCatUnderstood(st);
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    searchSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
+    Promise.all(st.opts.map(function(id){
+      return fetch('/api/search?q=' + encodeURIComponent(catQuery(id, st)) + '&lang=' + LANG)
+        .then(function(r){ if (!r.ok) throw new Error(t('error.http', { status: r.status })); return r.json(); })
+        .then(function(data){ return { id: id, data: data, total: Number(data && data.total_matches) || 0 }; },
+              function(err){ return { id: id, data: null, total: 0, error: err }; });
+    })).then(function(groups){
+      if (mySeq !== searchSeq) return;
+      catGroups = groups;
+      var total = groups.reduce(function(s, g){ return s + g.total; }, 0);
+      // Sopivimmat-kuvaus: koon mukaan, kun koko on valittu
+      lastCriteria = (st.cm && hasClothes(st)) || (st.shoe && hasShoe(st)) ? { size_cm: st.cm || cmFromShoe(st.shoe) } : {};
+      lastQuery = '';
+      if (!total) {
+        var err = groups.filter(function(g){ return g.error; })[0];
+        if (err && groups.every(function(g){ return g.error; })) {
+          statusEl.textContent = t('error.prefix') + err.error.message;
+          statusEl.classList.add('error');
+          return;
+        }
+        statusEl.textContent = '';
+        renderCatEmpty(st);
+        return;
+      }
+      statusEl.textContent = total === 1 ? t('status.one') : t('status.many', { n: total });
+      renderCatResults();
+      resultsEl.hidden = false;
+    });
+  }
+  function cmFromShoe(eu){
+    var best = 110;
+    [[21, 86], [24, 92], [26, 98], [27, 104], [29, 110], [30, 116], [32, 122], [33, 128], [34, 134], [35, 140], [37, 146], [38, 152], [39, 158], [40, 164], [41, 170], [42, 176]]
+      .forEach(function(p){ if (eu >= p[0]) best = p[1]; });
+    return best;
+  }
+
+  // Jaettu linkki (?kat=talvi&v=pipo,lapaset&koko=110): haku suoraan
+  (function(){
+    var st = stateFromUrl();
+    if (st) runCatSearch(st);
+  })();
 </script>
 
 </body>
