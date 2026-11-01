@@ -5,25 +5,54 @@ mock-katalogista Awinin kautta saatavaan Boozt-dataan.
 
 ## Arkkitehtuuri lyhyesti
 
-Awin **ei tarjoa livehakua** — data saadaan säännöllisesti ladattavana
-CSV/XML-tiedostona, joka sisältää koko katalogin. Siksi integraatio on
-jaettu kahteen osaan:
+Awin **ei tarjoa livehakua**: kauppojen katalogit (Outnorth FI, Outnorth SE,
+Voghion) ladataan kerran vuorokaudessa ja haku tehdään omasta tietokannasta.
 
 ```
-boozt-feed-importer.ts   Lataa KOKO Boozt-katalogin Awinista ja tallentaa
-                          sen paikallisesti (ajetaan ajastetusti, esim. 1x/vrk)
+api/cron/import-all.ts    Lataa kauppojen Awin-feedit (vercel.json crons, 1x/vrk)
                                     │
                                     ▼
-                          data/products-boozt.json  (ProductStore)
+                          Redis (src/store)  – tuotteet kaupoittain
                                     │
                                     ▼
-boozt.ts (adapter)        search()-metodi hakee TÄSTÄ paikallisesta
-                          datasta, EI koskaan suoraan Awinista
+api/search.ts             ?q=&lang=fi|sv|en (&market=FI|SE|other)
+  1. tulkinta             src/nlu/parse-query.ts (säännöt fi/sv/en) + LLM-varapolku
+  2. haku ja suodatus     src/adapters/multi-store-adapter.ts, lapsiturvasuodatus
+  3. yhdistäminen         src/ranking/offers.ts (värit, sama tuote eri kaupoissa)
+  4. järjestys            src/ranking/rank.ts + fit.ts (tuloslistat, ks. alla)
+  5. palaute              src/search-notice.ts (notice, kielellä lang)
                                     │
                                     ▼
-rank.ts                   Järjestää tulokset (TÄLLÄ HETKELLÄ TYNKÄ —
-                          ks. alla "Ranking-moduulin tila")
+index.html (+ sv/, en/)   Käyttöliittymä: Sopivimmat ensin, välilehdet,
+                          tulkintasirut, puhehaku. middleware.ts valitsee kielen.
 ```
+
+### Tuloslistat ja niiden järjestys
+
+Haku palauttaa neljä listaa (`results`). **Sopivimmat (`bestMatch`) on
+ensisijainen tulos**: käyttöliittymä avaa sen oletuksena kaikilla kielillä, ja
+backend palauttaa sen aina, kun tuloksia on (päätetty 1.11.2026).
+
+| Lista | Välilehti | Järjestys |
+|---|---|---|
+| `bestMatch` | Sopivimmat / Passar bäst / Best match | **Koko tai ikä tiedossa:** koon sopivuus (kasvunvaraa 0–6 cm, kengät EU-koko), sitten hakurajaukset ja hinta (`byFitThenPrice`). **Ei kokoa:** hakurajausten osumat (sukupuoli, talvi, vedenpitävyys, kävijän markkina, saatavuus) + laatumerkit, tunnettu merkki ja hyvät arviot, sitten hinta (`criteriaMatch`); kallein kolmannes jätetään pois. |
+| `cheapest` | Halvimmat | Hinta (euroiksi muunnettuna). Kokohaussa hyvin istuvista, jos niitä on vähintään 5. |
+| `bestValue` | Paras hinta-laatu | Edullisin kolmannes: laatumerkit ja tunnetut merkit ensin. |
+| `mostLoved` | Suosituimmat | Asiakasarviot (vähintään 3 arvioitua tuotetta). |
+
+Käyttöliittymä näyttää Sopivimmat-välilehden kuvauksessa, kumpaa järjestystä
+käytettiin, ja ilman kokoa se kehottaa lisäämään iän tai koon. Käyttäjän
+valitsema välilehti säilyy seuraavissa hauissa. AI-web-haun tuloksilla
+(ei hakukontekstia) Sopivimmat-listaa ei ole.
+
+### Kieliversiot
+
+`index.html` on suomenkielinen lähde. `scripts/build-i18n.js` tuottaa
+`sv/index.html` ja `en/index.html` käännöstiedostoista `i18n/*.json`
+(`npm test` tarkistaa, että ne ovat ajan tasalla). JavaScriptin tekstit ja
+kieliriippuva data ovat index.html:n `I18N`- ja `LOCALES`-taulukoissa.
+`middleware.ts` ohjaa etusivun kävijän kielen mukaan (säännöt
+`src/i18n/choose-language.ts`; oma valinta evästeessä `vaateta_lang`).
 
 ## Käyttöönotto
 
@@ -106,9 +135,6 @@ näkyvyyden vuoksi:
 
 ## Ranking-moduulin tila
 
-`rank.ts` on **tarkoituksella yksinkertainen tynkä** juuri nyt, kuten
-sovittiin: "Halvimmat" toimii oikeasti, mutta "Paras hinta-laatu" palauttaa
-tällä hetkellä saman listan kuin halvimmat (ei vielä oikeaa laatuheuristiikkaa).
-Tämä optimoidaan seuraavaksi, kun oikeaa Boozt-dataa on nähty — täydellinen
-algoritmi on jo suunniteltu dokumentissa `hakukokemus-ja-jarjestys-speksi.md`
-kohdassa 2.5, se vain odottaa oikeaa dataa ennen viimeistelyä.
+Ranking on käytössä: ks. yllä "Tuloslistat ja niiden järjestys" (`src/ranking/rank.ts`, `fit.ts`,
+`brand-tiers.ts`, `quality-signals.ts`). Laatuheuristiikkaa (merkit, materiaalit) tarkennetaan,
+kun dataa ja käyttäjäpalautetta kertyy.

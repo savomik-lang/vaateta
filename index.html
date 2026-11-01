@@ -1035,6 +1035,7 @@
       'card.colors': '{n} väriä', 'card.alsoColors': 'Myös: ',
       'tag.sizeAvail': 'Koko {cm} saatavilla', 'tag.waterproof': 'Vedenpitävä', 'tag.adult': 'Aikuisten koko {sizes}',
       'tab.bestMatch': 'Parhaiten haettuun kokoon ja ikään sopivat ensin, sitten hinnan mukaan.',
+      'tab.bestMatchCriteria': 'Hakuusi parhaiten sopivat ensin: rajaukset, laatu ja arviot, sitten hinta. Lisää ikä tai koko, niin sopivimmat valitaan koon mukaan.',
       'tab.cheapest': 'Edullisimmat vaihtoehdot hinnan mukaan.',
       'tab.bestValue': 'Edullisimman kolmanneksen joukosta laatumerkit ja tunnetut merkit ensin.',
       'tab.mostLoved': 'Parhaat asiakasarviot saaneet.',
@@ -1073,6 +1074,7 @@
       'card.colors': '{n} färger', 'card.alsoColors': 'Även: ',
       'tag.sizeAvail': 'Storlek {cm} finns', 'tag.waterproof': 'Vattentät', 'tag.adult': 'Vuxenstorlek {sizes}',
       'tab.bestMatch': 'Bäst passform för sökt storlek och ålder först, sedan efter pris.',
+      'tab.bestMatchCriteria': 'Det som passar sökningen bäst först: filter, kvalitet och betyg, sedan pris. Lägg till ålder eller storlek, så väljs de efter storlek.',
       'tab.cheapest': 'De billigaste alternativen efter pris.',
       'tab.bestValue': 'Bland den billigaste tredjedelen: kvalitetsmärken och kända varumärken först.',
       'tab.mostLoved': 'Högst betyg från kunder.',
@@ -1116,6 +1118,7 @@
       'card.colors': '{n} colours', 'card.alsoColors': 'Also: ',
       'tag.sizeAvail': 'Size {cm} available', 'tag.waterproof': 'Waterproof', 'tag.adult': 'Adult size {sizes}',
       'tab.bestMatch': 'Best fit for the size and age you searched first, then by price.',
+      'tab.bestMatchCriteria': 'Best fit for your search first: filters, quality and reviews, then price. Add an age or size to pick by size.',
       'tab.cheapest': 'The most affordable options, by price.',
       'tab.bestValue': 'From the cheapest third: quality labels and well-known brands first.',
       'tab.mostLoved': 'Highest customer ratings.',
@@ -1392,7 +1395,9 @@
     var grid = document.getElementById('resultGrid');
     grid.setAttribute('aria-labelledby', 'tab-' + list);
     grid.innerHTML = (lastResults[list] || []).map(renderCard).join('');
-    document.getElementById('tabDesc').textContent = t('tab.' + list);
+    // Ilman kokoa Sopivimmat järjestetään rajausten ja laadun mukaan (backend rank.ts)
+    var bySize = lastCriteria && typeof lastCriteria === 'object' && sizeInfo(lastCriteria);
+    document.getElementById('tabDesc').textContent = t(list === 'bestMatch' && !bySize ? 'tab.bestMatchCriteria' : 'tab.' + list);
   }
 
   tabs.forEach(function(t){

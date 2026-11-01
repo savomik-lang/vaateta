@@ -1,17 +1,44 @@
 import { Product } from "../types";
 import { toEur } from "../currency";
-import { compareBrandTier } from "./brand-tiers";
+import { compareBrandTier, getBrandTier } from "./brand-tiers";
 import { hasQualitySignal } from "./quality-signals";
-import { FitContext, byFitThenPrice, fitTier } from "./fit";
+import { FitContext, byFitThenPrice, fitScore, fitTier } from "./fit";
 
 export interface RankedResults {
   cheapest: Product[];
   bestValue: Product[];
   mostLoved: Product[] | null;
-  // Parhaiten haettuun kokoon ja kriteereihin sopivat (vain kokohauissa).
+  // Sopivimmat: ensisijainen tuloslista. Kokohaussa koon mukaan, muuten
+  // hakurajausten, laadun ja arvioiden mukaan (ks. criteriaMatch).
   bestMatch?: Product[];
 }
 const TOP_N = 5;
+const BRAND_BONUS: Record<string, number> = { premium: 4, perus: 2, budjetti: 0 };
+
+// Sopivuuspisteet, kun kokoa ei tiedetä: hakurajausten osumat (fitScore:
+// sukupuoli, talvi, vedenpitävyys, markkina, saatavuus) + laatumerkit,
+// tunnettu merkki ja hyvät arviot. Hinta ratkaisee tasatilanteet.
+export function criteriaScore(p: Product, ctx: FitContext): number {
+  let score = fitScore(p, ctx);
+  if (hasQualitySignal(p)) score += 4;
+  score += BRAND_BONUS[getBrandTier(p.brand)] ?? 0;
+  if (typeof p.rating === "number" && p.rating >= 4 && (p.rating_count ?? 0) >= 3) score += 2;
+  return score;
+}
+
+// Sopivimmat ilman kokoa. Kallein kolmannes jätetään pois (kun tuotteita on
+// riittävästi), jotta laatupisteet eivät nosta listaa pelkkiin kalleimpiin.
+export function criteriaMatch(products: Product[], ctx: FitContext): Product[] {
+  let pool = products;
+  if (products.length >= TOP_N * 2) {
+    const byPrice = [...products].sort((a, b) => toEur(a.price) - toEur(b.price));
+    pool = byPrice.slice(0, Math.ceil(byPrice.length * 2 / 3));
+  }
+  return [...pool].sort((a, b) => {
+    const d = criteriaScore(b, ctx) - criteriaScore(a, ctx);
+    return d !== 0 ? d : toEur(a.price) - toEur(b.price);
+  }).slice(0, TOP_N);
+}
 
 export function rankResults(products: Product[], ctx?: FitContext): RankedResults {
   // Kokohaussa halvin- ja bestValue-listat poimitaan ensisijaisesti hyvin
@@ -22,6 +49,8 @@ export function rankResults(products: Product[], ctx?: FitContext): RankedResult
     const good = products.filter((p) => fitTier(p, ctx) !== "C");
     if (good.length >= TOP_N) pool = good;
     bestMatch = [...products].sort(byFitThenPrice(ctx)).slice(0, TOP_N);
+  } else if (ctx && products.length > 0) {
+    bestMatch = criteriaMatch(products, ctx);
   }
   const cheapest = [...pool].sort((a, b) => toEur(a.price) - toEur(b.price)).slice(0, TOP_N);
   const bestValue = computeBestValue(pool);
