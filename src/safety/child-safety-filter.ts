@@ -37,6 +37,8 @@ const HARD_BLOCKLIST_KEYWORDS = [
   "crotchless", "fishnet body", "harness lingerie", "kinky", "camisole set",
   // suomeksi/ruotsiksi yleisimmät
   "alusvaatteet", "alusasu", "eroottinen", "seksikäs",
+  // lävistyskorut ja vartalokorut (Voghionin "Body Jewelry") eivät kuulu lastenpalveluun
+  "piercing", "piercings", "body jewelry", "body jewellery", "nipple ring", "nipple rings", "grillz",
 ];
 
 // "bodysuit"/"jumpsuit" yksinään on ihan tavallinen vauvan/lapsen

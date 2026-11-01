@@ -1,6 +1,7 @@
 import { GarmentType } from "../types";
 
 import { findGarmentSvEn } from "./lang-rules";
+import { looksLikeNonClothing, BODY_PRODUCT_REGEX } from "./non-clothing";
 
 export const GARMENT_KEYWORDS: Record<GarmentType, string[]> = {
   // kerrasto ensin: "base layer pants" / "kerrastohousut" eivät ole housuja.
@@ -34,6 +35,8 @@ const SHOE_ACCESSORY_REGEX = /\b(insoles?|shoelaces?|shoe laces?|laces|shoe cove
 
 export function guessGarmentType(...texts: (string | undefined)[]): GarmentType {
   const haystack = texts.filter(Boolean).join(" ").toLowerCase();
+  // Korut ja vartalotuotteet eivät ole vaatteita ("Body Jewelry" ei ole body).
+  if (looksLikeNonClothing(haystack)) return "muu";
   const byKeyword = guessByKeyword(haystack);
   if (byKeyword !== "muu") return byKeyword;
   // Sanarajalla toimiva ruotsi/englanti-lista (cap, keps, solhatt, underställ...) vain jos
@@ -45,6 +48,8 @@ export function guessGarmentType(...texts: (string | undefined)[]): GarmentType 
 function guessByKeyword(haystack: string): GarmentType {
   for (const [type, keywords] of Object.entries(GARMENT_KEYWORDS) as [GarmentType, string[]][]) {
     if (type === "kengät" && SHOE_ACCESSORY_REGEX.test(haystack)) continue;
+    // "body" on osamerkkijono: vaadi oikea body/bodysuit/potkupuku-sana ("bodybuilding", "crossbody" eivät kelpaa).
+    if (type === "body" && !BODY_PRODUCT_REGEX.test(haystack) && !haystack.includes("vauvanbody")) continue;
     if (keywords.some((kw) => haystack.includes(kw))) return type;
   }
   return "muu";
