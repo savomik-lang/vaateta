@@ -41,9 +41,30 @@ test("halvin-lista suosii hyvin istuvia kun niitä on tarpeeksi", () => {
   assert.ok(r2.cheapest.some((p) => p.id === "bad"));
 });
 
-test("ilman kokoa bestMatch-listaa ei tule", () => {
+test("ilman kokoa Sopivimmat tulee silti: rajausten osumat ja laatu ennen halvinta", () => {
+  const ctx = fitContextFromCriteria({ garment_type: "takki", season: "winter", child_gender_pref: "poika" } as any);
+  const eur = (amount: number) => ({ amount, currency: "EUR" as const });
+  const plainCheap = makeProduct({ id: "plain", price: eur(20) });
+  const winterQuality = makeProduct({ id: "winter", price: eur(45), winter: true, waterproof: true } as any);
+  const premium = makeProduct({ id: "premium", brand: "Reima", price: eur(60) });
+  const r = rankResults([plainCheap, winterQuality, premium], ctx);
+  assert.ok(r.bestMatch, "bestMatch puuttuu");
+  assert.deepEqual(r.bestMatch!.map((p) => p.id), ["winter", "premium", "plain"]);
+  assert.equal(r.cheapest[0].id, "plain");
+});
+
+test("ilman kokoa Sopivimmat ei poimi kalleinta kolmannesta", () => {
   const ctx = fitContextFromCriteria({ garment_type: "takki" } as any);
-  assert.equal(rankResults([makeProduct({ id: "x" })], ctx).bestMatch, undefined);
+  const items = Array.from({ length: 12 }, (_, i) => makeProduct({ id: "p" + i, price: { amount: 20 + i * 10, currency: "EUR" } }));
+  items[11] = { ...items[11], brand: "Reima", waterproof: true }; // kallein, laatumerkit
+  const best = rankResults(items, ctx).bestMatch!;
+  assert.equal(best.length, 5);
+  assert.ok(!best.some((p) => p.id === "p11"), "kallein tuote ei saa olla mukana");
+  assert.ok(best.every((p) => p.price.amount <= 20 + 7 * 10));
+});
+
+test("ilman hakukontekstia (AI-web-haku) Sopivimmat-listaa ei tule", () => {
+  assert.equal(rankResults([makeProduct({ id: "x" })]).bestMatch, undefined);
 });
 
 test("värivaihtoehdot samassa kaupassa samalla hinnalla yhdistetään; paras sopiva väri edustaa", () => {
