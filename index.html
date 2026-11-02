@@ -2596,7 +2596,7 @@
   var cpHead = document.getElementById('cpHead');
   var cpShow = document.getElementById('cpShow');
   var cpSize = document.getElementById('cpSize'), cpShoe = document.getElementById('cpShoe');
-  var panelState = null, panelTile = null, pendingCatSearch = null;
+  var panelState = null, panelTile = null, pendingCatSearch = null, openFallbackTimer = null;
   var supportsDialog = typeof catPanel.showModal === 'function';
 
   function sizeList(){ return CATS[panelState.cat].baby ? SIZES.filter(function(c){ return c <= BABY_MAX; }) : SIZES; }
@@ -2730,18 +2730,25 @@
     var media = panelTile && panelTile.querySelector('.cat-media');
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     function show(){
+      if (catPanel.open) return;
       catPanel.showModal();
       var first = cpOpts.querySelector('[aria-pressed="true"]') || cpOpts.querySelector('.cp-opt');
       if (first) first.focus();
     }
-    if (document.startViewTransition && media && !reduce) {
+    if (document.startViewTransition && media && !reduce && document.visibilityState === 'visible') {
       media.style.viewTransitionName = 'cat-media';
+      var cbRan = false;
       var vt = document.startViewTransition(function(){
+        cbRan = true;
         media.style.viewTransitionName = '';
         cpHead.style.viewTransitionName = 'cat-media';
         show();
       });
       trackTransition(vt, function(){ cpHead.style.viewTransitionName = ''; });
+      // Jos selain ei piirrä (esim. taustavälilehti), siirtymä jää odottamaan:
+      // paneeli avataan silloin ilman animaatiota.
+      clearTimeout(openFallbackTimer);
+      openFallbackTimer = setTimeout(function(){ if (!cbRan && !catPanel.open) { media.style.viewTransitionName = ''; show(); } }, 500);
     } else {
       catPanel.classList.toggle('cp-fade', !reduce);
       show();
@@ -2762,7 +2769,13 @@
     vt.finished.then(end, end);
   }
   function finishClose(){
-    if (!catPanel.open) return;
+    clearTimeout(openFallbackTimer);
+    if (!catPanel.open) {
+      // Paneeli ei ehtinyt auki (tai suljettiin jo): haku tehdään silti
+      var pending = pendingCatSearch; pendingCatSearch = null;
+      if (pending) runCatSearch(pending);
+      return;
+    }
     var media = panelTile && panelTile.querySelector('.cat-media');
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     var search = pendingCatSearch; pendingCatSearch = null;
