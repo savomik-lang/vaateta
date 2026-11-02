@@ -82,6 +82,8 @@ export interface SearchCriteria {
   garment_type?: GarmentType;
   size_cm?: number;
   size_raw?: string;
+  // Kenkien tarkka EU-koko (rakenteinen haku). Ilman tätä EU-koko johdetaan size_cm:stä.
+  shoe_eu?: number;
   // size_cm = haettu koko senttimetreinä (numero), age = lapsen ikä vuosina jos
   // haussa mainittiin ikä. size_raw säilyy yhteensopivuuden vuoksi.
   age?: number;

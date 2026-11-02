@@ -11,6 +11,8 @@ import { targetSizeCm, isTeenSearch } from "../adapters/multi-store-adapter";
 
 export interface FitContext {
   targetCm?: number;
+  // Kenkien tarkka EU-koko, jos haussa annettiin (muuten johdetaan targetCm:stä).
+  shoeEu?: number;
   isShoe: boolean;
   teen: boolean;
   genderPref?: "tyttö" | "poika" | "unisex";
@@ -24,6 +26,7 @@ export function fitContextFromCriteria(c: SearchCriteria, viewerMarket?: "FI" | 
   return {
     ...(viewerMarket === "SE" ? { preferMarket: "SE" as const } : {}),
     targetCm: targetSizeCm(c),
+    ...(c.shoe_eu !== undefined ? { shoeEu: c.shoe_eu } : {}),
     isShoe: c.garment_type === "kengät",
     teen: isTeenSearch(c),
     genderPref: c.child_gender_pref,
@@ -52,7 +55,7 @@ export function sizePenalty(sizes: string[], ctx: FitContext): number {
     let pen = Infinity;
     if (t.kind === "cm" && !ctx.isShoe) pen = gap(t.lo, t.hi, ctx.targetCm, ctx.targetCm + 6) / 3;
     else if (t.kind === "eu" && ctx.isShoe) {
-      const eu = shoeEuForCm(ctx.targetCm);
+      const eu = ctx.shoeEu ?? shoeEuForCm(ctx.targetCm);
       pen = gap(t.lo, t.hi, eu, eu + 1);
     } else if (t.kind === "letters" && !ctx.isShoe) {
       pen = t.letters.some((l) => teenLetterSizes(ctx.targetCm!).includes(l)) ? 0 : 4;

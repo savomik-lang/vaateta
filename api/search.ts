@@ -10,26 +10,16 @@ import { RedisKeyValueStore } from "../src/store/kv-store";
 import { getCachedResults, setCachedResults } from "../src/ai/query-cache";
 import { checkAndIncrementDailyLimit } from "../src/ai/rate-limit";
 import { searchWebForProducts } from "../src/ai/agent-search";
-import { hasBlockedKeywords } from "../src/safety/child-safety-filter";
+import { filterChildSafe } from "../src/safety/filter-products";
 import { Product } from "../src/types";
 import { parseLang, resolveMarket } from "../src/lang";
+import { structuredSearchResponse } from "../src/structured/handlers";
 import {
   Notice, findRelaxation, buildNoResultsNotice, buildPartialSizeNotice, buildLimitedCoverageNotice,
   buildNoGarmentNotice, buildRateLimitedNotice,
 } from "../src/search-notice";
 
 const EMPTY_RESULTS: RankedResults = { cheapest: [], bestValue: [], mostLoved: null };
-
-// LAPSITURVALLISUUS (korkea prioriteetti, viimeinen puolustuskerros): tämä
-// suodattaa VIELÄ KERRAN - riippumatta tulosten lähteestä (omat Awin-kaupat
-// TAI AI-web-hakuvarapolku) - ennen kuin mitään näytetään käyttäjälle.
-// Tuonnin oma suodatus (generic-awin-importer.ts) estää suurimman osan
-// epäsopivista tuotteista pääsemästä kantaan asti, mutta tämä on viimeinen
-// varmistus siltä varalta että data on tullut jotain muuta reittiä
-// (esim. AI-web-haku, jonka tuloksia ei voida etukäteen kuratoida).
-function filterChildSafe(products: Product[]): Product[] {
-  return products.filter((p) => !hasBlockedKeywords({ title: p.title, category: p.garment_type }));
-}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // UI:n kieli ja kävijän markkina (lang=fi|sv|en, market=FI|SE|other). Puuttuva/tuntematon -> fi / FI.
@@ -43,6 +33,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const q = (req.query.q as string) || "";
+  // Rakenteinen haku (kategoriapaneeli): ?items=... ilman q:ta. Tekstihaku (q) toimii ennallaan.
+  if (!q.trim() && req.query.items !== undefined) {
+    try {
+      const result = await structuredSearchResponse(req.query, view, new MultiStoreAdapter());
+      res.status(result.status).json(result.body);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Tuntematon virhe haussa" });
+    }
+    return;
+  }
   if (!q.trim()) {
     res.status(400).json({ error: { fi: "Anna hakuteksti parametrilla ?q=...", sv: "Ange söktext med parametern ?q=...", en: "Provide the search text with the parameter ?q=..." }[lang] });
     return;

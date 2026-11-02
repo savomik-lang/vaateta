@@ -15,6 +15,9 @@
     },
     "api/search.ts": {
       "maxDuration": 30
+    },
+    "api/facets.ts": {
+      "maxDuration": 30
     }
   }
 }

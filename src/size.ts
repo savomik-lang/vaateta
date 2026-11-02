@@ -123,7 +123,7 @@ function overlaps(lo: number, hi: number, a: number, b: number): boolean {
   return hi >= a && lo <= b;
 }
 
-export function tokenFit(tok: SizeToken, targetCm: number, isShoe: boolean): SizeFit {
+export function tokenFit(tok: SizeToken, targetCm: number, isShoe: boolean, shoeEu?: number): SizeFit {
   switch (tok.kind) {
     case "unknown": return "exact";
     case "letters":
@@ -141,7 +141,7 @@ export function tokenFit(tok: SizeToken, targetCm: number, isShoe: boolean): Siz
         if (tok.lo === tok.hi && tok.lo <= 17) return tokenFit({ kind: "cm", lo: AGE_TO_CM[tok.lo], hi: AGE_TO_CM[tok.lo] }, targetCm, false);
         return null;
       }
-      const eu = shoeEuForCm(targetCm);
+      const eu = shoeEu ?? shoeEuForCm(targetCm);
       if (overlaps(tok.lo, tok.hi, eu - 1, eu + 2)) return "exact";
       if (overlaps(tok.lo, tok.hi, eu - 3, eu - 2)) return "smaller";
       return null;
@@ -152,14 +152,14 @@ export function tokenFit(tok: SizeToken, targetCm: number, isShoe: boolean): Siz
 // Tuotteen paras sopivuus haettuun kokoon. Ei kokotietoa = hyväksytään.
 // Tunnistamattomat merkinnät ("One Size") ovat neutraaleja vain jos tuotteella
 // EI ole yhtään tulkittavaa kokoa - muuten ne eivät saa ohittaa kokosuodatinta.
-export function productSizeFit(sizes: string[], targetCm: number, isShoe: boolean): SizeFit {
+export function productSizeFit(sizes: string[], targetCm: number, isShoe: boolean, shoeEu?: number): SizeFit {
   if (sizes.length === 0) return "exact";
   const tokens = sizes.map(parseSizeToken);
   const known = tokens.filter((t) => t.kind !== "unknown");
   if (known.length === 0) return "exact";
   let best: SizeFit = null;
   for (const tok of known) {
-    const fit = tokenFit(tok, targetCm, isShoe);
+    const fit = tokenFit(tok, targetCm, isShoe, shoeEu);
     if (fit === "exact") return "exact";
     if (fit === "smaller") best = "smaller";
   }

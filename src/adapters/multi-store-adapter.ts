@@ -158,7 +158,7 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
       // viittaa isompiin lapsiin - "Baby/Toddler/Kids" ilman ikää on pienille.
       else if (targetCm >= 152 && !TEEN_TITLE_REGEX.test(p.title)) return false;
     }
-    const fit = productSizeFit(sizes, targetCm, p.garment_type === "kengät");
+    const fit = productSizeFit(sizes, targetCm, p.garment_type === "kengät", c.shoe_eu);
     if (fit === null) return false;
     if (fit === "smaller" && !opts.allowSmaller) return false;
   }
@@ -198,6 +198,13 @@ export class MultiStoreAdapter {
   async search(criteria: SearchCriteria, opts: MatchOptions = {}): Promise<Product[]> {
     const all = await this.loadAllProducts();
     return all.filter((p) => matchesCriteria(p, criteria, opts));
+  }
+
+  // Katalogin versio: kaikkien kauppojen päivitysajat. Muuttuu aina kun mikä tahansa kauppa tuodaan
+  // uudelleen (välimuistien avaimeksi; lastImportedAt palauttaa vain vanhimman).
+  async importVersion(): Promise<string> {
+    const timestamps = await Promise.all(this.stores.map((s) => s.lastUpdated()));
+    return timestamps.map((t) => t ?? "").join("|");
   }
 
   async lastImportedAt(): Promise<string | null> {
