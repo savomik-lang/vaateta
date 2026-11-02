@@ -97,6 +97,7 @@ Kielletty: #C98A2B (vanha sinappi) tekstinä, kontrasti 2,7:1.
 - Pitkät nimet: pehmeä tavuviiva (`\u00ad`) kapeita ruutuja varten (320 px näyttö).
 - Avaus: View Transitions (kuva liukuu ruudusta paneeliin), muuten häivytys; `prefers-reduced-motion` ilman liikettä.
 - Muisti: `localStorage` `vaateta_lapsi` (koko, kenkäkoko, lapsi); kerrottu tietosuojaselosteessa.
+- Määrät (vaihe B1, `/api/facets`): luku nimen alla `--ink-soft` 11,5 px; 0 tuotetta = himmennetty (opacity .5) ja `aria-disabled`, ei valittavissa. Näytä-painike kertoo valittujen summan ("Näytä 71 tuotetta"), 0 = ei käytössä.
 
 ## Liike
 
