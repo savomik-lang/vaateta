@@ -607,6 +607,9 @@
   .cp-opt .cp-check svg{ width: 12px; height: 12px; stroke-width: 2.6; }
   .cp-opt[aria-pressed="true"] .cp-check{ display:inline-flex; }
   .cp-opt:focus-visible{ outline: 2px solid var(--ink); outline-offset: 2px; }
+  .cp-count{ min-height: 15px; font-size: 11.5px; font-weight: 500; line-height: 1.3; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .cp-opt[aria-pressed="true"] .cp-count{ color: var(--ink); }
+  .cp-opt.cp-zero:not([aria-pressed="true"]){ opacity: .5; cursor: default; }
   @media (hover: hover){ .cp-opt:hover{ border-color: var(--ink-soft); color: var(--ink); } }
   .cp-seg{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .cp-seg label{ position: relative; }
@@ -1373,7 +1376,9 @@
       'opt.sadeasu': 'Sadeasu', 'opt.kurakengat': 'Kura\u00adkengät', 'opt.kengat': 'Kaikki kengät',
       'opt.takki': 'Takki', 'opt.paita': 'Paita', 'opt.housut': 'Housut',
       'opt.mekko': 'Mekko', 'opt.haalari': 'Haalari', 'opt.sukat': 'Sukat',
-      'opt.pyjama': 'Pyjama', 'opt.body': 'Body'
+      'opt.pyjama': 'Pyjama', 'opt.body': 'Body',
+      'cp.showN': 'Näytä {n} tuotetta', 'cp.showOne': 'Näytä 1 tuote', 'cp.showNone': 'Ei tuotteita näillä valinnoilla',
+      'cp.countSr': '{n} tuotetta'
     },
     sv: {
       'price.now': 'Pris ', 'price.was': 'Förut ', 'card.view': 'Visa i butiken',
@@ -1429,7 +1434,9 @@
       'opt.sadeasu': 'Regn\u00adställ', 'opt.kurakengat': 'Vatten\u00adtäta skor', 'opt.kengat': 'Alla skor',
       'opt.takki': 'Jacka', 'opt.paita': 'Tröja', 'opt.housut': 'Byxor',
       'opt.mekko': 'Klänning', 'opt.haalari': 'Overall', 'opt.sukat': 'Strumpor',
-      'opt.pyjama': 'Pyjamas', 'opt.body': 'Body'
+      'opt.pyjama': 'Pyjamas', 'opt.body': 'Body',
+      'cp.showN': 'Visa {n} produkter', 'cp.showOne': 'Visa 1 produkt', 'cp.showNone': 'Inga produkter med de här valen',
+      'cp.countSr': '{n} produkter'
     },
     en: {
       'price.now': 'Price ', 'price.was': 'Was ', 'card.view': 'View in shop',
@@ -1485,7 +1492,9 @@
       'opt.sadeasu': 'Rain suit', 'opt.kurakengat': 'Waterproof shoes', 'opt.kengat': 'All shoes',
       'opt.takki': 'Jacket', 'opt.paita': 'Top', 'opt.housut': 'Trousers',
       'opt.mekko': 'Dress', 'opt.haalari': 'Overall', 'opt.sukat': 'Socks',
-      'opt.pyjama': 'Pyjamas', 'opt.body': 'Bodysuit'
+      'opt.pyjama': 'Pyjamas', 'opt.body': 'Bodysuit',
+      'cp.showN': 'Show {n} products', 'cp.showOne': 'Show 1 product', 'cp.showNone': 'No products with these choices',
+      'cp.countSr': '{n} products'
     }
   };
   var LANG = String(document.documentElement.lang || 'fi').slice(0, 2).toLowerCase();
@@ -2482,46 +2491,50 @@
   }
 
   // =====================================================================
-  // KATEGORIAPANEELI (premium-UX, vaihe A): ruutu suurenee paneeliksi, jossa
-  // valitaan vaatteet (monivalinta), lapsi ja koko. Jokaisesta vaatteesta
-  // tehdään oma haku nykyiseen /api/search-rajapintaan rinnakkain, ja tulokset
-  // yhdistetään. Hakulauseet on tarkistettu backendin parserilla (fi/sv/en).
-  // Vaihe B (Data-chat): rakenteinen haku, määrät kuvakkeisiin, brändit.
+  // KATEGORIAPANEELI: ruutu suurenee paneeliksi, jossa valitaan vaatteet
+  // (monivalinta), lapsi ja koko.
+  // Vaihe B1: yksi rakenteinen haku /api/search?items=… ja määrät kuvakkeisiin
+  // /api/facets (sopimus: projektin claude/vaihe-b-rajapinta.md). item =
+  // <vaatetyyppi>[.<alatyyppi>][+winter][+wp].
+  // Varapolku (vaihe A): jos rakenteinen haku ei ole käytössä (vanha backend tai
+  // virhe), jokaisesta vaatteesta tehdään oma tekstihaku (q) rinnakkain.
+  // Hakulauseet on tarkistettu backendin parserilla (fi/sv/en).
   // =====================================================================
   var OPTS = {
-    talvihaalari: { icon: 'haalari', q: { fi: 'talvihaalari', sv: 'vinteroverall', en: 'winter snowsuit' } },
-    talvitakki: { icon: 'takki', q: { fi: 'talvitakki', sv: 'vinterjacka', en: 'winter jacket' } },
-    toppahousut: { icon: 'toppahousut', q: { fi: 'toppahousut', sv: 'täckbyxor', en: 'snow trousers' } },
-    pipo: { icon: 'pipo', q: { fi: 'pipo', sv: 'mössa', en: 'beanie' } },
-    lapaset: { icon: 'lapaset', q: { fi: 'lapaset', sv: 'vantar', en: 'mittens' } },
-    kuralapaset: { icon: 'lapaset_wp', q: { fi: 'vedenpitävät lapaset', sv: 'vattentäta vantar', en: 'waterproof mittens' } },
-    kerrasto: { icon: 'kerrasto', q: { fi: 'kerrasto', sv: 'underställ', en: 'base layer' } },
-    villasukat: { icon: 'sukat', q: { fi: 'villasukat', sv: 'ullstrumpor', en: 'wool socks' } },
-    talvikengat: { icon: 'talvikenka', shoe: true, q: { fi: 'talvikengät', sv: 'vinterkängor', en: 'winter boots' } },
-    kurahousut: { icon: 'kurahousut', q: { fi: 'kurahousut', sv: 'regnbyxor', en: 'rain trousers' } },
-    sadetakki: { icon: 'sadetakki', q: { fi: 'sadetakki', sv: 'vattentät jacka', en: 'waterproof jacket' } },
-    sadeasu: { icon: 'sadeasu', q: { fi: 'sadeasu', sv: 'vattentät regnställ', en: 'waterproof rain suit' } },
-    kurakengat: { icon: 'saappaat', shoe: true, q: { fi: 'vedenpitävät kumisaappaat', sv: 'vattentäta gummistövlar', en: 'waterproof wellies' } },
-    kengat: { icon: 'kengat', shoe: true, q: { fi: 'kengät', sv: 'skor', en: 'shoes' } },
-    takki: { icon: 'takki', q: { fi: 'takki', sv: 'jacka', en: 'jacket' } },
-    paita: { icon: 'paita', q: { fi: 'paita', sv: 'tröja', en: 'shirt' } },
-    housut: { icon: 'housut', q: { fi: 'housut', sv: 'byxor', en: 'trousers' } },
-    mekko: { icon: 'mekko', q: { fi: 'mekko', sv: 'klänning', en: 'dress' } },
-    haalari: { icon: 'haalari', q: { fi: 'haalari', sv: 'overall', en: 'overall' } },
-    sukat: { icon: 'sukat', q: { fi: 'sukat', sv: 'strumpor', en: 'socks' } },
-    pyjama: { icon: 'pyjama', q: { fi: 'pyjama', sv: 'pyjamas', en: 'pyjamas' } },
-    body: { icon: 'body', q: { fi: 'body', sv: 'body', en: 'bodysuit' } }
+    talvihaalari: { item: 'haalari+winter', icon: 'haalari', q: { fi: 'talvihaalari', sv: 'vinteroverall', en: 'winter snowsuit' } },
+    talvitakki: { item: 'takki+winter', icon: 'takki', q: { fi: 'talvitakki', sv: 'vinterjacka', en: 'winter jacket' } },
+    toppahousut: { item: 'toppahousut', icon: 'toppahousut', q: { fi: 'toppahousut', sv: 'täckbyxor', en: 'snow trousers' } },
+    pipo: { item: 'pipo', icon: 'pipo', q: { fi: 'pipo', sv: 'mössa', en: 'beanie' } },
+    lapaset: { item: 'lapaset', icon: 'lapaset', q: { fi: 'lapaset', sv: 'vantar', en: 'mittens' } },
+    kuralapaset: { item: 'lapaset+wp', icon: 'lapaset_wp', q: { fi: 'vedenpitävät lapaset', sv: 'vattentäta vantar', en: 'waterproof mittens' } },
+    kerrasto: { item: 'kerrasto', icon: 'kerrasto', q: { fi: 'kerrasto', sv: 'underställ', en: 'base layer' } },
+    villasukat: { item: 'sukat', icon: 'sukat', q: { fi: 'villasukat', sv: 'ullstrumpor', en: 'wool socks' } },
+    talvikengat: { item: 'kengät+winter', icon: 'talvikenka', shoe: true, q: { fi: 'talvikengät', sv: 'vinterkängor', en: 'winter boots' } },
+    kurahousut: { item: 'kurahousut', icon: 'kurahousut', q: { fi: 'kurahousut', sv: 'regnbyxor', en: 'rain trousers' } },
+    sadetakki: { item: 'takki+wp', icon: 'sadetakki', q: { fi: 'sadetakki', sv: 'vattentät jacka', en: 'waterproof jacket' } },
+    sadeasu: { item: 'haalari+wp', icon: 'sadeasu', q: { fi: 'sadeasu', sv: 'vattentät regnställ', en: 'waterproof rain suit' } },
+    kurakengat: { item: 'kengät+wp', icon: 'saappaat', shoe: true, q: { fi: 'vedenpitävät kumisaappaat', sv: 'vattentäta gummistövlar', en: 'waterproof wellies' } },
+    kengat: { item: 'kengät', icon: 'kengat', shoe: true, q: { fi: 'kengät', sv: 'skor', en: 'shoes' } },
+    takki: { item: 'takki', icon: 'takki', q: { fi: 'takki', sv: 'jacka', en: 'jacket' } },
+    paita: { item: 'paita', icon: 'paita', q: { fi: 'paita', sv: 'tröja', en: 'shirt' } },
+    housut: { item: 'housut', icon: 'housut', q: { fi: 'housut', sv: 'byxor', en: 'trousers' } },
+    mekko: { item: 'mekko', icon: 'mekko', q: { fi: 'mekko', sv: 'klänning', en: 'dress' } },
+    haalari: { item: 'haalari', icon: 'haalari', q: { fi: 'haalari', sv: 'overall', en: 'overall' } },
+    sukat: { item: 'sukat', icon: 'sukat', q: { fi: 'sukat', sv: 'strumpor', en: 'socks' } },
+    pyjama: { item: 'pyjama', icon: 'pyjama', q: { fi: 'pyjama', sv: 'pyjamas', en: 'pyjamas' } },
+    body: { item: 'body', icon: 'body', q: { fi: 'body', sv: 'body', en: 'bodysuit' } }
   };
   var CATS = {
-    talvi: { img: 'talvi-ulkoilu', def: 'talvihaalari', opts: ['talvihaalari', 'talvitakki', 'toppahousut', 'pipo', 'lapaset', 'villasukat', 'talvikengat'] },
+    talvi: { img: 'talvi-ulkoilu', def: 'talvihaalari', opts: ['talvihaalari', 'talvitakki', 'toppahousut', 'pipo', 'lapaset', 'kerrasto', 'villasukat', 'talvikengat'] },
     sade: { img: 'sade-kura', def: 'kurahousut', opts: ['kurahousut', 'sadetakki', 'sadeasu', 'kurakengat', 'kuralapaset'] },
     kengat: { img: 'kengat', def: 'talvikengat', opts: ['talvikengat', 'kurakengat', 'kengat'] },
     pipot: { img: 'pipot-lapaset', def: 'pipo', opts: ['pipo', 'lapaset', 'kuralapaset', 'villasukat'] },
     arki: { img: 'arki-paivakoti', def: 'takki', opts: ['takki', 'paita', 'housut', 'mekko', 'haalari', 'sukat', 'pipo', 'kengat'] },
     vauvat: { img: 'vauvat', def: 'haalari', baby: true, opts: ['haalari', 'takki', 'housut', 'paita', 'pipo', 'lapaset', 'sukat'] }
   };
-  // Kerrasto, body ja pyjama ovat valmiina (OPTS), mutta katalogissa ei ole niitä vielä
-  // (live-tarkistus 1.11.2026: 0–1 tuotetta). Lisätään kategorioihin, kun tuotteita on.
+  // Body ja pyjama ovat valmiina (OPTS), mutta katalogissa ei ole niitä vielä
+  // (Data-chat 2.11.2026: puuttuvat lähteistä). Lisätään kategorioihin, kun tuotteita on.
+  // Kerrasto palautettu 2.11. (84 tuotetta tuonnin jälkeen).
   var SIZES = [50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 110, 116, 122, 128, 134, 140, 146, 152, 158, 164, 170, 176];
   var BABY_MAX = 92, SHOE_MIN = 18, SHOE_MAX = 42;
   // Ikäarvio koon alle: [cm, alku, loppu, 'm' = kuukautta | 'y' = vuotta]
@@ -2595,10 +2608,76 @@
       return '<li><button type="button" class="cp-opt" data-opt="' + id + '" aria-pressed="' + on + '">' +
         '<svg aria-hidden="true"><use href="#ic-' + OPTS[id].icon + '"/></svg>' +
         '<span>' + esc(optLabel(id)) + '</span>' +
+        '<span class="cp-count"></span>' +
         '<span class="cp-check" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-check"/></svg></span>' +
         '</button></li>';
     }).join('');
+    renderCounts();
   }
+
+  // ---------- MÄÄRÄT (vaihe B1: /api/facets) ----------
+  // Määrät haetaan, kun paneeli avataan ja kun lapsi tai koko muuttuu (viive 250 ms).
+  // Vaatteen valinta ei muuta määriä, vain Näytä-painikkeen summaa.
+  // Jos facets ei vastaa (vanha backend), määriä ei näytetä ja paneeli toimii kuten ennen.
+  var facetCounts = null, facetSeq = 0, facetTimer = null, facetsAvailable = true;
+  var cpShowDefault = cpShow.textContent;
+  function itemOf(id){ return OPTS[id].item; }
+  function filterParams(st){
+    var p = [];
+    if (st.cm) p.push('size_cm=' + st.cm);
+    if (st.shoe) p.push('shoe_eu=' + st.shoe);
+    if (GENDER_URL[st.gender]) p.push('gender=' + GENDER_URL[st.gender]);
+    p.push('lang=' + LANG);
+    return p.join('&');
+  }
+  function itemsParam(ids){
+    var seen = {}, out = [];
+    ids.forEach(function(id){ var it = itemOf(id); if (!seen[it]) { seen[it] = 1; out.push(encodeURIComponent(it)); } });
+    return 'items=' + out.join(',');
+  }
+  function requestFacets(delay){
+    clearTimeout(facetTimer);
+    if (!facetsAvailable || !panelState) return;
+    var st = panelState, mySeq = ++facetSeq;
+    facetTimer = setTimeout(function(){
+      Promise.resolve().then(function(){ return fetch('/api/facets?' + itemsParam(CATS[st.cat].opts) + '&' + filterParams(st)); })
+        .then(function(r){ if (r.status === 404) facetsAvailable = false; if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(d){
+          if (mySeq !== facetSeq) return;
+          facetCounts = d && d.items && typeof d.items === 'object' ? d.items : null;
+          renderCounts();
+        })
+        .catch(function(){ if (mySeq === facetSeq) { facetCounts = null; renderCounts(); } });
+    }, delay == null ? 250 : delay);
+  }
+  function countFor(id){
+    var n = facetCounts ? facetCounts[itemOf(id)] : undefined;
+    return typeof n === 'number' ? n : null;
+  }
+  function renderCounts(){
+    if (!panelState) return;
+    cpOpts.querySelectorAll('.cp-opt').forEach(function(btn){
+      var id = btn.getAttribute('data-opt'), n = countFor(id);
+      var on = btn.getAttribute('aria-pressed') === 'true';
+      var el = btn.querySelector('.cp-count');
+      el.innerHTML = n == null ? '' : '<span aria-hidden="true">' + n.toLocaleString(LOC.locale) + '</span>' +
+        '<span class="visually-hidden">, ' + esc(t('cp.countSr', { n: n })) + '</span>';
+      var zero = n === 0 && !on;
+      btn.classList.toggle('cp-zero', n === 0);
+      if (zero) btn.setAttribute('aria-disabled', 'true'); else btn.removeAttribute('aria-disabled');
+    });
+    updateShow();
+  }
+  function updateShow(){
+    var st = panelState;
+    if (!st.opts.length) { cpShow.disabled = true; cpShow.textContent = cpShowDefault; return; }
+    var known = st.opts.every(function(id){ return countFor(id) != null; });
+    if (!known) { cpShow.disabled = false; cpShow.textContent = cpShowDefault; return; }
+    var n = st.opts.reduce(function(sum, id){ return sum + countFor(id); }, 0);
+    cpShow.disabled = n === 0;
+    cpShow.textContent = n === 0 ? t('cp.showNone') : t(n === 1 ? 'cp.showOne' : 'cp.showN', { n: n.toLocaleString(LOC.locale) });
+  }
+
   function renderSize(){
     var st = panelState, list = sizeList();
     var showClothes = hasClothes(st) || !hasShoe(st);
@@ -2628,7 +2707,7 @@
     renderOpts();
     catPanel.querySelectorAll('input[name="cpGender"]').forEach(function(r){ r.checked = r.value === (panelState.gender || ''); });
     renderSize();
-    cpShow.disabled = panelState.opts.length === 0;
+    updateShow();
   }
 
   function stateFromMemory(cat){
@@ -2644,7 +2723,9 @@
     var tileImg = panelTile && panelTile.querySelector('img');
     cpImg.src = tileImg ? (tileImg.currentSrc || tileImg.src) : '/images/kategoria-' + CATS[cat].img + '-960.jpg';
     document.getElementById('cpTitle').textContent = catTitle(cat);
+    facetCounts = null;
     renderPanel();
+    requestFacets(0);
     if (!supportsDialog) { catPanel.setAttribute('open', ''); return; }
     var media = panelTile && panelTile.querySelector('.cat-media');
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -2729,38 +2810,40 @@
     if (!btn) return;
     var id = btn.getAttribute('data-opt');
     var i = panelState.opts.indexOf(id);
+    if (i === -1 && btn.getAttribute('aria-disabled') === 'true') return;   // 0 tuotetta näillä rajauksilla
     if (i === -1) panelState.opts.push(id); else panelState.opts.splice(i, 1);
     // Järjestys aina kategorian mukaan (tulokset ja sirut samassa järjestyksessä)
     var order = CATS[panelState.cat].opts;
     panelState.opts.sort(function(a, b){ return order.indexOf(a) - order.indexOf(b); });
     btn.setAttribute('aria-pressed', i === -1 ? 'true' : 'false');
     renderSize();
-    cpShow.disabled = panelState.opts.length === 0;
+    renderCounts();
   });
   catPanel.querySelectorAll('input[name="cpGender"]').forEach(function(r){
-    r.addEventListener('change', function(){ if (r.checked) panelState.gender = r.value; });
+    r.addEventListener('change', function(){ if (r.checked) { panelState.gender = r.value; requestFacets(); } });
   });
-  cpSize.addEventListener('input', function(){ panelState.cm = sizeList()[Number(cpSize.value)]; renderSize(); });
-  cpShoe.addEventListener('input', function(){ panelState.shoe = Number(cpShoe.value); renderSize(); });
+  cpSize.addEventListener('input', function(){ panelState.cm = sizeList()[Number(cpSize.value)]; renderSize(); requestFacets(); });
+  cpShoe.addEventListener('input', function(){ panelState.shoe = Number(cpShoe.value); renderSize(); requestFacets(); });
   function stepSize(d){
     var list = sizeList(), i = panelState.cm ? list.indexOf(panelState.cm) : Math.floor(list.length / 2) - (d > 0 ? 1 : 0);
     i = Math.max(0, Math.min(list.length - 1, i + d));
-    panelState.cm = list[i]; renderSize();
+    panelState.cm = list[i]; renderSize(); requestFacets();
   }
   function stepShoe(d){
     var n = panelState.shoe ? panelState.shoe + d : 30;
-    panelState.shoe = Math.max(SHOE_MIN, Math.min(SHOE_MAX, n)); renderSize();
+    panelState.shoe = Math.max(SHOE_MIN, Math.min(SHOE_MAX, n)); renderSize(); requestFacets();
   }
   document.getElementById('cpSizeDec').addEventListener('click', function(){ stepSize(-1); });
   document.getElementById('cpSizeInc').addEventListener('click', function(){ stepSize(1); });
   document.getElementById('cpShoeDec').addEventListener('click', function(){ stepShoe(-1); });
   document.getElementById('cpShoeInc').addEventListener('click', function(){ stepShoe(1); });
-  document.getElementById('cpSizeClear').addEventListener('click', function(){ panelState.cm = null; renderSize(); cpSize.focus(); });
-  document.getElementById('cpShoeClear').addEventListener('click', function(){ panelState.shoe = null; renderSize(); cpShoe.focus(); });
+  document.getElementById('cpSizeClear').addEventListener('click', function(){ panelState.cm = null; renderSize(); requestFacets(); cpSize.focus(); });
+  document.getElementById('cpShoeClear').addEventListener('click', function(){ panelState.shoe = null; renderSize(); requestFacets(); cpShoe.focus(); });
   document.getElementById('cpForget').addEventListener('click', function(){
     forgetMemory();
     panelState.cm = null; panelState.shoe = null; panelState.gender = '';
     renderPanel();
+    requestFacets(0);
   });
   document.getElementById('cpForm').addEventListener('submit', function(e){
     e.preventDefault();
@@ -2907,6 +2990,33 @@
     runCatSearch(st);
   });
 
+  // Vaihe B1: yksi rakenteinen haku. Palauttaa ryhmät samassa muodossa kuin tekstihaku.
+  // Hylkää (-> varapolku), jos backend ei tue rakenteista hakua tai vastaa virheellä.
+  var structuredOK = null;
+  function structuredSearch(st){
+    return Promise.resolve().then(function(){ return fetch('/api/search?' + itemsParam(st.opts) + '&' + filterParams(st)); })
+      .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function(d){
+        if (!d || d.mode !== 'structured' || !Array.isArray(d.groups)) throw new Error('no-groups');
+        structuredOK = true;
+        var byItem = {};
+        d.groups.forEach(function(g){ if (g && g.item) byItem[g.item] = g; });
+        return st.opts.map(function(id){
+          var g = byItem[itemOf(id)] || { total_matches: 0, results: {} };
+          return { id: id, data: { results: g.results || {}, total_matches: g.total_matches }, total: Number(g.total_matches) || 0 };
+        });
+      });
+  }
+  // Vaihe A: jokaisesta vaatteesta oma tekstihaku rinnakkain
+  function textSearch(st){
+    return Promise.all(st.opts.map(function(id){
+      return fetch('/api/search?q=' + encodeURIComponent(catQuery(id, st)) + '&lang=' + LANG)
+        .then(function(r){ if (!r.ok) throw new Error(t('error.http', { status: r.status })); return r.json(); })
+        .then(function(data){ return { id: id, data: data, total: Number(data && data.total_matches) || 0 }; },
+              function(err){ return { id: id, data: null, total: 0, error: err }; });
+    }));
+  }
+
   function runCatSearch(st){
     var mySeq = ++searchSeq;
     catMode = st; catFilterId = ''; catGroups = [];
@@ -2923,12 +3033,9 @@
     renderCatUnderstood(st);
     var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     searchSection.scrollIntoView({ behavior: reduceMotion ? 'instant' : 'smooth', block: 'start' });
-    Promise.all(st.opts.map(function(id){
-      return fetch('/api/search?q=' + encodeURIComponent(catQuery(id, st)) + '&lang=' + LANG)
-        .then(function(r){ if (!r.ok) throw new Error(t('error.http', { status: r.status })); return r.json(); })
-        .then(function(data){ return { id: id, data: data, total: Number(data && data.total_matches) || 0 }; },
-              function(err){ return { id: id, data: null, total: 0, error: err }; });
-    })).then(function(groups){
+    var search = structuredOK === false ? textSearch(st)
+      : structuredSearch(st).catch(function(){ structuredOK = false; return textSearch(st); });
+    search.then(function(groups){
       if (mySeq !== searchSeq) return;
       catGroups = groups;
       var total = groups.reduce(function(s, g){ return s + g.total; }, 0);
