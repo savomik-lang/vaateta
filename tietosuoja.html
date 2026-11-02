@@ -138,7 +138,7 @@
   <section class="lang-section active" id="lang-fi" lang="fi">
 
     <div class="note">
-      Lyhyesti: hakulauseesi käytetään vain sopivien vaatteiden etsimiseen. Emme pyydä nimeäsi, emme käytä kirjautumista tai analytiikkaa, emmekä yhdistä hakuja sinuun. Ainoa oma evästeemme muistaa kielivalintasi. Älä kirjoita hakuun nimiä tai muita tunnistetietoja.
+      Lyhyesti: hakulauseesi käytetään vain sopivien vaatteiden etsimiseen. Emme pyydä nimeäsi, emme käytä kirjautumista tai analytiikkaa, emmekä yhdistä hakuja sinuun. Ainoa oma evästeemme muistaa kielivalintasi, ja selaimesi muisti voi muistaa valitsemasi lapsen koon. Älä kirjoita hakuun nimiä tai muita tunnistetietoja.
     </div>
 
     <h2>1. Rekisterinpitäjä</h2>
@@ -157,6 +157,7 @@
       <li><strong>Puhehaku (mikrofoni).</strong> Jos painat mikrofonipainiketta, selaimesi kysyy luvan mikrofonin käyttöön. Puhe muutetaan tekstiksi selaimen omalla puheentunnistuspalvelulla (esim. Chromessa Google, Safarissa Apple), joka voi käsitellä äänen omilla palvelimillaan. Vaateta ei vastaanota eikä tallenna ääntä, vaan ainoastaan tunnistetun tekstin, joka lähetetään hakuna. Tietokoneella selain mittaa lisäksi äänen voimakkuutta kuunteluanimaatiota varten; mittaus tapahtuu vain laitteellasi. Mikrofoni on käytössä vain painikkeen painamisesta kuuntelun loppuun, ja se sulkeutuu itsestään, jos puhetta ei kuulu muutamaan sekuntiin.</li>
       <li><strong>Kauppalinkit.</strong> Kun avaat tuotteen kaupassa, siirryt kumppaniverkosto Awinin seurantalinkin kautta kaupan sivulle. Awin ja kauppa voivat käyttää evästeitä todetakseen, että ostos tehtiin Vaatetan kautta. Tähän sovelletaan Awinin ja kaupan omia tietosuojaselosteita. Vaateta saa Awinilta vain koostettua tietoa toteutuneista ostoksista ja palkkioista, ei henkilötietojasi.</li>
       <li><strong>Kielivalinta.</strong> Etusivu avautuu kielellä, joka päätellään selaimesi kieliasetuksesta ja maasta. Maa päätellään IP-osoitteesta hostauspalvelun (Vercel) toimesta, eikä sitä tallenneta. Jos valitset kielen itse (FI, SV, EN), valinta tallennetaan evästeeseen <code>vaateta_lang</code> vuodeksi, jotta sivu avautuu jatkossa samalla kielellä. Eväste sisältää vain kielikoodin, ja se on palvelun toiminnan kannalta välttämätön. Voit poistaa sen selaimen asetuksista.</li>
+      <li><strong>Lapsen koko.</strong> Jos valitset kategoriassa lapsen koon, kenkäkoon tai sukupuolen (tyttö/poika), valinta tallennetaan vain selaimesi omaan muistiin (localStorage, nimi <code>vaateta_lapsi</code>), jotta se on valmiina seuraavalla kerralla. Tallenteessa ei ole nimeä eikä muuta tunnistetta, eikä se lähde meille muuten kuin osana tekemääsi hakua. Voit poistaa sen paneelin Unohda-painikkeella tai tyhjentämällä selaimen tiedot.</li>
       <li><strong>Sähköposti.</strong> Kun lähetät meille viestin ("Lähetä palautetta" tai "Ota yhteyttä"), näemme sähköpostiosoitteesi ja viestisi sisällön.</li>
     </ul>
 
@@ -179,6 +180,7 @@
     <ul>
       <li>Välimuistiin tallennetut hakulauseet poistuvat automaattisesti viimeistään 24 tunnin kuluttua.</li>
       <li>Kielivalinnan eväste vanhenee vuoden kuluttua viimeisestä valinnasta.</li>
+      <li>Selaimen muistiin tallennettu lapsen koko säilyy, kunnes poistat sen.</li>
       <li>Palvelimen lokitiedot säilyvät hostauspalvelun oman käytännön mukaisesti.</li>
       <li>Tekoälypalvelulle lähetetyt hakulauseet säilyvät Anthropicin kaupallisten ehtojen mukaisesti rajatun ajan, eikä niitä käytetä tekoälymallien kouluttamiseen.</li>
       <li>Sähköpostiviestit säilytetään niin kauan kuin on tarpeen yhteydenottoon vastaamiseksi.</li>
@@ -210,7 +212,7 @@
   <section class="lang-section" id="lang-sv" lang="sv">
 
     <div class="note">
-      Kort sagt: din sökning används bara för att hitta passande kläder. Vi frågar inte efter ditt namn, vi använder ingen inloggning eller analys, och sökningar kopplas inte till dig. Vår enda egna cookie kommer ihåg ditt språkval. Skriv inte namn eller andra identifierande uppgifter i sökningen.
+      Kort sagt: din sökning används bara för att hitta passande kläder. Vi frågar inte efter ditt namn, vi använder ingen inloggning eller analys, och sökningar kopplas inte till dig. Vår enda egna cookie kommer ihåg ditt språkval, och din webbläsare kan komma ihåg barnets storlek som du väljer. Skriv inte namn eller andra identifierande uppgifter i sökningen.
     </div>
 
     <h2>1. Personuppgiftsansvarig</h2>
@@ -229,6 +231,7 @@
       <li><strong>Röstsökning (mikrofon).</strong> Om du trycker på mikrofonknappen ber webbläsaren om lov att använda mikrofonen. Talet omvandlas till text av webbläsarens egen taligenkänning (t.ex. Google i Chrome, Apple i Safari), som kan behandla ljudet på sina egna servrar. Vaateta tar inte emot och sparar inget ljud, bara den igenkända texten, som skickas som en sökning. På datorer mäter webbläsaren också ljudnivån för lyssningsanimationen; mätningen sker bara på din enhet. Mikrofonen är aktiv bara från att du trycker på knappen tills lyssningen slutar, och den stängs av automatiskt om inget tal hörs inom några sekunder.</li>
       <li><strong>Butikslänkar.</strong> När du öppnar en produkt i en butik går du via en spårningslänk från partnernätverket Awin till butikens webbplats. Awin och butiken kan använda cookies för att registrera att köpet gjordes via Vaateta. Deras egna integritetspolicyer gäller. Vaateta får bara sammanställd information om genomförda köp och provisioner från Awin, inte dina personuppgifter.</li>
       <li><strong>Språkval.</strong> Startsidan öppnas på ett språk som väljs utifrån webbläsarens språkinställning och ditt land. Landet härleds från IP-adressen av vårt webbhotell (Vercel) och sparas inte. Om du själv väljer språk (FI, SV, EN) sparas valet i cookien <code>vaateta_lang</code> i ett år, så att sidan öppnas på samma språk nästa gång. Cookien innehåller bara språkkoden och är nödvändig för funktionen. Du kan ta bort den i webbläsarens inställningar.</li>
+      <li><strong>Barnets storlek.</strong> Om du väljer barnets storlek, skostorlek eller kön (flicka/pojke) i en kategori sparas valet bara i webbläsarens eget minne (localStorage, namnet <code>vaateta_lapsi</code>), så att det finns kvar nästa gång. Det innehåller inget namn eller annan identifierare och skickas inte till oss annat än som en del av sökningen du gör. Du kan ta bort det med knappen Glöm i panelen eller genom att rensa webbläsarens data.</li>
       <li><strong>E-post.</strong> När du skickar ett meddelande till oss ("Skicka feedback" eller "Kontakta oss") ser vi din e-postadress och meddelandets innehåll.</li>
     </ul>
 
@@ -251,6 +254,7 @@
     <ul>
       <li>Sökningar i cachen raderas automatiskt inom 24 timmar.</li>
       <li>Språkcookien upphör att gälla ett år efter ditt senaste val.</li>
+      <li>Barnets storlek i webbläsarens minne finns kvar tills du tar bort den.</li>
       <li>Serverloggar sparas enligt webbhotellets egna regler.</li>
       <li>Sökningar som skickas till AI-tjänsten sparas en begränsad tid enligt Anthropics kommersiella villkor och används inte för att träna AI-modeller.</li>
       <li>E-postmeddelanden sparas så länge det behövs för att besvara dem.</li>
@@ -282,7 +286,7 @@
   <section class="lang-section" id="lang-en" lang="en">
 
     <div class="note">
-      In short: your search text is used only to find suitable clothes. We do not ask for your name, and we use no login or analytics. Searches are not linked to you. Our only cookie of our own remembers your language choice. Please do not include names or other identifying details in a search.
+      In short: your search text is used only to find suitable clothes. We do not ask for your name, and we use no login or analytics. Searches are not linked to you. Our only cookie of our own remembers your language choice, and your browser can remember the child’s size you choose. Please do not include names or other identifying details in a search.
     </div>
 
     <h2>1. Data Controller</h2>
@@ -301,6 +305,7 @@
       <li><strong>Voice search (microphone).</strong> If you press the microphone button, your browser asks for permission to use the microphone. Speech is converted to text by your browser's own speech recognition service (e.g. Google in Chrome, Apple in Safari), which may process the audio on its own servers. Vaateta does not receive or store any audio, only the recognised text, which is sent as a search. On computers the browser also measures the sound level for the listening animation; this happens only on your device. The microphone is active only from pressing the button until listening ends, and it switches off automatically if no speech is heard within a few seconds.</li>
       <li><strong>Store links.</strong> When you open a product in a store, you pass through a tracking link of the affiliate network Awin to the store's site. Awin and the store may use cookies to record that the purchase came via Vaateta. Their own privacy notices apply. Vaateta receives only aggregated information on completed purchases and commissions from Awin, not your personal data.</li>
       <li><strong>Language choice.</strong> The front page opens in a language based on your browser's language setting and your country. The country is derived from your IP address by our hosting provider (Vercel) and is not stored. If you choose a language yourself (FI, SV, EN), the choice is saved in the cookie <code>vaateta_lang</code> for one year so the site opens in the same language next time. The cookie contains only the language code and is strictly necessary for this function. You can delete it in your browser settings.</li>
+      <li><strong>Child’s size.</strong> If you choose a child’s size, shoe size or gender (girl/boy) in a category, the choice is saved only in your browser’s own storage (localStorage, name <code>vaateta_lapsi</code>) so it is ready next time. It contains no name or other identifier and is not sent to us except as part of a search you make. You can delete it with the Forget button in the panel or by clearing your browser data.</li>
       <li><strong>Email.</strong> When you send us a message ("Send feedback" / "Contact"), we see your email address and message content.</li>
     </ul>
 
@@ -323,6 +328,7 @@
     <ul>
       <li>Cached queries are deleted automatically within 24 hours.</li>
       <li>The language cookie expires one year after your last choice.</li>
+      <li>The child’s size saved in your browser stays until you delete it.</li>
       <li>Server logs are kept according to the hosting provider's own policy.</li>
       <li>Queries sent to the AI service are kept for a limited time under Anthropic's commercial terms and are not used to train AI models.</li>
       <li>Emails are kept as long as needed to respond to your inquiry.</li>

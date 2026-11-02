@@ -73,6 +73,7 @@ Kielletty: #C98A2B (vanha sinappi) tekstinä, kontrasti 2,7:1.
 | 10 | `header` (logo, valikko, kielivalitsin ja sen pudotusvalikko) |
 | 20 | `.sticky-search` (kiinnittyvä hakupalkki) |
 | 60 | Puhehaun ikkuna |
+| top layer | Kategoriapaneeli (`<dialog>` showModal, aina päällimmäisenä) |
 
 - Otsakkeen täytyy olla ensinäkymän sisällön yläpuolella: mobiilissa `.hero-content` alkaa heti otsakkeen alta
   (yläpadding kuvan korkeuden verran) ja peitti kielivalikon, kun molemmilla oli sama arvo (korjattu 1.11.2026).
@@ -83,6 +84,19 @@ Kielletty: #C98A2B (vanha sinappi) tekstinä, kontrasti 2,7:1.
 - Ensinäkymä: `images/ensinakyma-metsapolku-*` (WebP 1408/800 + JPG). Kategoriat: `images/kategoria-*` (4:3, WebP 480/960 + JPG).
 - Alkuperäiset: `images/lahde/` (ei julkaista). Tekoälykuvat: alatunnisteessa "Kuvat on luotu tekoälyllä".
 - Tuotekuvissa ei logoja tai merkkien tunnusmerkkejä ("plain unbranded").
+
+## Kategoriapaneeli ja vaatekuvakkeet
+
+- Kategoriaruutu avaa paneelin (`<dialog id="catPanel">`): vaatteet monivalintana, lapsi (Tyttö · Poika · Kaikki),
+  koko liukusäätimellä (vaatekoot 50–176, vauvoilla 50–92) ja kenkäkoko EU 18–42, kun kenkiä on valittu.
+- Vaihtoehdot ja hakulauseet: `OPTS` ja `CATS` index.html:ssä. Vain vaihtoehtoja, jotka oikeasti rajaavat hakua
+  (vaatetyyppi + talvi/vedenpitävä); alatyypit (lenkkarit, lippis…) vasta, kun backend tukee niitä (vaihe B).
+- Kuvakkeet: oma SVG-sprite (`#ic-*`), 32 × 32, viiva 1,75, pyöristetyt päät, ei täyttöä, väri `currentColor`.
+  Vedenpitävässä versiossa pisara oikeassa yläkulmassa. Ikäneutraalit muodot (myös isommille lapsille).
+- Valittu ruutu: valkoinen pohja, 2 px `--ink`-reuna ja `--accent`-valintamerkki; valitsematon `--paper-alt`.
+- Pitkät nimet: pehmeä tavuviiva (`\u00ad`) kapeita ruutuja varten (320 px näyttö).
+- Avaus: View Transitions (kuva liukuu ruudusta paneeliin), muuten häivytys; `prefers-reduced-motion` ilman liikettä.
+- Muisti: `localStorage` `vaateta_lapsi` (koko, kenkäkoko, lapsi); kerrottu tietosuojaselosteessa.
 
 ## Liike
 
