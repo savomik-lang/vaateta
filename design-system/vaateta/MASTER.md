@@ -90,7 +90,15 @@ Kielletty: #C98A2B (vanha sinappi) tekstinä, kontrasti 2,7:1.
 - Kategoriaruutu avaa paneelin (`<dialog id="catPanel">`): vaatteet monivalintana, lapsi (Tyttö · Poika · Kaikki),
   koko liukusäätimellä (vaatekoot 50–176, vauvoilla 50–92) ja kenkäkoko EU 18–42, kun kenkiä on valittu.
 - Vaihtoehdot ja hakulauseet: `OPTS` ja `CATS` index.html:ssä. Vain vaihtoehtoja, jotka oikeasti rajaavat hakua
-  (vaatetyyppi + talvi/vedenpitävä); alatyypit (lenkkarit, lippis…) vasta, kun backend tukee niitä (vaihe B).
+  (vaatetyyppi + talvi/vedenpitävä).
+- Alatyypit (vaihe B2): valitun vaatteen alle "Tarkenna: Kengät (valinnainen)" -rivi sirupainikkeina, vain jos
+  vaatteen item on pelkkä vaatetyyppi (ei `+winter`/`+wp`) ja backend palauttaa alatyypin facetsin `subtypes`-listassa
+  (≥ 8 tuotetta). Ei valintaa = kaikki. Kuvake `#ic-s-*` (24 px sirussa) tai olemassa oleva vaatekuvake (`SUB_ICON`).
+- Merkit (vaihe B2): "Merkit (valinnainen)" koon jälkeen, 8 suurinta + "Näytä kaikki merkit (n)" (`aria-expanded`),
+  monivalinta, valitut näkyvät aina. Lista lasketaan valituista vaatteista (`brand_items`), määrät rajautuvat merkkeihin.
+- Sirupainike (`.cp-chip`): korkeus 44 px, 999 px pyöristys, valitsematon `--paper-alt`, valittu valkoinen + 2 px
+  `--ink`-reuna + valintamerkki, 0 tuotetta himmennetty ja `aria-disabled`.
+- URL: `ala=kengat.lenkkarit,pipo.lippis` (vaate-id.alatyyppi) ja `merkki=Reima&merkki=Lindberg`.
 - Kuvakkeet: oma SVG-sprite (`#ic-*`), 32 × 32, viiva 1,75, pyöristetyt päät, ei täyttöä, väri `currentColor`.
   Vedenpitävässä versiossa pisara oikeassa yläkulmassa. Ikäneutraalit muodot (myös isommille lapsille).
 - Valittu ruutu: valkoinen pohja, 2 px `--ink`-reuna ja `--accent`-valintamerkki; valitsematon `--paper-alt`.
