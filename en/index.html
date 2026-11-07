@@ -832,6 +832,7 @@
   .result-card .rc-title{
     font-size: 14px; font-weight: 500; line-height: 1.3;
     display:-webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow:hidden;
+    overflow-wrap: anywhere;
   }
   .result-card .rc-price{ display:flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin-top: 2px; }
   .rc-price .now{ font-family:var(--font-ui); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--ink); }
@@ -1207,7 +1208,7 @@
 <section class="live-search" id="kokeile" hidden>
   <div class="wrap">
     <h2 id="resultsHeading" data-i18n="results.title">Results</h2>
-    <p class="live-search-hint" data-i18n="results.hint">Includes Outnorth (Finland and Sweden) and Voghion. Prices update once a day.</p>
+    <p class="live-search-hint" data-i18n="results.hint">Includes Outnorth (Finland and Sweden), Voghion and Metsola. Prices update once a day.</p>
 
     <div class="understood" id="understood" hidden>
       <span class="understood-label" id="understoodLabel" data-i18n="results.understood">Here's how I read your search</span>
@@ -1259,6 +1260,7 @@
           <li data-i18n="about.shops.fi">Outnorth Finland</li>
           <li data-i18n="about.shops.se">Outnorth Sweden</li>
           <li>Voghion</li>
+          <li>Metsola</li>
         </ul>
         <p class="small" data-i18n="about.shops.more">More kids' clothing shops are on the way.</p>
       </div>
@@ -1513,10 +1515,10 @@
   var LOCALES = {
     fi: {
       locale: 'fi-FI', speech: 'fi-FI', home: 'EUR', priceStep: 10, shoeSize: 'koko {n}',
-      stores: { 'outnorth-se': 'Outnorth SE', 'outnorth-fi': 'Outnorth FI', 'voghion-global': 'Voghion' },
+      stores: { 'outnorth-se': 'Outnorth SE', 'outnorth-fi': 'Outnorth FI', 'voghion-global': 'Voghion', 'metsola-fi': 'Metsola' },
       garments: { takki: 'Takki', kurahousut: 'Kurahousut', toppahousut: 'Toppahousut', housut: 'Housut',
         'kengät': 'Kengät', paita: 'Paita', haalari: 'Haalari', mekko: 'Mekko', body: 'Body',
-        uimapuku: 'Uimapuku', pyjama: 'Pyjama', sukat: 'Sukat', pipo: 'Pipo', lapaset: 'Lapaset' },
+        uimapuku: 'Uimapuku', pyjama: 'Pyjama', sukat: 'Sukat', pipo: 'Pipo', lapaset: 'Lapaset', kerrasto: 'Kerrasto' },
       noGarment: ['Talvitakki', 'Kurahousut', 'Toppahousut', 'Haalari', 'Kengät', 'Pipo', 'Lapaset'],
       chips: {
         autumn: ['Talvihaalari 110 cm', 'Kurahousut 2-vuotiaalle', 'Pipo 4-vuotiaalle', 'Villasukat 6-vuotiaalle', 'Välikausitakki pojalle', 'Mekko tytölle'],
@@ -1530,10 +1532,10 @@
     },
     sv: {
       locale: 'sv-SE', speech: 'sv-SE', home: 'SEK', priceStep: 100, shoeSize: 'storlek {n}',
-      stores: { 'outnorth-se': 'Outnorth Sverige', 'outnorth-fi': 'Outnorth Finland', 'voghion-global': 'Voghion' },
+      stores: { 'outnorth-se': 'Outnorth Sverige', 'outnorth-fi': 'Outnorth Finland', 'voghion-global': 'Voghion', 'metsola-fi': 'Metsola' },
       garments: { takki: 'Jacka', kurahousut: 'Regnbyxor', toppahousut: 'Täckbyxor', housut: 'Byxor',
         'kengät': 'Skor', paita: 'Tröja', haalari: 'Overall', mekko: 'Klänning', body: 'Body',
-        uimapuku: 'Baddräkt', pyjama: 'Pyjamas', sukat: 'Strumpor', pipo: 'Mössa', lapaset: 'Vantar' },
+        uimapuku: 'Baddräkt', pyjama: 'Pyjamas', sukat: 'Strumpor', pipo: 'Mössa', lapaset: 'Vantar', kerrasto: 'Underställ' },
       noGarment: ['Vinterjacka', 'Regnbyxor', 'Täckbyxor', 'Overall', 'Skor', 'Mössa', 'Vantar'],
       chips: {
         autumn: ['Vinteroverall 110 cm', 'Regnbyxor till 2-åring', 'Mössa till 4-åring', 'Ullstrumpor till 6-åring', 'Jacka till pojke', 'Klänning till flicka'],
@@ -1548,10 +1550,10 @@
     },
     en: {
       locale: 'en-GB', speech: 'en-GB', home: 'EUR', priceStep: 10, shoeSize: 'size {n}',
-      stores: { 'outnorth-se': 'Outnorth Sweden', 'outnorth-fi': 'Outnorth Finland', 'voghion-global': 'Voghion' },
+      stores: { 'outnorth-se': 'Outnorth Sweden', 'outnorth-fi': 'Outnorth Finland', 'voghion-global': 'Voghion', 'metsola-fi': 'Metsola' },
       garments: { takki: 'Jacket', kurahousut: 'Rain trousers', toppahousut: 'Snow trousers', housut: 'Trousers',
         'kengät': 'Shoes', paita: 'Top', haalari: 'Snowsuit', mekko: 'Dress', body: 'Bodysuit',
-        uimapuku: 'Swimsuit', pyjama: 'Pyjamas', sukat: 'Socks', pipo: 'Hat', lapaset: 'Mittens' },
+        uimapuku: 'Swimsuit', pyjama: 'Pyjamas', sukat: 'Socks', pipo: 'Hat', lapaset: 'Mittens', kerrasto: 'Base layer' },
       noGarment: ['Winter jacket', 'Rain trousers', 'Snow trousers', 'Snowsuit', 'Shoes', 'Hat', 'Mittens'],
       chips: {
         autumn: ['Snowsuit 110 cm', 'Rain trousers for a 2-year-old', 'Hat for a 4-year-old', 'Wool socks for a 6-year-old', 'Jacket for a boy', 'Dress for a girl'],
@@ -2531,10 +2533,10 @@
     kengat: { img: 'kengat', def: 'talvikengat', opts: ['talvikengat', 'kurakengat', 'kengat'] },
     pipot: { img: 'pipot-lapaset', def: 'pipo', opts: ['pipo', 'lapaset', 'kuralapaset', 'villasukat'] },
     arki: { img: 'arki-paivakoti', def: 'takki', opts: ['takki', 'paita', 'housut', 'mekko', 'haalari', 'sukat', 'pipo', 'kengat'] },
-    vauvat: { img: 'vauvat', def: 'haalari', baby: true, opts: ['haalari', 'takki', 'housut', 'paita', 'pipo', 'lapaset', 'sukat'] }
+    vauvat: { img: 'vauvat', def: 'haalari', baby: true, opts: ['haalari', 'body', 'pyjama', 'housut', 'paita', 'takki', 'pipo', 'lapaset'] }
   };
-  // Body ja pyjama ovat valmiina (OPTS), mutta katalogissa ei ole niitä vielä
-  // (Data-chat 2.11.2026: puuttuvat lähteistä). Lisätään kategorioihin, kun tuotteita on.
+  // Body ja pyjama: Vauvat-kategoriassa 7.11. alkaen (tuotteet Metsolasta, PR #30).
+  // Ennen ensimmäistä tuontia määrä on 0, jolloin kuvake on himmennetty eikä valittavissa.
   // Kerrasto palautettu 2.11. (84 tuotetta tuonnin jälkeen).
   var SIZES = [50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 110, 116, 122, 128, 134, 140, 146, 152, 158, 164, 170, 176];
   var BABY_MAX = 92, SHOE_MIN = 18, SHOE_MAX = 42;
