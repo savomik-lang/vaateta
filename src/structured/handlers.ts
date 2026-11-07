@@ -65,7 +65,7 @@ export async function facetsResponse(
   const key = cacheKey("facets:v2", { items: items.items.map((i) => i.id), brand_items: brandItems.map((i) => i.id), filters: filters.filters });
   const { json, cache } = await cachedJson(kv, key, version, async () => {
     const [products, lastImported] = await Promise.all([adapter.loadAllProducts(), adapter.lastImportedAt()]);
-    return JSON.stringify(runFacets(products, items.items, filters.filters, lastImported, brandItems));
+    return JSON.stringify(runFacets(products, items.items, filters.filters, lastImported, brandItems, version || undefined));
   });
   return { status: 200, body: json, cache };
 }

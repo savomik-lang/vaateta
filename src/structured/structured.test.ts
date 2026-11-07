@@ -7,10 +7,12 @@ import { InMemoryKeyValueStore } from "../store/kv-store";
 import { makeProduct } from "../fixtures/make-product";
 import { structuredSearchResponse, facetsResponse } from "./handlers";
 import { tidyBrandName, isUnknownBrand } from "./items";
+import { subtypeOf, SUBTYPE_MIN_PRODUCTS } from "./subtypes";
+import { clearSubtypeMemo } from "./search";
 import { clearMemoryCache } from "./cache";
 import { productSizeFit, cmForShoeEu } from "../size";
 
-beforeEach(() => clearMemoryCache());
+beforeEach(() => { clearMemoryCache(); clearSubtypeMemo(); });
 
 function catalog() {
   return [
@@ -145,10 +147,10 @@ test("rakenteinen haku: virheet 400", async () => {
   assert.deepEqual((p.body as any).invalid_params, ["size_cm"]);
 });
 
-test("alatyyppi-itemillä ei ole vielä osumia (vaihe B2), mutta ryhmä palautetaan", async () => {
-  const r = (await structuredSearchResponse({ items: "kengät.lenkkarit" }, {}, adapter())).body as any;
+test("tuntematon alatyyppi ei kaada hakua: ryhmä palautuu nollalla", async () => {
+  const r = (await structuredSearchResponse({ items: "kengät.lentokone" }, {}, adapter())).body as any;
   assert.equal(r.groups[0].total_matches, 0);
-  assert.equal(r.groups[0].item, "kengät.lenkkarit");
+  assert.equal(r.groups[0].item, "kengät.lentokone");
 });
 
 test("facets-määrä = rakenteisen haun total_matches samoilla suodattimilla", async () => {
@@ -327,4 +329,79 @@ test("facets-välimuisti mitätöityy uudella julkaisulla (commit), vaikka tuont
   } finally {
     if (saved === undefined) delete process.env.VERCEL_GIT_COMMIT_SHA; else process.env.VERCEL_GIT_COMMIT_SHA = saved;
   }
+});
+
+const withTitle = (garment: any, title: string, extra: Record<string, unknown> = {}) =>
+  makeProduct({ id: `s:${garment}:${title}`, garment_type: garment, title, brand: "Reima", size_available: [], source: "outnorth-fi", ...extra });
+
+test("alatyyppien tunnistus fi/sv/en otsikosta", () => {
+  const cases: [string, string, string | null][] = [
+    ["kengät", "Kids Sneakers Blue", "lenkkarit"], ["kengät", "Lasten lenkkarit", "lenkkarit"], ["kengät", "Löparsko barn", "lenkkarit"], ["kengät", "Kids Running Shoes", "lenkkarit"],
+    ["kengät", "Kids Sandals", "sandaalit"], ["kengät", "Lasten sandaalit", "sandaalit"], ["kengät", "Sandaler barn", "sandaalit"],
+    ["kengät", "Kids Slippers", "tossut"], ["kengät", "Lasten tohvelit", "tossut"], ["kengät", "Tofflor barn", "tossut"],
+    ["kengät", "Kids Rain Boots", "kumisaappaat"], ["kengät", "Kurasaappaat lapsille", "kumisaappaat"], ["kengät", "Gummistövlar barn", "kumisaappaat"], ["kengät", "Wellies Kids", "kumisaappaat"],
+    ["kengät", "Kids Winter Boots", null],
+    ["pipo", "Kids Cap", "lippis"], ["pipo", "Lasten lippis", "lippis"], ["pipo", "Keps barn", "lippis"], ["pipo", "Sun Hat Kids", "aurinkohattu"], ["pipo", "Solhatt barn", "aurinkohattu"],
+    ["pipo", "Rib Helmet -Kypärämyssy", "kypärämyssy"], ["pipo", "Balaclava Kids", "kypärämyssy"], ["pipo", "Kids Beanie", null],
+    ["lapaset", "Kids Mittens", "lapaset"], ["lapaset", "Lasten vanttuut", "lapaset"], ["lapaset", "Lasten sormikkaat", "sormikkaat"], ["lapaset", "Kids Gloves", "sormikkaat"], ["lapaset", "Fingervantar barn", "sormikkaat"],
+    ["paita", "Kids T-Shirt", "t-paita"], ["paita", "Lasten t-paita", "t-paita"], ["paita", "Long Sleeve Top", "pitkähihainen"], ["paita", "Långärmad tröja", "pitkähihainen"],
+    ["paita", "Kids Hoodie", "huppari"], ["paita", "Lasten huppari", "huppari"], ["paita", "Huvtröja barn", "huppari"],
+    ["paita", "Kids Fleece Sweater", "fleece"], ["paita", "Midlayer Kids", "fleece"], ["paita", "Wool Knit Sweater", "neule"], ["paita", "Lasten neule", "neule"], ["paita", "Stickad tröja", "neule"],
+    ["housut", "Kids Jeans", "farkut"], ["housut", "Lasten farkut", "farkut"], ["housut", "Kids Shorts", "shortsit"], ["housut", "Puppy -Leggingsit", "leggingsit"], ["housut", "Kids Leggings", "leggingsit"],
+    ["housut", "Kids Softshell Pants", "ulkoiluhousut"], ["housut", "Hiking Pants Kids", "ulkoiluhousut"], ["housut", "Kids Chino", null],
+    ["takki", "Kids Softshell Jacket", "softshell"], ["takki", "Kids Shell Jacket", "kuoritakki"], ["takki", "Lasten kuoritakki", "kuoritakki"], ["takki", "Kids Down Jacket", "toppatakki"], ["takki", "Puffer Jacket Kids", "toppatakki"], ["takki", "Lasten toppatakki", "toppatakki"], ["takki", "Kids Fleece Jacket", null],
+    ["haalari", "Kids Overall", null],
+  ];
+  for (const [g, title, want] of cases) assert.equal(subtypeOf(withTitle(g, title)), want, `${g}: ${title}`);
+  assert.equal(subtypeOf(withTitle("kengät", "Kids Sneakers", { subtype: "sandaalit" })), "sandaalit", "tuonnissa asetettu subtype ensisijainen");
+});
+
+function shoeCatalog() {
+  const p = [];
+  for (let i = 0; i < SUBTYPE_MIN_PRODUCTS + 2; i++) p.push(withTitle("kengät", `Kids Sneakers Model ${i}`, { size_available: ["30"] }));
+  for (let i = 0; i < SUBTYPE_MIN_PRODUCTS; i++) p.push(withTitle("kengät", `Kids Rain Boots Model ${i}`, { size_available: ["30"], waterproof: true }));
+  for (let i = 0; i < SUBTYPE_MIN_PRODUCTS - 1; i++) p.push(withTitle("kengät", `Kids Sandals Model ${i}`, { size_available: ["30"] }));
+  p.push(withTitle("kengät", "Kids Winter Boots", { size_available: ["30"], winter: true }));
+  for (let i = 0; i < 3; i++) p.push(withTitle("paita", `Kids T-Shirt ${i}`));
+  return p;
+}
+
+test("facets: alatyypit vain kynnyksen (8 tuotetta) ylittäville, määrän mukaan, vain pyydetyille vaatetyypeille", async () => {
+  const a = adapter(shoeCatalog());
+  const f = await facets({ items: "kengät,paita" }, a);
+  assert.deepEqual(f.subtypes, { kengät: ["lenkkarit", "kumisaappaat"] }, "sandaaleja 7 < 8 ja t-paitoja 3 < 8");
+  const none = await facets({ items: "pipo" }, a);
+  assert.deepEqual(none.subtypes, {});
+  const onlyPaita = await facets({ items: "paita" }, a);
+  assert.deepEqual(onlyPaita.subtypes, {}, "kenkien alatyyppejä ei palauteta, jos kenkiä ei pyydetty");
+});
+
+test("facets: alatyyppilista ei riipu koosta, sukupuolesta eikä brändistä", async () => {
+  const a = adapter(shoeCatalog());
+  const base = await facets({ items: "kengät" }, a);
+  const filtered = await facets({ items: "kengät", size_cm: "110", gender: "tytto", brands: "Joku Muu" }, a);
+  assert.deepEqual(filtered.subtypes, base.subtypes);
+});
+
+test("rakenteinen haku: alatyyppi-item palauttaa vain kyseisen alatyypin ja lukumäärä = facets", async () => {
+  const a = adapter(shoeCatalog());
+  const r = (await structuredSearchResponse({ items: "kengät.lenkkarit,kengät.kumisaappaat,kengät" }, {}, a)).body as any;
+  const [lenk, kumi, all] = r.groups;
+  assert.equal(lenk.total_matches, SUBTYPE_MIN_PRODUCTS + 2);
+  assert.equal(kumi.total_matches, SUBTYPE_MIN_PRODUCTS);
+  assert.ok(all.total_matches > lenk.total_matches + kumi.total_matches, "koko kengät-ryhmä sisältää muutkin");
+  const titles = [...lenk.results.cheapest, ...lenk.results.bestMatch].map((p: any) => p.title);
+  assert.ok(titles.length > 0 && titles.every((t: string) => /Sneakers/.test(t)));
+  const f = await facets({ items: "kengät.lenkkarit,kengät.kumisaappaat,kengät" }, a);
+  assert.equal(f.items["kengät.lenkkarit"], lenk.total_matches);
+  assert.equal(f.items["kengät.kumisaappaat"], kumi.total_matches);
+  // alatyyppi ei muuta garment_type-luokitusta
+  assert.ok([...lenk.results.cheapest].every((p: any) => p.garment_type === "kengät"));
+});
+
+test("alatyyppi + modifierit ja koko: kengät.kumisaappaat+wp koolla 30", async () => {
+  const a = adapter(shoeCatalog());
+  const r = (await structuredSearchResponse({ items: "kengät.kumisaappaat+wp,kengät.lenkkarit+wp", shoe_eu: "30" }, {}, a)).body as any;
+  assert.equal(r.groups[0].total_matches, SUBTYPE_MIN_PRODUCTS);
+  assert.equal(r.groups[1].total_matches, 0, "lenkkarit eivät ole vedenpitäviä");
 });
