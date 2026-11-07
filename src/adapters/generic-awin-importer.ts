@@ -225,6 +225,8 @@ export interface ImportResult {
   // Kuinka monta riviä hylättiin koska niissä ei ollut lapsimerkkiä
   // (vain childOnly-kaupoille, esim. Outnorth).
   notChildRows?: number;
+  // Adtraction: loppuneiden rivien määrä (jätetään pois, vain varastossa olevat tuodaan).
+  outOfStockRows?: number;
   durationMs?: number;
   timings?: { headersMs: number; streamMs: number; dedupeMs: number; saveMs: number };
 }

@@ -1,6 +1,6 @@
 import { Product, ProductOffer } from "../types";
 import { toEur } from "../currency";
-import { AWIN_STORES } from "../stores-registry";
+import { STORES } from "../stores-registry";
 import { FitContext, baseTitle, dedupeColorVariants, fitTier, sizePenalty } from "./fit";
 import { Lang, ViewOpts } from "../lang";
 
@@ -25,7 +25,7 @@ function keysFor(p: Product): string[] {
 }
 
 function storeName(source: string): string {
-  return AWIN_STORES.find((s) => s.storeKey === source)?.displayName || source;
+  return STORES.find((s) => s.storeKey === source)?.displayName || source;
 }
 
 // Suomenkielinen oletushuomautus (FI-kävijä, Ruotsin kauppa). Muut kielet ja kävijän
@@ -33,7 +33,7 @@ function storeName(source: string): string {
 export const FOREIGN_SHOP_NOTE = "Ruotsin verkkokauppa – tarkista toimitus Suomeen ennen ostoa";
 
 export function marketOf(source: string): string | undefined {
-  return AWIN_STORES.find((s) => s.storeKey === source)?.market;
+  return STORES.find((s) => s.storeKey === source)?.market;
 }
 // Kävijän oma markkina ensin, "global" (Voghion) sen jälkeen, vieras markkina viimeisenä.
 // FI-kävijä: FI > global > SE (kuten ennen). SE-kävijä: SE > global > FI. Muut: FI > global > SE.
