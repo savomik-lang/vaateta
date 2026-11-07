@@ -7,6 +7,7 @@ import { productSizeFit, inferSizeFromTitle } from "../size";
 import { hasChildMarkers } from "../safety/child-safety-filter";
 import { guessWinter, SEASON_FILTERED_GARMENTS } from "../season";
 import { STORES, getConfiguredStores } from "../stores-registry";
+import { filterByCountry } from "../geo";
 
 // ---------------------------------------------------------------------------
 // Hakee JOKAISESTA rekisteröidystä kaupasta (Outnorth SE/FI, Voghion Global,
@@ -193,6 +194,11 @@ export class MultiStoreAdapter {
       });
     }
     return this.cache;
+  }
+
+  // Kävijän maassa näytettävä katalogi (kaupat, jotka eivät toimita maahan, jätetään pois). Maa puuttuu = kaikki.
+  async loadProductsFor(country?: string): Promise<Product[]> {
+    return filterByCountry(await this.loadAllProducts(), country);
   }
 
   async search(criteria: SearchCriteria, opts: MatchOptions = {}): Promise<Product[]> {

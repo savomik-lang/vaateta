@@ -56,6 +56,10 @@ export interface StoreDefinition {
   // muiden maiden kaupoista (esim. Outnorth SE) näytetään huomautus, koska
   // toimitusta Suomeen ei ole varmistettu.
   market?: "FI" | "SE" | "global";
+  // Maat (ISO-3166 alpha-2), joihin kauppa toimittaa. Jos asetettu, kaupan tuotteet näytetään VAIN
+  // näiden maiden kävijöille (maa x-vercel-ip-country-otsakkeesta; AX käsitellään kuten FI).
+  // Jos kenttää ei ole, kauppa näkyy kaikkialla. Ks. geo.ts.
+  shipsTo?: string[];
 }
 
 // Outnorthin feedien sarakkeet (Datafeeds.csv 31.10.2026). SE-feedissä on
@@ -79,13 +83,19 @@ const OUTNORTH_FI_COLUMNS = [
   "currency",
 ];
 
+// Metsolan toimitusmaat (metsola.fi:n maavalitsin 7.11.2026; omistajan päätös: muualla Metsolaa ei näytetä).
+const METSOLA_SHIPS_TO = [
+  "FI", "SE", "EE", "LV", "LT", "DK", "DE", "NL", "BE", "LU", "FR", "IE", "ES", "PT", "IT",
+  "MT", "GR", "HR", "AT", "CZ", "SK", "PL", "HU", "RO", "BG",
+];
+
 export const STORES: StoreDefinition[] = [
   { storeKey: "outnorth-se", displayName: "Outnorth SE", feedIdEnvVar: "AWIN_OUTNORTH_SE_FEED_ID", format: "classic", childOnly: true, trustedForTeen: true, market: "SE", classicColumns: OUTNORTH_SE_COLUMNS, classicLanguage: "sv" },
   { storeKey: "outnorth-fi", displayName: "Outnorth FI", feedIdEnvVar: "AWIN_OUTNORTH_FI_FEED_ID", format: "classic", childOnly: true, trustedForTeen: true, basePriceIsSale: true, market: "FI", classicColumns: OUTNORTH_FI_COLUMNS, classicLanguage: "fi" },
   { storeKey: "voghion-global", displayName: "Voghion Global", feedIdEnvVar: "AWIN_VOGHION_GLOBAL_FEED_ID", format: "google", market: "global" },
   // Adtraction (hyväksytty 7.11.2026). Syöte sisältää jokaisen koon omana rivinään; tuonti kokoaa ne
   // yhdeksi tuotteeksi ja jättää pois aikuisten tuotteet, kankaat, lahjakortit ja loppuneet koot.
-  { storeKey: "metsola-fi", displayName: "Metsola", feedIdEnvVar: "ADTRACTION_METSOLA_FI_FEED_URL", format: "adtraction", fixedBrand: "Metsola", market: "FI" },
+  { storeKey: "metsola-fi", displayName: "Metsola", feedIdEnvVar: "ADTRACTION_METSOLA_FI_FEED_URL", format: "adtraction", fixedBrand: "Metsola", market: "FI", shipsTo: METSOLA_SHIPS_TO },
   // PÄIVITÄ TÄHÄN uusi rivi kun Babyshop/Boozt tms. joskus hyväksyy:
   // { storeKey: "babyshop-fi", displayName: "Babyshop FI", feedIdEnvVar: "AWIN_BABYSHOP_FI_FEED_ID", format: "classic" },
 ];

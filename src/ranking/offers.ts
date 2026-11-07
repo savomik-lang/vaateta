@@ -84,7 +84,13 @@ export function shippingNote(productMarket: string | undefined, view: ViewOpts =
   return m === "SE" ? NOTE_SE_TO_FI[lang] : undefined;
 }
 function noteFor(source: string, view?: ViewOpts): string | undefined {
-  return shippingNote(marketOf(source), view);
+  const store = STORES.find((s) => s.storeKey === source);
+  // Kauppa, jonka toimitusmaat tiedetään (shipsTo), ja kävijän maa on listalla: suomalaisen kaupan
+  // huomautus on sama kuin SE-kävijälle ("Shipped from Finland"), ei "tarkista toimitus".
+  if (store?.shipsTo && store.market === "FI" && view?.market === "other" && view.country && store.shipsTo.includes(view.country)) {
+    return NOTE_FI_TO_SE[view.lang ?? "fi"];
+  }
+  return shippingNote(store?.market, view);
 }
 
 function toOffer(p: Product, view?: ViewOpts): ProductOffer {
