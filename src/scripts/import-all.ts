@@ -1,16 +1,16 @@
-import { importAwinStore } from "../adapters/generic-awin-importer";
+import { importStore } from "../adapters/import-store";
 import { getConfiguredStores } from "../stores-registry";
 import { getUnconfiguredStoreNames } from "../adapters/multi-store-adapter";
 
 async function main() {
   const stores = getConfiguredStores();
   if (stores.length === 0) {
-    console.log("Ei yhtään kauppaa konfiguroitu .env:ssä - tarkista AWIN_*_FEED_ID-muuttujat.");
+    console.log("Ei yhtään kauppaa konfiguroitu .env:ssä - tarkista AWIN_*_FEED_ID- ja ADTRACTION_*_FEED_URL-muuttujat.");
     return;
   }
   for (const store of stores) {
     try {
-      const result = await importAwinStore(store);
+      const result = await importStore(store);
       console.log(`${store.displayName}: ${result.importedProducts} tuotetta tuotu (${result.skippedRows} ohitettu).`);
     } catch (err: any) {
       console.error(`${store.displayName}: tuonti epäonnistui:`, err.message);

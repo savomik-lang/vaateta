@@ -6,7 +6,7 @@ import { looksLikeNonClothing, BODY_PRODUCT_REGEX } from "../nlu/non-clothing";
 import { productSizeFit, inferSizeFromTitle } from "../size";
 import { hasChildMarkers } from "../safety/child-safety-filter";
 import { guessWinter, SEASON_FILTERED_GARMENTS } from "../season";
-import { AWIN_STORES, getConfiguredStores } from "../stores-registry";
+import { STORES, getConfiguredStores } from "../stores-registry";
 
 // ---------------------------------------------------------------------------
 // Hakee JOKAISESTA rekisteröidystä kaupasta (Outnorth SE/FI, Voghion Global,
@@ -68,7 +68,7 @@ export function isTeenSearch(c: SearchCriteria): boolean {
 }
 
 function isTrustedForTeen(source: string): boolean {
-  return AWIN_STORES.some((s) => s.storeKey === source && s.trustedForTeen);
+  return STORES.some((s) => s.storeKey === source && s.trustedForTeen);
 }
 
 // Liivi: "Waistcoat", "Vest", "Gilet", "Bodywarmer", "Väst", "Liivi". "Vest" ei saa osua sanaan
@@ -221,5 +221,5 @@ export class MultiStoreAdapter {
 // (ei feedId:tä .env:ssä) - hyödyllinen virheilmoituksiin ja diagnostiikkaan.
 export function getUnconfiguredStoreNames(): string[] {
   const configured = new Set(getConfiguredStores().map((s) => s.storeKey));
-  return AWIN_STORES.filter((s) => !configured.has(s.storeKey)).map((s) => s.displayName);
+  return STORES.filter((s) => !configured.has(s.storeKey)).map((s) => s.displayName);
 }

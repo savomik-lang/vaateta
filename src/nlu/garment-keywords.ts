@@ -22,7 +22,7 @@ export const GARMENT_KEYWORDS: Record<GarmentType, string[]> = {
   haalari: ["haalari", "overall", "jumpsuit", "kokohaalari", "ulkoiluhaalari", "talvihaalari", "kuoriasu", "sadeasu", "shell suit"],
   mekko: ["mekko", "dress", "klänning", "juhlamekko", "kesämekko"],
   body: ["body", "bodysuit", "vauvanbody", "potkupuku"],
-  pyjama: ["pyjama", "pyjamat", "yöpuku", "pajamas", "nukkumapuku"],
+  pyjama: ["pyjama", "pyjamat", "yöpuku", "yövaate", "yövaatteet", "yöasu", "pajamas", "nukkumapuku"],
   pipo: ["pipo", "beanie", "myssy", "aurinkohattu", "lippalakki", "lippis", "balaklava", "balaclava", "hattu"],
   lapaset: ["lapaset", "mittens", "vantar", "sormikkaat", "käsineet"],
   muu: [],

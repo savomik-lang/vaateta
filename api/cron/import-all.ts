@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from "@vercel/node";
-import { importAwinStore } from "../../src/adapters/generic-awin-importer";
+import { importStore } from "../../src/adapters/import-store";
 import { getConfiguredStores } from "../../src/stores-registry";
 import { getUnconfiguredStoreNames } from "../../src/adapters/multi-store-adapter";
 
@@ -26,7 +26,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
   if (stores.length === 0) {
     res.status(200).json({
-      message: "Ei yhtään kauppaa konfiguroitu .env:ssä - tarkista AWIN_*_FEED_ID-muuttujat.",
+      message: "Ei yhtään kauppaa konfiguroitu .env:ssä - tarkista AWIN_*_FEED_ID- ja ADTRACTION_*_FEED_URL-muuttujat.",
       results: [],
     });
     return;
@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // (FI + Voghion samassa ajossa mahtuu 60 s rajaan).
   await Promise.all(stores.map(async (store) => {
     try {
-      const result = await importAwinStore(store);
+      const result = await importStore(store);
       results.push({ ...result, status: "ok" });
     } catch (err: any) {
       console.error(`${store.displayName}: tuonti epäonnistui:`, err);
