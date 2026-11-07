@@ -1430,7 +1430,7 @@
       'opt.mekko': 'Mekko', 'opt.haalari': 'Haalari', 'opt.sukat': 'Sukat',
       'opt.pyjama': 'Pyjama', 'opt.body': 'Body',
       'cp.showN': 'Näytä {n} tuotetta', 'cp.showOne': 'Näytä 1 tuote', 'cp.showNone': 'Ei tuotteita näillä valinnoilla',
-      'cp.countSr': '{n} tuotetta',
+      'cp.countSr': '{n} tuotetta', 'cp.countSrOne': '1 tuote',
       'cp.refine': 'Tarkenna: {g}', 'cp.optional': '(valinnainen)', 'cp.brandsAll': 'Näytä kaikki merkit ({n})', 'cp.brandsLess': 'Näytä vähemmän',
       'cat.noBrand': 'Näytä kaikki merkit',
       'subg.kengät': 'Kengät', 'subg.pipo': 'Päähineet', 'subg.lapaset': 'Lapaset ja sormikkaat', 'subg.paita': 'Paidat', 'subg.housut': 'Housut', 'subg.takki': 'Takit',
@@ -1497,7 +1497,7 @@
       'opt.mekko': 'Klänning', 'opt.haalari': 'Overall', 'opt.sukat': 'Strumpor',
       'opt.pyjama': 'Pyjamas', 'opt.body': 'Body',
       'cp.showN': 'Visa {n} produkter', 'cp.showOne': 'Visa 1 produkt', 'cp.showNone': 'Inga produkter med de här valen',
-      'cp.countSr': '{n} produkter',
+      'cp.countSr': '{n} produkter', 'cp.countSrOne': '1 produkt',
       'cp.refine': 'Precisera: {g}', 'cp.optional': '(valfritt)', 'cp.brandsAll': 'Visa alla märken ({n})', 'cp.brandsLess': 'Visa färre',
       'cat.noBrand': 'Visa alla märken',
       'subg.kengät': 'Skor', 'subg.pipo': 'Huvudbonader', 'subg.lapaset': 'Vantar och handskar', 'subg.paita': 'Tröjor', 'subg.housut': 'Byxor', 'subg.takki': 'Jackor',
@@ -1564,7 +1564,7 @@
       'opt.mekko': 'Dress', 'opt.haalari': 'Overall', 'opt.sukat': 'Socks',
       'opt.pyjama': 'Pyjamas', 'opt.body': 'Bodysuit',
       'cp.showN': 'Show {n} products', 'cp.showOne': 'Show 1 product', 'cp.showNone': 'No products with these choices',
-      'cp.countSr': '{n} products',
+      'cp.countSr': '{n} products', 'cp.countSrOne': '1 product',
       'cp.refine': 'Narrow down: {g}', 'cp.optional': '(optional)', 'cp.brandsAll': 'Show all brands ({n})', 'cp.brandsLess': 'Show fewer',
       'cat.noBrand': 'Show all brands',
       'subg.kengät': 'Shoes', 'subg.pipo': 'Headwear', 'subg.lapaset': 'Mittens and gloves', 'subg.paita': 'Tops', 'subg.housut': 'Trousers', 'subg.takki': 'Jackets',
@@ -2797,7 +2797,7 @@
   function countFor(id){ return countItem(itemOf(id)); }
   function countHtml(n){
     return n == null ? '' : '<span aria-hidden="true">' + n.toLocaleString(LOC.locale) + '</span>' +
-      '<span class="visually-hidden">, ' + esc(t('cp.countSr', { n: n })) + '</span>';
+      '<span class="visually-hidden">, ' + esc(n === 1 ? t('cp.countSrOne') : t('cp.countSr', { n: n })) + '</span>';
   }
   // Luku ja tyhjän himmennys: 0 tuotetta = ei valittavissa (paitsi jo valittu, jotta sen voi poistaa)
   function setCount(btn, n){
