@@ -57,7 +57,10 @@ export async function facetsResponse(
     if (!parsed.ok) return itemsError(parsed, MAX_FACET_ITEMS, lang);
     brandItems = parsed.items;
   }
-  const version = await adapter.importVersion();
+  // Välimuisti mitätöityy uuden tuonnin lisäksi uudella julkaisulla (koodi voi muuttaa laskentaa, esim.
+  // luokittelu tai suodatus), joten versioon liitetään julkaisun commit.
+  const importVersion = await adapter.importVersion();
+  const version = importVersion ? `${importVersion}#${(process.env.VERCEL_GIT_COMMIT_SHA || "dev").slice(0, 12)}` : "";
   // Määrät eivät riipu kielestä eivätkä markkinasta -> avaimessa vain itemit, brändi-itemit ja suodattimet.
   const key = cacheKey("facets:v2", { items: items.items.map((i) => i.id), brand_items: brandItems.map((i) => i.id), filters: filters.filters });
   const { json, cache } = await cachedJson(kv, key, version, async () => {

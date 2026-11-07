@@ -313,3 +313,18 @@ test("retkeilyvarusteet (polttoainepullon korkki, juomapullo) eivät tule vaatte
   assert.equal(f.items.pipo, 2, "korkki ei ole pipo");
   assert.deepEqual(f.brands, [{ name: "Reima", count: 1 }], "Primus ja Voghion pois");
 });
+
+test("facets-välimuisti mitätöityy uudella julkaisulla (commit), vaikka tuonti ei ole muuttunut", async () => {
+  const kv = new InMemoryKeyValueStore();
+  const store = new InMemoryProductStore(catalog());
+  const saved = process.env.VERCEL_GIT_COMMIT_SHA;
+  try {
+    process.env.VERCEL_GIT_COMMIT_SHA = "aaaaaaaaaaaa";
+    assert.equal((await facetsResponse({ items: "pipo" }, "fi", new MultiStoreAdapter([store]), kv)).cache, "miss");
+    assert.equal((await facetsResponse({ items: "pipo" }, "fi", new MultiStoreAdapter([store]), kv)).cache, "memory");
+    process.env.VERCEL_GIT_COMMIT_SHA = "bbbbbbbbbbbb";
+    assert.equal((await facetsResponse({ items: "pipo" }, "fi", new MultiStoreAdapter([store]), kv)).cache, "miss");
+  } finally {
+    if (saved === undefined) delete process.env.VERCEL_GIT_COMMIT_SHA; else process.env.VERCEL_GIT_COMMIT_SHA = saved;
+  }
+});
