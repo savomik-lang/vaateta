@@ -50,12 +50,22 @@ export async function facetsResponse(
   if (!items.ok) return itemsError(items, MAX_FACET_ITEMS, lang);
   const filters = parseFilters(query);
   if (!filters.ok) return { status: 400, body: { error: MSG.params_invalid[lang], invalid_params: filters.invalid_params } };
-  const version = await adapter.importVersion();
-  // Määrät eivät riipu kielestä eivätkä markkinasta -> avaimessa vain itemit ja suodattimet.
-  const key = cacheKey("facets:v1", { items: items.items.map((i) => i.id), filters: filters.filters });
+  // brand_items: itemit, joiden tuotteista brändilista lasketaan (puuttuu = kaikki items).
+  let brandItems = items.items;
+  if (query.brand_items !== undefined && String(query.brand_items).trim() !== "") {
+    const parsed = parseItemList(query.brand_items, MAX_FACET_ITEMS);
+    if (!parsed.ok) return itemsError(parsed, MAX_FACET_ITEMS, lang);
+    brandItems = parsed.items;
+  }
+  // Välimuisti mitätöityy uuden tuonnin lisäksi uudella julkaisulla (koodi voi muuttaa laskentaa, esim.
+  // luokittelu tai suodatus), joten versioon liitetään julkaisun commit.
+  const importVersion = await adapter.importVersion();
+  const version = importVersion ? `${importVersion}#${(process.env.VERCEL_GIT_COMMIT_SHA || "dev").slice(0, 12)}` : "";
+  // Määrät eivät riipu kielestä eivätkä markkinasta -> avaimessa vain itemit, brändi-itemit ja suodattimet.
+  const key = cacheKey("facets:v2", { items: items.items.map((i) => i.id), brand_items: brandItems.map((i) => i.id), filters: filters.filters });
   const { json, cache } = await cachedJson(kv, key, version, async () => {
     const [products, lastImported] = await Promise.all([adapter.loadAllProducts(), adapter.lastImportedAt()]);
-    return JSON.stringify(runFacets(products, items.items, filters.filters, lastImported));
+    return JSON.stringify(runFacets(products, items.items, filters.filters, lastImported, brandItems, version || undefined));
   });
   return { status: 200, body: json, cache };
 }

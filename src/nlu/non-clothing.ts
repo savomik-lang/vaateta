@@ -14,6 +14,11 @@ export const NON_CLOTHING_REGEX = new RegExp(
     `${P}(?:earrings?|necklaces?|bracelets?|anklets?|pendants?|brooch(?:es)?|cufflinks?|barbells?|labrets?|septums?)${S}`,
     `\\p{L}*grillz${S}`,
     `${P}body\\s*(?:lotion|wash|oil|spray|pillow|scrub|butter|paint|glitter|stickers?|tattoos?|art|bag|armou?r|harness|shaper|brush|mist|cream|building|con)${S}`,
+    // juomapullot, polttoainepullot ja muu retkeilyvarustus (Outnorth-valikoimassa korkit luokittuivat pipoiksi ja
+    // pullot kengiksi). "Bottle green" on väri, joten pullo vaatii määreen tai vierussanan.
+    `${P}(?:fuel|water|drinking|baby|feeding|sports?|insulated|thermo|sippy|vacuum)\\s+bottles?${S}`,
+    `${P}bottles?\\s+(?:cap|lid|brush|holder|cage|set)${S}`,
+    `${P}(?:sippy|thermos|flasks?|canteens?|hydration|nipples?\\s+(?:for|slow|medium|fast)|slow\\s+flow|pacifiers?|teethers?|cartridges?|canisters?|stoves?|lunch\\s?box(?:es)?)${S}`,
     // suomi ja ruotsi
     `${P}(?:korut?|korvakoru\\p{L}*|kaulakoru\\p{L}*|rannekoru\\p{L}*|sormus\\p{L}*|lävistys\\p{L}*|smycke\\p{L}*|örhänge\\p{L}*)${S}`,
   ].join("|"),

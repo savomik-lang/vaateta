@@ -9,7 +9,8 @@ import { ViewOpts } from "../lang";
 import {
   Notice, findRelaxation, buildNoResultsNotice, buildPartialSizeNotice, buildLimitedCoverageNotice,
 } from "../search-notice";
-import { Filters, ParsedItem, brandKey } from "./items";
+import { Filters, ParsedItem, brandKey, isUnknownBrand, pickBrandDisplayName } from "./items";
+import { SUBTYPE_MIN_PRODUCTS, garmentsWithSubtypes, subtypeOf } from "./subtypes";
 
 // ---------------------------------------------------------------------------
 // Rakenteinen haku ja facets. Käyttävät samaa suodatusta (matchesCriteria), turvasuodatusta,
@@ -48,7 +49,8 @@ export function criteriaForItem(item: ParsedItem, filters: Filters): SearchCrite
 }
 
 function poolFor(index: ProductIndex, item: ParsedItem, filters: Filters): Product[] {
-  const pool = index.get(item.garment) ?? [];
+  let pool = index.get(item.garment) ?? [];
+  if (item.subtype) pool = pool.filter((p) => subtypeOf(p) === item.subtype);
   if (filters.brands.length === 0) return pool;
   const keys = new Set(filters.brands.map(brandKey));
   return pool.filter((p) => keys.has(brandKey(p.brand)));
@@ -69,8 +71,6 @@ export interface ItemMatches {
 /** Itemin osumat. Sama logiikka kuin q-haussa; facets käyttää tämän pituutta. */
 export function collectMatches(index: ProductIndex, item: ParsedItem, filters: Filters, view: ViewOpts): ItemMatches {
   const criteria = criteriaForItem(item, filters);
-  // Alatyypit tulevat vaiheessa B2; siihen asti alatyyppi-itemillä ei ole osumia.
-  if (item.subtype) return { criteria, pool: [], matches: [], extended: false };
   const pool = poolFor(index, item, filters);
   let matches = run(pool, criteria, view);
   let extended = false;
@@ -95,7 +95,7 @@ export function searchItem(index: ProductIndex, item: ParsedItem, filters: Filte
   const { criteria, pool, matches, extended } = collectMatches(index, item, filters, view);
   if (matches.length === 0) {
     const relax = pool.length > 0 ? findRelaxation(criteria, (c) => run(pool, c, view)) : null;
-    return { item: item.id, total_matches: 0, results: EMPTY, notice: item.subtype ? null : buildNoResultsNotice(criteria, relax, lang) };
+    return { item: item.id, total_matches: 0, results: EMPTY, notice: buildNoResultsNotice(criteria, relax, lang) };
   }
   let notice: Notice | null = extended ? buildPartialSizeNotice(criteria, lang) : null;
   if (!notice && isTeenSearch(criteria) && matches.length <= SMALL_RESULT_LIMIT) notice = buildLimitedCoverageNotice(lang);
@@ -140,14 +140,88 @@ export interface FacetsResponse {
   last_imported: string | null;
 }
 
-/** Määrät itemeittäin: täsmälleen sama luku kuin rakenteisen haun total_matches samoilla suodattimilla. */
-export function runFacets(products: Product[], items: ParsedItem[], filters: Filters, lastImported: string | null): FacetsResponse {
+export const MAX_FACET_BRANDS = 30;
+
+/**
+ * Määrät itemeittäin: täsmälleen sama luku kuin rakenteisen haun total_matches samoilla suodattimilla.
+ * Brändilista lasketaan `brandItems`-itemien (oletus: kaikki items) yhteisistä tuotteista ILMAN
+ * brands-rajausta, jotta jo valitut brändit eivät häviä listasta (monivalinta). Sama tuote
+ * lasketaan kerran, vaikka se osuisi useaan itemiin (esim. takki ja takki+wp).
+ */
+export function runFacets(
+  products: Product[], items: ParsedItem[], filters: Filters, lastImported: string | null, brandItems: ParsedItem[] = items,
+  catalogKey?: string,
+): FacetsResponse {
   const index = buildIndex(products);
   const counts: Record<string, number> = {};
+  const noBrandFilter: Filters = { ...filters, brands: [] };
+  // Brändittömien osumien välimuisti: jos brands-rajausta ei ole, itemien laskennan tulos kelpaa sellaisenaan.
+  const unrestricted = new Map<string, Product[]>();
   for (const item of items) {
     if (item.id in counts) continue;
-    counts[item.id] = collectMatches(index, item, filters, {}).matches.length;
+    const m = collectMatches(index, item, filters, {});
+    counts[item.id] = m.matches.length;
+    if (filters.brands.length === 0) unrestricted.set(item.id, m.matches);
   }
-  // Alatyypit ja brändit: vaihe B2.
-  return { items: counts, subtypes: {}, brands: [], last_imported: lastImported };
+
+  const byBrand = new Map<string, { count: number; variants: Map<string, number> }>();
+  const seenProducts = new Set<string>();
+  for (const item of brandItems) {
+    const matches = unrestricted.get(item.id) ?? collectMatches(index, item, noBrandFilter, {}).matches;
+    unrestricted.set(item.id, matches);
+    for (const p of matches) {
+      if (seenProducts.has(p.id) || isUnknownBrand(p.brand)) continue;
+      seenProducts.add(p.id);
+      const key = brandKey(p.brand);
+      const entry = byBrand.get(key) ?? { count: 0, variants: new Map<string, number>() };
+      entry.count++;
+      const raw = p.brand.normalize("NFC").trim().replace(/\s+/g, " ");
+      entry.variants.set(raw, (entry.variants.get(raw) ?? 0) + 1);
+      byBrand.set(key, entry);
+    }
+  }
+  const brands = [...byBrand.values()]
+    .map((e) => ({ name: pickBrandDisplayName(e.variants), count: e.count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, MAX_FACET_BRANDS);
+
+  // Alatyypit: vain pyydettyjen itemien vaatetyypeille, vain jos tuotteita vähintään kynnyksen verran
+  // koko katalogissa (ei riipu koosta, sukupuolesta tai brändistä, joten kuvakkeet eivät vilku).
+  const catalog = catalogSubtypeCounts(products, catalogKey);
+  const subtypes: Record<string, string[]> = {};
+  for (const item of items) {
+    if (item.garment in subtypes) continue;
+    const ids = Object.entries(catalog[item.garment] ?? {})
+      .filter(([, n]) => n >= SUBTYPE_MIN_PRODUCTS)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+      .map(([id]) => id);
+    if (ids.length > 0) subtypes[item.garment] = ids;
+  }
+  return { items: counts, subtypes, brands, last_imported: lastImported };
 }
+
+type SubtypeCounts = Record<string, Record<string, number>>;
+const subtypeMemo = new Map<string, SubtypeCounts>();
+
+/** Alatyyppien tuotemäärät vaatetyypeittäin (lapsisuodatettu, yhdistetty). Muistetaan katalogin version mukaan. */
+export function catalogSubtypeCounts(products: Product[], key?: string): SubtypeCounts {
+  if (key) { const hit = subtypeMemo.get(key); if (hit) return hit; }
+  const index = buildIndex(products);
+  const out: SubtypeCounts = {};
+  for (const garment of garmentsWithSubtypes()) {
+    const list = run(index.get(garment) ?? [], { garment_type: garment, child_signal: true }, {});
+    const counts: Record<string, number> = {};
+    for (const p of list) {
+      const id = subtypeOf(p);
+      if (id) counts[id] = (counts[id] ?? 0) + 1;
+    }
+    out[garment] = counts;
+  }
+  if (key) {
+    if (subtypeMemo.size >= 4) subtypeMemo.delete(subtypeMemo.keys().next().value as string);
+    subtypeMemo.set(key, out);
+  }
+  return out;
+}
+
+export function clearSubtypeMemo(): void { subtypeMemo.clear(); }
