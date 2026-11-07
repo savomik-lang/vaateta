@@ -610,6 +610,30 @@
   .cp-count{ min-height: 15px; font-size: 11.5px; font-weight: 500; line-height: 1.3; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
   .cp-opt[aria-pressed="true"] .cp-count{ color: var(--ink); }
   .cp-opt.cp-zero:not([aria-pressed="true"]){ opacity: .5; cursor: default; }
+  /* Vaihe B2: alatyypit ja merkit sirupainikkeina (monivalinta) */
+  .cp-subs[hidden]{ display:none; }
+  .cp-chips{ list-style:none; margin:0; padding:0; display:flex; flex-wrap: wrap; gap: 8px; }
+  .cp-chip{
+    display:inline-flex; align-items:center; gap: 6px; min-height: 44px; max-width: 100%; padding: 0 14px; margin: 0;
+    font: 500 14px/1.2 var(--font-ui); color: var(--ink); text-align: left;
+    background: var(--paper-alt); border: 1px solid transparent; border-radius: 999px; cursor: pointer;
+    -webkit-tap-highlight-color: transparent; transition: background .15s ease, border-color .15s ease;
+  }
+  .cp-chip > svg{ width: 24px; height: 24px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .cp-chip .cp-chip-label{ min-width: 0; overflow-wrap: anywhere; }
+  .cp-chip .cp-count{ min-height: 0; font-size: 12.5px; }
+  .cp-chip .cp-chip-check{ display:none; width: 14px; height: 14px; stroke-width: 2.6; }
+  .cp-chip[aria-pressed="true"]{ background: var(--paper-raised); border: 2px solid var(--ink); padding: 0 13px; }
+  .cp-chip[aria-pressed="true"] .cp-chip-check{ display:inline-block; }
+  .cp-chip[aria-pressed="true"] .cp-count{ color: var(--ink); }
+  .cp-chip.cp-zero:not([aria-pressed="true"]){ opacity: .5; cursor: default; }
+  .cp-chip:focus-visible, .cp-more:focus-visible{ outline: 2px solid var(--ink); outline-offset: 2px; }
+  @media (hover: hover){ .cp-chip:hover{ border-color: var(--ink-soft); } }
+  .cp-more{
+    min-height: 44px; margin-top: 4px; padding: 0 2px; border: 0; background: none; cursor: pointer;
+    font: 500 14px var(--font-ui); color: var(--ink); text-decoration: underline; text-underline-offset: 3px;
+  }
+  .cp-more[hidden]{ display:none; }
   @media (hover: hover){ .cp-opt:hover{ border-color: var(--ink-soft); color: var(--ink); } }
   .cp-seg{ display:grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .cp-seg label{ position: relative; }
@@ -666,7 +690,7 @@
   @media (prefers-reduced-motion: reduce){
     .cat-panel.cp-fade{ animation: none; }
     ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*){ animation: none !important; }
-    .cp-opt{ transition: none; }
+    .cp-opt, .cp-chip{ transition: none; }
   }
 
   /* Valinnat tuloksissa: vaatesuodatin + muokkaa */
@@ -1097,7 +1121,7 @@
       </button></li>
       <li><button type="button" class="cat-tile" data-cat="vauvat" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-vauvat-480.webp 480w, /images/kategoria-vauvat-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-vauvat-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
-        <span class="cat-name" data-i18n="cat.baby">Vauvat 50–80 cm</span>
+        <span class="cat-name" data-i18n="cat.baby">Vauvat 50–92 cm</span>
       </button></li>
     </ul>
   </div>
@@ -1115,6 +1139,7 @@
         <legend><span class="cp-legend-main" data-i18n="cp.garments">Vaatteet</span> <span data-i18n="cp.garmentsHint">(valitse yksi tai useampi)</span></legend>
         <ul class="cp-opts" id="cpOpts"></ul>
       </fieldset>
+      <div class="cp-subs" id="cpSubs" hidden></div>
       <fieldset class="cp-group">
         <legend data-i18n="cp.child">Lapsi</legend>
         <div class="cp-seg">
@@ -1148,6 +1173,11 @@
           <button type="button" class="cp-step" id="cpShoeInc" aria-label="Suurempi kenkäkoko" data-i18n-attr="aria-label:cp.shoeLarger">+</button>
         </div>
       </div>
+      <fieldset class="cp-group" id="cpBrandGroup" hidden>
+        <legend><span class="cp-legend-main" data-i18n="cp.brands">Merkit</span> <span data-i18n="cp.optional">(valinnainen)</span></legend>
+        <ul class="cp-chips" id="cpBrands"></ul>
+        <button type="button" class="cp-more" id="cpBrandMore" aria-expanded="false" aria-controls="cpBrands" hidden></button>
+      </fieldset>
       <p class="cp-memory" id="cpMemory"><span data-i18n="cp.memory">Koko ja lapsi muistetaan tällä laitteella.</span> <button type="button" id="cpForget" data-i18n="cp.forget">Unohda</button></p>
     </div>
     <div class="cp-foot">
@@ -1156,7 +1186,7 @@
   </form>
 </dialog>
 
-<!-- Vaatekuvakkeet (oma piirros, 32x32 ääriviiva): kategoriapaneeli -->
+<!-- Vaatekuvakkeet (oma piirros, 32x32 ääriviiva): kategoriapaneeli (vaatteet ja alatyypit) -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <symbol id="ic-pipo" viewBox="0 0 32 32"><path d="M7 21.5C7 13.5 11 8.5 16 8.5s9 5 9 13"/><rect x="5.5" y="21.5" width="21" height="5" rx="1.6"/><circle cx="16" cy="5.6" r="2.2"/><path d="M10.5 21.5v5M16 21.5v5M21.5 21.5v5"/></symbol>
   <symbol id="ic-lapaset" viewBox="0 0 32 32"><path d="M12.5 26.5V14.6C12.5 10.2 14.8 7 18 7s5.5 3.2 5.5 7.6v11.9z"/><path d="M12.5 15.6c-2.7-1.4-4.8.5-3.8 3l3.8 4.6"/><path d="M12.5 22.6h11"/></symbol>
@@ -1177,6 +1207,25 @@
   <symbol id="ic-saappaat" viewBox="0 0 32 32"><path d="M10 4h9v15l5.5 1.8c2.2.7 3.3 2.2 3.3 4.2v1H8.5z"/><path d="M8.5 26h19.3v2.5H8.5zM10 7.5h9"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
   <symbol id="ic-kengat" viewBox="0 0 32 32"><path d="M4 22c0-3.6 1.8-5.8 4.2-6.1l5-.7 3.8-4c.8-.8 2.2-.7 2.8.3l2 4c3.3 1 6.2 3 6.2 6.5v2H4z"/><path d="M4 24h24v2.6H4zM14.6 13.8l2 2M16.8 11.9l2 2"/></symbol>
   <symbol id="ic-lapaset_wp" viewBox="0 0 32 32"><path d="M10.5 26.5V14.6C10.5 10.2 12.8 7 16 7s5.5 3.2 5.5 7.6v11.9z"/><path d="M10.5 15.6c-2.7-1.4-4.8.5-3.8 3l3.8 4.6"/><path d="M10.5 22.6h11"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
+  <!-- Alatyypit (vaihe B2) -->
+  <symbol id="ic-s-lenkkarit" viewBox="0 0 32 32"><path d="M3.5 21.5c0-2.6 1.4-4.3 3.6-4.7l5.9-1.1 3.4-4.1c.7-.8 2-.8 2.6.1l1.6 2.5 4.2 1.6c2.7 1 4.7 3.1 4.7 5.7z"/><path d="M3.5 21.5h25.9v2.4a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z"/><path d="M13.6 15.2l1.7 1.6M15.9 12.8l1.7 1.6M20 19l4.2-1.3"/></symbol>
+  <symbol id="ic-s-sandaalit" viewBox="0 0 32 32"><path d="M16 3.5c3.6 0 5.8 3 5.8 7.2 0 3.3-1.3 5.6-1.6 8.8-.3 3.3.9 5.4.9 7.1 0 1.9-2.2 3.4-5.1 3.4s-5.1-1.5-5.1-3.4c0-1.7 1.2-3.8.9-7.1-.3-3.2-1.6-5.5-1.6-8.8 0-4.2 2.2-7.2 5.8-7.2z"/><path d="M10.4 9.8h11.2M11.2 16h9.6M11 23.5h10"/></symbol>
+  <symbol id="ic-s-tossut" viewBox="0 0 32 32"><path d="M3.8 22.5c0-3.6 2.9-6.3 7-6.3h3.6c4.6 0 12.8 1.8 13.8 5.6v1.6H3.8z"/><path d="M3.8 23.4h24.4v2.4H3.8z"/><path d="M15.5 16.3c1 1.9 1.3 4.2.8 6.9"/></symbol>
+  <symbol id="ic-s-lippis" viewBox="0 0 32 32"><path d="M5 20c0-6.3 4.6-10.6 10.5-10.6S26 13.7 26 20"/><path d="M5 20h23.6c.9 0 1.2 1.1.5 1.6-1.4 1-3.3 1.7-5.3 1.7H5.5c-.3 0-.5-.2-.5-.5z"/><circle cx="15.5" cy="8.2" r="1.2"/><path d="M15.5 9.5V20M10.2 11.8c-.9 2.3-1.4 5-1.4 8.2"/></symbol>
+  <symbol id="ic-s-aurinkohattu" viewBox="0 0 32 32"><path d="M10 18.6c0-5.6 2.5-9.1 6-9.1s6 3.5 6 9.1"/><path d="M3.5 20.6c2-1.7 6.6-2.6 12.5-2.6s10.5.9 12.5 2.6c-2 1.8-6.6 2.8-12.5 2.8S5.5 22.4 3.5 20.6z"/><path d="M10.3 15.6h11.4"/></symbol>
+  <symbol id="ic-s-kyparamyssy" viewBox="0 0 32 32"><path d="M16 3.5c-5.4 0-8.8 4.2-8.8 9.8v9.5c0 2 1 3.5 2.6 4.3L13 28.5h6l3.2-1.4c1.6-.8 2.6-2.3 2.6-4.3v-9.5c0-5.6-3.4-9.8-8.8-9.8z"/><path d="M11 15.6c0-2.5 2.2-4.2 5-4.2s5 1.7 5 4.2-2.2 4.4-5 4.4-5-1.9-5-4.4z"/><path d="M9 24.2h14"/></symbol>
+  <symbol id="ic-s-sormikkaat" viewBox="0 0 32 32"><path d="M10.6 27.5v-9.8L7.9 14.6c-1-1.2.5-3 1.9-2.1l2.2 1.6V8.4a1.4 1.4 0 0 1 2.8 0v5.2V6.8a1.4 1.4 0 0 1 2.8 0v6.8V7.6a1.4 1.4 0 0 1 2.8 0v6.6V9.9a1.4 1.4 0 0 1 2.8 0v9c0 3-1.3 4.9-3 5.9v2.7z"/><path d="M10.6 23.8h10.6"/></symbol>
+  <symbol id="ic-s-tpaita" viewBox="0 0 32 32"><path d="M11.5 5c1.2 2 7.8 2 9 0l7 3.6-2.5 5.2-3.5-1.5V27h-11V12.3L7 13.8 4.5 8.6z"/></symbol>
+  <symbol id="ic-s-huppari" viewBox="0 0 32 32"><path d="M12 6.5 6 9.4 3.2 24.5h3.6L8.5 14v14h15V14l1.7 10.5h3.6L26 9.4l-6-2.9"/><path d="M12 6.5c0-3.3 1.8-5 4-5s4 1.7 4 5c0 2.2-1.8 3.6-4 3.6s-4-1.4-4-3.6z"/><path d="M14.6 10v3.2M17.4 10v3.2M12 20.5h8l-.8 3.8h-6.4z"/></symbol>
+  <symbol id="ic-s-fleece" viewBox="0 0 32 32"><path d="M12.2 5.5 6 8.6 3.2 23.8h3.6L8.5 13.5V27.5h15v-14l1.7 10.3h3.6L26 8.6l-6.2-3.1"/><path d="M12.2 3.5h7.6v3.8c-1 1.1-2.3 1.7-3.8 1.7s-2.8-.6-3.8-1.7z"/><path d="M16 9v6.5M14.9 15.5h2.2M8.5 24h15"/></symbol>
+  <symbol id="ic-s-neule" viewBox="0 0 32 32"><path d="M12 5c1 2 7 2 8 0l6 3.2 2.8 15.3h-3.6L23.5 13v14h-15V13l-1.7 10.5H3.2L6 8.2z"/><path d="M8.5 24h15M3.6 21.3h3.5M24.9 21.3h3.5M11 14.5l2.5 2 2.5-2 2.5 2 2.5-2"/></symbol>
+  <symbol id="ic-s-farkut" viewBox="0 0 32 32"><path d="M9 5h14l1.5 23h-5.8L16 13.5 13.3 28H7.5z"/><path d="M8.8 8.5h14.4M16 8.5v4.2M10.3 8.6c.4 1.8 1.4 2.8 3.2 3M21.7 8.6c-.4 1.8-1.4 2.8-3.2 3"/></symbol>
+  <symbol id="ic-s-shortsit" viewBox="0 0 32 32"><path d="M8.5 6.5h15l1.4 14h-6.7L16 13l-2.2 7.5H7.1z"/><path d="M8.2 9.8h15.6"/></symbol>
+  <symbol id="ic-s-leggingsit" viewBox="0 0 32 32"><path d="M10.3 4.5h11.4l-.6 23.5h-3.9L16 12.5 14.8 28h-3.9z"/><path d="M10.4 7.8h11.2"/></symbol>
+  <symbol id="ic-s-ulkoiluhousut" viewBox="0 0 32 32"><path d="M9 5h14l1.5 23h-5.8L16 13.5 13.3 28H7.5z"/><path d="M8.8 8.5h14.4M9.7 14.4h3.1v3.8H9.4zM8 22.5h5M19 22.5h5"/></symbol>
+  <symbol id="ic-s-softshell" viewBox="0 0 32 32"><path d="M11.5 6 6.8 8.3C5.6 9 5 10.1 4.9 11.5L4 22.5h3.6L9 14.5V27h14V14.5l1.4 8h3.6l-.9-11c-.1-1.4-.7-2.5-1.9-3.2L20.5 6"/><path d="M11.5 3.5h9V7c-1.2 1.3-2.7 2-4.5 2s-3.3-.7-4.5-2z"/><path d="M16 9v18M11 19.5h3M18 19.5h3"/></symbol>
+  <symbol id="ic-s-kuoritakki" viewBox="0 0 32 32"><path d="M11.5 7 6.8 9.4C5.6 10 5 11.1 4.9 12.5L4 23.5h3.6L9 15.5V28h14V15.5l1.4 8h3.6l-.9-11c-.1-1.4-.7-2.5-1.9-3.1L20.5 7"/><path d="M11.5 7c0-3.4 2-5.2 4.5-5.2s4.5 1.8 4.5 5.2l-2 3h-5z"/><path d="M16 10v18M10.5 14.5l3 1M21.5 14.5l-3 1"/></symbol>
+  <symbol id="ic-s-toppatakki" viewBox="0 0 32 32"><path d="M11.5 5.5 6.6 8C5.4 8.7 4.8 9.8 4.7 11.2L3.8 23h4L9 15.5v11.8h14V15.5l1.2 7.5h4l-.9-11.8c-.1-1.4-.7-2.5-1.9-3.2l-4.9-2.5"/><path d="M11.5 5.5h9v2.8c-1.2 1-2.7 1.5-4.5 1.5s-3.3-.5-4.5-1.5z"/><path d="M16 9.8v17.5M9 14h14M9 18.5h14M9 23h14"/></symbol>
   <symbol id="ic-check" viewBox="0 0 16 16"><path d="M3.5 8.3l3 3 6-6.6"/></symbol>
   <symbol id="ic-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
 </svg>
@@ -1380,7 +1429,16 @@
       'opt.mekko': 'Mekko', 'opt.haalari': 'Haalari', 'opt.sukat': 'Sukat',
       'opt.pyjama': 'Pyjama', 'opt.body': 'Body',
       'cp.showN': 'Näytä {n} tuotetta', 'cp.showOne': 'Näytä 1 tuote', 'cp.showNone': 'Ei tuotteita näillä valinnoilla',
-      'cp.countSr': '{n} tuotetta'
+      'cp.countSr': '{n} tuotetta',
+      'cp.refine': 'Tarkenna: {g}', 'cp.optional': '(valinnainen)', 'cp.brandsAll': 'Näytä kaikki merkit ({n})', 'cp.brandsLess': 'Näytä vähemmän',
+      'cat.noBrand': 'Näytä kaikki merkit',
+      'subg.kengät': 'Kengät', 'subg.pipo': 'Päähineet', 'subg.lapaset': 'Lapaset ja sormikkaat', 'subg.paita': 'Paidat', 'subg.housut': 'Housut', 'subg.takki': 'Takit',
+      'sub.lenkkarit': 'Lenkkarit', 'sub.sandaalit': 'Sandaalit', 'sub.tossut': 'Tossut', 'sub.kumisaappaat': 'Kumisaappaat',
+      'sub.lippis': 'Lippis', 'sub.aurinkohattu': 'Aurinkohattu', 'sub.kypärämyssy': 'Kypärämyssy',
+      'sub.lapaset': 'Lapaset', 'sub.sormikkaat': 'Sormikkaat',
+      'sub.t-paita': 'T-paita', 'sub.pitkähihainen': 'Pitkähihainen', 'sub.huppari': 'Huppari', 'sub.fleece': 'Fleece', 'sub.neule': 'Neule',
+      'sub.farkut': 'Farkut', 'sub.shortsit': 'Shortsit', 'sub.leggingsit': 'Leggingsit', 'sub.ulkoiluhousut': 'Ulkoiluhousut',
+      'sub.softshell': 'Softshell', 'sub.kuoritakki': 'Kuoritakki', 'sub.toppatakki': 'Toppatakki'
     },
     sv: {
       'price.now': 'Pris ', 'price.was': 'Förut ', 'card.view': 'Visa i butiken',
@@ -1438,7 +1496,16 @@
       'opt.mekko': 'Klänning', 'opt.haalari': 'Overall', 'opt.sukat': 'Strumpor',
       'opt.pyjama': 'Pyjamas', 'opt.body': 'Body',
       'cp.showN': 'Visa {n} produkter', 'cp.showOne': 'Visa 1 produkt', 'cp.showNone': 'Inga produkter med de här valen',
-      'cp.countSr': '{n} produkter'
+      'cp.countSr': '{n} produkter',
+      'cp.refine': 'Precisera: {g}', 'cp.optional': '(valfritt)', 'cp.brandsAll': 'Visa alla märken ({n})', 'cp.brandsLess': 'Visa färre',
+      'cat.noBrand': 'Visa alla märken',
+      'subg.kengät': 'Skor', 'subg.pipo': 'Huvudbonader', 'subg.lapaset': 'Vantar och handskar', 'subg.paita': 'Tröjor', 'subg.housut': 'Byxor', 'subg.takki': 'Jackor',
+      'sub.lenkkarit': 'Sneakers', 'sub.sandaalit': 'Sandaler', 'sub.tossut': 'Tofflor', 'sub.kumisaappaat': 'Gummistövlar',
+      'sub.lippis': 'Keps', 'sub.aurinkohattu': 'Solhatt', 'sub.kypärämyssy': 'Balaklava',
+      'sub.lapaset': 'Vantar', 'sub.sormikkaat': 'Fingervantar',
+      'sub.t-paita': 'T-shirt', 'sub.pitkähihainen': 'Långärmad', 'sub.huppari': 'Huvtröja', 'sub.fleece': 'Fleece', 'sub.neule': 'Stickad tröja',
+      'sub.farkut': 'Jeans', 'sub.shortsit': 'Shorts', 'sub.leggingsit': 'Leggings', 'sub.ulkoiluhousut': 'Friluftsbyxor',
+      'sub.softshell': 'Softshell', 'sub.kuoritakki': 'Skaljacka', 'sub.toppatakki': 'Täckjacka'
     },
     en: {
       'price.now': 'Price ', 'price.was': 'Was ', 'card.view': 'View in shop',
@@ -1496,7 +1563,16 @@
       'opt.mekko': 'Dress', 'opt.haalari': 'Overall', 'opt.sukat': 'Socks',
       'opt.pyjama': 'Pyjamas', 'opt.body': 'Bodysuit',
       'cp.showN': 'Show {n} products', 'cp.showOne': 'Show 1 product', 'cp.showNone': 'No products with these choices',
-      'cp.countSr': '{n} products'
+      'cp.countSr': '{n} products',
+      'cp.refine': 'Narrow down: {g}', 'cp.optional': '(optional)', 'cp.brandsAll': 'Show all brands ({n})', 'cp.brandsLess': 'Show fewer',
+      'cat.noBrand': 'Show all brands',
+      'subg.kengät': 'Shoes', 'subg.pipo': 'Headwear', 'subg.lapaset': 'Mittens and gloves', 'subg.paita': 'Tops', 'subg.housut': 'Trousers', 'subg.takki': 'Jackets',
+      'sub.lenkkarit': 'Trainers', 'sub.sandaalit': 'Sandals', 'sub.tossut': 'Slippers', 'sub.kumisaappaat': 'Wellies',
+      'sub.lippis': 'Cap', 'sub.aurinkohattu': 'Sun hat', 'sub.kypärämyssy': 'Balaclava',
+      'sub.lapaset': 'Mittens', 'sub.sormikkaat': 'Gloves',
+      'sub.t-paita': 'T-shirt', 'sub.pitkähihainen': 'Long-sleeve top', 'sub.huppari': 'Hoodie', 'sub.fleece': 'Fleece', 'sub.neule': 'Jumper',
+      'sub.farkut': 'Jeans', 'sub.shortsit': 'Shorts', 'sub.leggingsit': 'Leggings', 'sub.ulkoiluhousut': 'Outdoor trousers',
+      'sub.softshell': 'Softshell', 'sub.kuoritakki': 'Shell jacket', 'sub.toppatakki': 'Puffer jacket'
     }
   };
   var LANG = String(document.documentElement.lang || 'fi').slice(0, 2).toLowerCase();
@@ -2498,6 +2574,8 @@
   // Vaihe B1: yksi rakenteinen haku /api/search?items=… ja määrät kuvakkeisiin
   // /api/facets (sopimus: projektin claude/vaihe-b-rajapinta.md). item =
   // <vaatetyyppi>[.<alatyyppi>][+winter][+wp].
+  // Vaihe B2: valitulle vaatteelle tarkennus alatyypeillä (kengät.lenkkarit) ja
+  // Merkit-rivi (8 suurinta + "Näytä kaikki", monivalinta, brands=).
   // Varapolku (vaihe A): jos rakenteinen haku ei ole käytössä (vanha backend tai
   // virhe), jokaisesta vaatteesta tehdään oma tekstihaku (q) rinnakkain.
   // Hakulauseet on tarkistettu backendin parserilla (fi/sv/en).
@@ -2537,6 +2615,15 @@
   // Body ja pyjama: Vauvat-kategoriassa 7.11. alkaen (tuotteet Metsolasta, PR #30).
   // Ennen ensimmäistä tuontia määrä on 0, jolloin kuvake on himmennetty eikä valittavissa.
   // Kerrasto palautettu 2.11. (84 tuotetta tuonnin jälkeen).
+  // Vaihe B2: alatyypit. Backend kertoo facetsin subtypes-kentässä, mitkä ovat käytössä
+  // (vähintään 8 tuotetta). Tarkennus näytetään vain vaatteille, joiden item on pelkkä
+  // vaatetyyppi (ei +winter/+wp). Kuvake: oma (#ic-s-*) tai olemassa oleva vaatekuvake.
+  var SUB_ICON = { lenkkarit: 's-lenkkarit', sandaalit: 's-sandaalit', tossut: 's-tossut', kumisaappaat: 'saappaat',
+    lippis: 's-lippis', aurinkohattu: 's-aurinkohattu', 'kypärämyssy': 's-kyparamyssy', lapaset: 'lapaset', sormikkaat: 's-sormikkaat',
+    't-paita': 's-tpaita', 'pitkähihainen': 'paita', huppari: 's-huppari', fleece: 's-fleece', neule: 's-neule',
+    farkut: 's-farkut', shortsit: 's-shortsit', leggingsit: 's-leggingsit', ulkoiluhousut: 's-ulkoiluhousut',
+    softshell: 's-softshell', kuoritakki: 's-kuoritakki', toppatakki: 's-toppatakki' };
+  var BRANDS_TOP = 8, MAX_FACET_ITEMS = 20, MAX_SEARCH_ITEMS = 10;
   var SIZES = [50, 56, 62, 68, 74, 80, 86, 92, 98, 104, 110, 116, 122, 128, 134, 140, 146, 152, 158, 164, 170, 176];
   var BABY_MAX = 92, SHOE_MIN = 18, SHOE_MAX = 42;
   // Ikäarvio koon alle: [cm, alku, loppu, 'm' = kuukautta | 'y' = vuotta]
@@ -2574,6 +2661,30 @@
   function forgetMemory(){ try { localStorage.removeItem(MEMORY_KEY); } catch (e) {} }
   function hasShoe(st){ return st.opts.some(function(o){ return OPTS[o].shoe; }); }
   function hasClothes(st){ return st.opts.some(function(o){ return !OPTS[o].shoe; }); }
+  function subLabel(sub){ return t('sub.' + sub); }
+  // Yksikön nimi: vaate (id) tai alatyyppi (id.alatyyppi)
+  function unitLabel(key){ var i = key.indexOf('.'); return i === -1 ? optLabel(key) : subLabel(key.slice(i + 1)); }
+  // Vaatetyyppi, jolle alatyypit sallitaan (item ilman +winter/+wp), muuten null
+  function subBase(id){ var it = OPTS[id] && OPTS[id].item; return it && it.indexOf('+') === -1 && it.indexOf('.') === -1 ? it : null; }
+  function subsAvailable(id){
+    var b = subBase(id), list = b && subtypeLists[b];
+    return list ? list.filter(function(s){ return SUB_ICON[s]; }) : [];
+  }
+  // Valinnan yksiköt: vaate kokonaan tai sen valitut alatyypit. Jokainen on oma ryhmänsä tuloksissa.
+  function unitsOf(st){
+    var out = [];
+    st.opts.forEach(function(id){
+      var subs = (st.subs && st.subs[id]) || [], base = subBase(id);
+      if (subs.length && base) subs.forEach(function(s){ out.push({ key: id + '.' + s, id: id, sub: s, item: base + '.' + s }); });
+      else out.push({ key: id, id: id, item: OPTS[id].item });
+    });
+    return out;
+  }
+  function uniq(arr){ return arr.filter(function(x, i){ return arr.indexOf(x) === i; }); }
+  function chunks(arr, n){ var out = []; for (var i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n)); return out; }
+  function listParam(name, arr){ return name + '=' + arr.map(encodeURIComponent).join(','); }
+  function brandKey(n){ return String(n).trim().toLowerCase().replace(/\s+/g, ' '); }
+  function hasBrand(list, name){ var k = brandKey(name); return list.some(function(b){ return brandKey(b) === k; }); }
   function validCm(cm, cat){
     cm = Number(cm);
     if (SIZES.indexOf(cm) === -1) return null;
@@ -2598,6 +2709,8 @@
   var cpHead = document.getElementById('cpHead');
   var cpShow = document.getElementById('cpShow');
   var cpSize = document.getElementById('cpSize'), cpShoe = document.getElementById('cpShoe');
+  var cpSubs = document.getElementById('cpSubs'), cpBrands = document.getElementById('cpBrands');
+  var cpBrandGroup = document.getElementById('cpBrandGroup'), cpBrandMore = document.getElementById('cpBrandMore');
   var panelState = null, panelTile = null, pendingCatSearch = null, openFallbackTimer = null;
   var supportsDialog = typeof catPanel.showModal === 'function';
 
@@ -2622,62 +2735,139 @@
   // Vaatteen valinta ei muuta määriä, vain Näytä-painikkeen summaa.
   // Jos facets ei vastaa (vanha backend), määriä ei näytetä ja paneeli toimii kuten ennen.
   var facetCounts = null, facetSeq = 0, facetTimer = null, facetsAvailable = true;
+  // Vaihe B2: alatyyppilistat vaatetyypeittäin (eivät riipu suodattimista) ja merkkilista
+  var subtypeLists = {}, facetBrands = null, brandsExpanded = false;
   var cpShowDefault = cpShow.textContent;
+  var CHIP_CHECK = '<svg class="cp-chip-check" aria-hidden="true" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-check"/></svg>';
   function itemOf(id){ return OPTS[id].item; }
   function filterParams(st){
     var p = [];
     if (st.cm) p.push('size_cm=' + st.cm);
     if (st.shoe) p.push('shoe_eu=' + st.shoe);
     if (GENDER_URL[st.gender]) p.push('gender=' + GENDER_URL[st.gender]);
+    if (st.brands && st.brands.length) p.push('brands=' + encodeURIComponent(st.brands.join(',')));
     p.push('lang=' + LANG);
     return p.join('&');
   }
-  function itemsParam(ids){
-    var seen = {}, out = [];
-    ids.forEach(function(id){ var it = itemOf(id); if (!seen[it]) { seen[it] = 1; out.push(encodeURIComponent(it)); } });
-    return 'items=' + out.join(',');
+  // Määrät: kategorian kaikki vaatteet + valittujen vaatteiden alatyypit
+  function facetItemList(st){
+    var items = CATS[st.cat].opts.map(itemOf);
+    st.opts.forEach(function(id){ subsAvailable(id).forEach(function(s){ items.push(subBase(id) + '.' + s); }); });
+    unitsOf(st).forEach(function(u){ items.push(u.item); });   // esim. linkistä tulleet alatyypit
+    return uniq(items);
   }
+  // Merkkilista lasketaan valituista (brand_items); pyyntö jaetaan osiin, jos itemejä on yli 20.
+  // Haetaan, kun paneeli avataan ja kun valinnat, lapsi, koko tai merkit muuttuvat (viive 250 ms).
+  // Jos facets ei vastaa (vanha backend), määriä ja merkkejä ei näytetä ja paneeli toimii kuten ennen.
   function requestFacets(delay){
     clearTimeout(facetTimer);
     if (!facetsAvailable || !panelState) return;
     var st = panelState, mySeq = ++facetSeq;
     facetTimer = setTimeout(function(){
-      Promise.resolve().then(function(){ return fetch('/api/facets?' + itemsParam(CATS[st.cat].opts) + '&' + filterParams(st)); })
-        .then(function(r){ if (r.status === 404) facetsAvailable = false; if (!r.ok) throw new Error(r.status); return r.json(); })
-        .then(function(d){
+      var items = facetItemList(st), brandItems = uniq(unitsOf(st).map(function(u){ return u.item; }));
+      var common = (brandItems.length ? '&' + listParam('brand_items', brandItems) : '') + '&' + filterParams(st);
+      Promise.all(chunks(items, MAX_FACET_ITEMS).map(function(part){
+        return Promise.resolve().then(function(){ return fetch('/api/facets?' + listParam('items', part) + common); })
+          .then(function(r){ if (r.status === 404) facetsAvailable = false; if (!r.ok) throw new Error(r.status); return r.json(); });
+      }))
+        .then(function(res){
           if (mySeq !== facetSeq) return;
-          facetCounts = d && d.items && typeof d.items === 'object' ? d.items : null;
-          renderCounts();
+          var counts = {}, newLists = false;
+          res.forEach(function(d){
+            if (d && d.items && typeof d.items === 'object') Object.keys(d.items).forEach(function(k){ counts[k] = d.items[k]; });
+            if (d && d.subtypes && typeof d.subtypes === 'object') Object.keys(d.subtypes).forEach(function(k){
+              var l = d.subtypes[k];
+              if (Array.isArray(l) && String(subtypeLists[k]) !== String(l)) { subtypeLists[k] = l; newLists = true; }
+            });
+          });
+          facetCounts = counts;
+          facetBrands = res[0] && Array.isArray(res[0].brands) ? res[0].brands : null;
+          renderSubs(); renderCounts(); renderBrands();
+          // Uusia alatyyppejä valitulle vaatteelle: niiden määrät heti perään
+          if (newLists && facetItemList(st).some(function(it){ return !(it in counts); })) requestFacets(0);
         })
-        .catch(function(){ if (mySeq === facetSeq) { facetCounts = null; renderCounts(); } });
+        .catch(function(){ if (mySeq === facetSeq) { facetCounts = null; facetBrands = null; renderCounts(); renderBrands(); } });
     }, delay == null ? 250 : delay);
   }
-  function countFor(id){
-    var n = facetCounts ? facetCounts[itemOf(id)] : undefined;
+  function countItem(item){
+    var n = facetCounts ? facetCounts[item] : undefined;
     return typeof n === 'number' ? n : null;
+  }
+  function countFor(id){ return countItem(itemOf(id)); }
+  function countHtml(n){
+    return n == null ? '' : '<span aria-hidden="true">' + n.toLocaleString(LOC.locale) + '</span>' +
+      '<span class="visually-hidden">, ' + esc(t('cp.countSr', { n: n })) + '</span>';
+  }
+  // Luku ja tyhjän himmennys: 0 tuotetta = ei valittavissa (paitsi jo valittu, jotta sen voi poistaa)
+  function setCount(btn, n){
+    var on = btn.getAttribute('aria-pressed') === 'true';
+    btn.querySelector('.cp-count').innerHTML = countHtml(n);
+    btn.classList.toggle('cp-zero', n === 0);
+    if (n === 0 && !on) btn.setAttribute('aria-disabled', 'true'); else btn.removeAttribute('aria-disabled');
   }
   function renderCounts(){
     if (!panelState) return;
-    cpOpts.querySelectorAll('.cp-opt').forEach(function(btn){
-      var id = btn.getAttribute('data-opt'), n = countFor(id);
-      var on = btn.getAttribute('aria-pressed') === 'true';
-      var el = btn.querySelector('.cp-count');
-      el.innerHTML = n == null ? '' : '<span aria-hidden="true">' + n.toLocaleString(LOC.locale) + '</span>' +
-        '<span class="visually-hidden">, ' + esc(t('cp.countSr', { n: n })) + '</span>';
-      var zero = n === 0 && !on;
-      btn.classList.toggle('cp-zero', n === 0);
-      if (zero) btn.setAttribute('aria-disabled', 'true'); else btn.removeAttribute('aria-disabled');
+    cpOpts.querySelectorAll('.cp-opt').forEach(function(btn){ setCount(btn, countFor(btn.getAttribute('data-opt'))); });
+    cpSubs.querySelectorAll('.cp-sub').forEach(function(btn){
+      var key = btn.getAttribute('data-sub'), i = key.indexOf('.');
+      setCount(btn, countItem(subBase(key.slice(0, i)) + '.' + key.slice(i + 1)));
     });
     updateShow();
   }
   function updateShow(){
     var st = panelState;
     if (!st.opts.length) { cpShow.disabled = true; cpShow.textContent = cpShowDefault; return; }
-    var known = st.opts.every(function(id){ return countFor(id) != null; });
+    var units = unitsOf(st);
+    var known = units.every(function(u){ return countItem(u.item) != null; });
     if (!known) { cpShow.disabled = false; cpShow.textContent = cpShowDefault; return; }
-    var n = st.opts.reduce(function(sum, id){ return sum + countFor(id); }, 0);
+    var n = units.reduce(function(sum, u){ return sum + countItem(u.item); }, 0);
     cpShow.disabled = n === 0;
     cpShow.textContent = n === 0 ? t('cp.showNone') : t(n === 1 ? 'cp.showOne' : 'cp.showN', { n: n.toLocaleString(LOC.locale) });
+  }
+
+  // Uudelleenpiirto vain kun sisältö muuttuu; näppäimistön kohdistus pysyy samassa painikkeessa
+  function rerender(el, html, attr){
+    if (el.__html === html) return;
+    var a = document.activeElement, key = a && el.contains(a) ? a.getAttribute(attr) : null;
+    el.__html = html; el.innerHTML = html;
+    if (key != null) {
+      var same = Array.prototype.filter.call(el.querySelectorAll('[' + attr + ']'), function(b){ return b.getAttribute(attr) === key; })[0];
+      if (same) same.focus();
+    }
+  }
+  // Tarkennus (alatyypit) jokaiselle valitulle vaatteelle, jolla niitä on
+  function renderSubs(){
+    var st = panelState, html = '';
+    st.opts.forEach(function(id){
+      var list = subsAvailable(id);
+      if (!list.length) return;
+      var sel = st.subs[id] || [];
+      html += '<fieldset class="cp-group"><legend><span class="cp-legend-main">' + esc(t('cp.refine', { g: t('subg.' + subBase(id)) })) + '</span> ' +
+        '<span>' + esc(t('cp.optional')) + '</span></legend><ul class="cp-chips">' +
+        list.map(function(s){
+          return '<li><button type="button" class="cp-chip cp-sub" data-sub="' + esc(id + '.' + s) + '" aria-pressed="' + (sel.indexOf(s) !== -1) + '">' +
+            '<svg aria-hidden="true"><use href="#ic-' + SUB_ICON[s] + '"/></svg>' + CHIP_CHECK +
+            '<span class="cp-chip-label">' + esc(subLabel(s)) + '</span><span class="cp-count"></span></button></li>';
+        }).join('') + '</ul></fieldset>';
+    });
+    rerender(cpSubs, html, 'data-sub');
+    cpSubs.hidden = !html;
+  }
+  // Merkit: 8 suurinta + "Näytä kaikki"; valitut näkyvät aina (myös jos 0 tuotetta)
+  function renderBrands(){
+    var st = panelState, list = (facetBrands || []).slice();
+    st.brands.forEach(function(b){ if (!hasBrand(list.map(function(x){ return x.name; }), b)) list.push({ name: b, count: 0 }); });
+    var shown = brandsExpanded ? list : list.filter(function(x, i){ return i < BRANDS_TOP || hasBrand(st.brands, x.name); });
+    rerender(cpBrands, shown.map(function(x){
+      var on = hasBrand(st.brands, x.name), n = Number(x.count) || 0;
+      return '<li><button type="button" class="cp-chip cp-brand' + (n === 0 ? ' cp-zero' : '') + '" data-brand="' + esc(x.name) + '" aria-pressed="' + on + '"' +
+        (n === 0 && !on ? ' aria-disabled="true"' : '') + '>' + CHIP_CHECK +
+        '<span class="cp-chip-label">' + esc(x.name) + '</span><span class="cp-count">' + countHtml(n) + '</span></button></li>';
+    }).join(''), 'data-brand');
+    cpBrandGroup.hidden = !list.length;
+    cpBrandMore.hidden = list.length <= BRANDS_TOP;
+    cpBrandMore.textContent = brandsExpanded ? t('cp.brandsLess') : t('cp.brandsAll', { n: list.length });
+    cpBrandMore.setAttribute('aria-expanded', brandsExpanded ? 'true' : 'false');
   }
 
   function renderSize(){
@@ -2707,25 +2897,30 @@
   }
   function renderPanel(){
     renderOpts();
+    renderSubs();
+    renderCounts();
     catPanel.querySelectorAll('input[name="cpGender"]').forEach(function(r){ r.checked = r.value === (panelState.gender || ''); });
     renderSize();
+    renderBrands();
     updateShow();
   }
 
   function stateFromMemory(cat){
     var m = loadMemory();
-    return { cat: cat, opts: [CATS[cat].def], cm: validCm(m.cm, cat), shoe: validShoe(m.shoe), gender: GENDER_URL[m.gender] ? m.gender : '' };
+    return { cat: cat, opts: [CATS[cat].def], subs: {}, brands: [], cm: validCm(m.cm, cat), shoe: validShoe(m.shoe), gender: GENDER_URL[m.gender] ? m.gender : '' };
   }
 
   function openCatPanel(cat, tile, preset){
     if (!CATS[cat]) return;
     panelState = preset ? JSON.parse(JSON.stringify(preset)) : stateFromMemory(cat);
     panelState.cat = cat;
+    panelState.subs = panelState.subs || {};
+    panelState.brands = panelState.brands || [];
     panelTile = tile || document.querySelector('.cat-tile[data-cat="' + cat + '"]');
     var tileImg = panelTile && panelTile.querySelector('img');
     cpImg.src = tileImg ? (tileImg.currentSrc || tileImg.src) : '/images/kategoria-' + CATS[cat].img + '-960.jpg';
     document.getElementById('cpTitle').textContent = catTitle(cat);
-    facetCounts = null;
+    facetCounts = null; facetBrands = null; brandsExpanded = false;
     renderPanel();
     requestFacets(0);
     if (!supportsDialog) { catPanel.setAttribute('open', ''); return; }
@@ -2826,14 +3021,40 @@
     var id = btn.getAttribute('data-opt');
     var i = panelState.opts.indexOf(id);
     if (i === -1 && btn.getAttribute('aria-disabled') === 'true') return;   // 0 tuotetta näillä rajauksilla
-    if (i === -1) panelState.opts.push(id); else panelState.opts.splice(i, 1);
+    if (i === -1) panelState.opts.push(id); else { panelState.opts.splice(i, 1); delete panelState.subs[id]; }
     // Järjestys aina kategorian mukaan (tulokset ja sirut samassa järjestyksessä)
     var order = CATS[panelState.cat].opts;
     panelState.opts.sort(function(a, b){ return order.indexOf(a) - order.indexOf(b); });
     btn.setAttribute('aria-pressed', i === -1 ? 'true' : 'false');
     renderSize();
+    renderSubs();
     renderCounts();
+    requestFacets();   // merkkilista ja alatyyppien määrät riippuvat valituista vaatteista
   });
+  cpSubs.addEventListener('click', function(e){
+    var btn = e.target.closest('.cp-sub');
+    if (!btn) return;
+    var key = btn.getAttribute('data-sub'), d = key.indexOf('.'), id = key.slice(0, d), sub = key.slice(d + 1);
+    var list = panelState.subs[id] || [], j = list.indexOf(sub);
+    if (j === -1 && btn.getAttribute('aria-disabled') === 'true') return;
+    if (j === -1) list.push(sub); else list.splice(j, 1);
+    var order = subsAvailable(id);
+    list.sort(function(a, b){ return order.indexOf(a) - order.indexOf(b); });
+    if (list.length) panelState.subs[id] = list; else delete panelState.subs[id];
+    btn.setAttribute('aria-pressed', j === -1 ? 'true' : 'false');
+    renderCounts();
+    requestFacets();
+  });
+  cpBrands.addEventListener('click', function(e){
+    var btn = e.target.closest('.cp-brand');
+    if (!btn) return;
+    var name = btn.getAttribute('data-brand'), on = hasBrand(panelState.brands, name);
+    if (!on && btn.getAttribute('aria-disabled') === 'true') return;
+    panelState.brands = on ? panelState.brands.filter(function(b){ return brandKey(b) !== brandKey(name); }) : panelState.brands.concat([name]);
+    btn.setAttribute('aria-pressed', on ? 'false' : 'true');
+    requestFacets();   // määrät rajautuvat valittuihin merkkeihin
+  });
+  cpBrandMore.addEventListener('click', function(){ brandsExpanded = !brandsExpanded; renderBrands(); });
   catPanel.querySelectorAll('input[name="cpGender"]').forEach(function(r){
     r.addEventListener('change', function(){ if (r.checked) { panelState.gender = r.value; requestFacets(); } });
   });
@@ -2887,9 +3108,12 @@
   function setCatUrl(st){
     try {
       var p = new URLSearchParams(location.search);
-      ['kat', 'v', 'koko', 'kenka', 'lapsi'].forEach(function(k){ p.delete(k); });
+      ['kat', 'v', 'ala', 'merkki', 'koko', 'kenka', 'lapsi'].forEach(function(k){ p.delete(k); });
       if (st) {
         p.set('kat', st.cat); p.set('v', st.opts.join(','));
+        var subKeys = unitsOf(st).filter(function(u){ return u.sub; }).map(function(u){ return u.key; });
+        if (subKeys.length) p.set('ala', subKeys.join(','));
+        (st.brands || []).forEach(function(b){ p.append('merkki', b); });
         if (st.cm) p.set('koko', st.cm);
         if (st.shoe && hasShoe(st)) p.set('kenka', st.shoe);
         if (GENDER_URL[st.gender]) p.set('lapsi', GENDER_URL[st.gender]);
@@ -2904,7 +3128,21 @@
     var opts = String(p.get('v') || '').split(',').filter(function(o){ return CATS[cat].opts.indexOf(o) !== -1; });
     if (!opts.length) opts = [CATS[cat].def];
     var g = p.get('lapsi') === 'tytto' ? 'tyttö' : p.get('lapsi') === 'poika' ? 'poika' : '';
-    return { cat: cat, opts: opts, cm: validCm(p.get('koko'), cat), shoe: validShoe(p.get('kenka')), gender: g };
+    // ala=kengat.lenkkarit,pipo.lippis (vaate.alatyyppi), merkki=Reima&merkki=Lindberg
+    var subs = {};
+    String(p.get('ala') || '').split(',').forEach(function(k){
+      var d = k.indexOf('.'), id = k.slice(0, d), sub = k.slice(d + 1);
+      if (d > 0 && opts.indexOf(id) !== -1 && subBase(id) && /^[a-zåäö-]{2,30}$/.test(sub)) {
+        subs[id] = subs[id] || [];
+        if (subs[id].indexOf(sub) === -1) subs[id].push(sub);
+      }
+    });
+    var brands = [];
+    p.getAll('merkki').forEach(function(b){
+      b = String(b).trim();
+      if (b && b.length <= 60 && brands.length < 30 && !hasBrand(brands, b)) brands.push(b);
+    });
+    return { cat: cat, opts: opts, subs: subs, brands: brands, cm: validCm(p.get('koko'), cat), shoe: validShoe(p.get('kenka')), gender: g };
   }
 
   // Sopivimmat, Paras hinta-laatu ja Suosituimmat: vuorotellen vaatteittain,
@@ -2939,7 +3177,7 @@
           esc(label) + ' <span class="n">' + n + '</span></button></li>';
       };
       document.getElementById('catFilterChips').innerHTML = chip('', t('filter.all'), total) +
-        catGroups.map(function(g){ return chip(g.id, optLabel(g.id), g.total); }).join('');
+        catGroups.map(function(g){ return chip(g.id, unitLabel(g.id), g.total); }).join('');
       catFilterEl.hidden = withHits.length < 1;
     } else {
       catFilterEl.hidden = true;
@@ -2956,11 +3194,12 @@
 
   function renderCatUnderstood(st){
     understoodLabelEl.textContent = t('cat.selection');
-    var chips = st.opts.map(function(id){ return { key: 'opt:' + id, label: optLabel(id) }; });
+    var chips = unitsOf(st).map(function(u){ return { key: 'opt:' + u.key, label: unitLabel(u.key) }; });
     if (st.cm && hasClothes(st)) chips.push({ key: 'cm', label: t('size.cm', { cm: st.cm }) });
     if (st.shoe && hasShoe(st)) chips.push({ key: 'shoe', label: t('size.eu', { n: st.shoe }) });
     var gl = { 'tyttö': t('crit.girl'), poika: t('crit.boy') };
     if (gl[st.gender]) chips.push({ key: 'gender', label: cap(gl[st.gender]) });
+    (st.brands || []).forEach(function(b){ chips.push({ key: 'brand:' + b, label: b }); });
     document.getElementById('understoodChips').innerHTML = chips.map(function(ch){
       return '<li class="crit-chip"><span>' + esc(ch.label) + '</span>' +
         '<button type="button" data-cat-remove="' + esc(ch.key) + '" aria-label="' + esc(t('crit.remove')) + ': ' + esc(ch.label) + '" title="' + esc(t('crit.remove')) + '">×</button></li>';
@@ -2974,8 +3213,18 @@
     var key = btn.getAttribute('data-cat-remove');
     var st = JSON.parse(JSON.stringify(catMode));
     if (key.indexOf('opt:') === 0) {
-      st.opts = st.opts.filter(function(o){ return o !== key.slice(4); });
+      var uk = key.slice(4), d = uk.indexOf('.');
+      if (d === -1) { st.opts = st.opts.filter(function(o){ return o !== uk; }); delete st.subs[uk]; }
+      else {
+        // Alatyyppi pois; viimeisen mukana lähtee koko vaate (ei laajenneta kaikkiin)
+        var oid = uk.slice(0, d), left = (st.subs[oid] || []).filter(function(x){ return x !== uk.slice(d + 1); });
+        if (left.length) st.subs[oid] = left;
+        else { delete st.subs[oid]; st.opts = st.opts.filter(function(o){ return o !== oid; }); }
+      }
       if (!st.opts.length) { openCatPanel(st.cat, null, st); return; }
+    } else if (key.indexOf('brand:') === 0) {
+      var bk = brandKey(key.slice(6));
+      st.brands = st.brands.filter(function(b){ return brandKey(b) !== bk; });
     } else if (key === 'cm') st.cm = null;
     else if (key === 'shoe') st.shoe = null;
     else if (key === 'gender') st.gender = '';
@@ -2989,6 +3238,7 @@
     var acts = [];
     if ((st.cm && hasClothes(st)) || (st.shoe && hasShoe(st))) acts.push({ act: 'nosize', label: t('cat.noSize') });
     if (st.gender) acts.push({ act: 'nogender', label: t('cat.noGender') });
+    if (st.brands && st.brands.length) acts.push({ act: 'nobrand', label: t('cat.noBrand') });
     acts.push({ act: 'edit', label: t('cat.edit') });
     document.getElementById('emptyChips').innerHTML = acts.map(function(a, i){
       return '<li><button type="button" class="chip' + (i === 0 ? ' primary' : '') + '" data-cat-act="' + a.act + '">' + esc(a.label) + '</button></li>';
@@ -3002,6 +3252,7 @@
     if (act === 'edit') { openCatPanel(st.cat, null, st); return; }
     if (act === 'nosize') { st.cm = null; st.shoe = null; }
     if (act === 'nogender') st.gender = '';
+    if (act === 'nobrand') st.brands = [];
     runCatSearch(st);
   });
 
@@ -3009,20 +3260,23 @@
   // Hylkää (-> varapolku), jos backend ei tue rakenteista hakua tai vastaa virheellä.
   var structuredOK = null;
   function structuredSearch(st){
-    return Promise.resolve().then(function(){ return fetch('/api/search?' + itemsParam(st.opts) + '&' + filterParams(st)); })
-      .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function(d){
-        if (!d || d.mode !== 'structured' || !Array.isArray(d.groups)) throw new Error('no-groups');
-        structuredOK = true;
-        var byItem = {};
-        d.groups.forEach(function(g){ if (g && g.item) byItem[g.item] = g; });
-        return st.opts.map(function(id){
-          var g = byItem[itemOf(id)] || { total_matches: 0, results: {} };
-          return { id: id, data: { results: g.results || {}, total_matches: g.total_matches }, total: Number(g.total_matches) || 0 };
-        });
+    var units = unitsOf(st), items = uniq(units.map(function(u){ return u.item; }));
+    // Yli 10 itemiä (paljon alatyyppejä): useampi pyyntö rinnakkain
+    return Promise.all(chunks(items, MAX_SEARCH_ITEMS).map(function(part){
+      return Promise.resolve().then(function(){ return fetch('/api/search?' + listParam('items', part) + '&' + filterParams(st)); })
+        .then(function(r){ if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then(function(d){ if (!d || d.mode !== 'structured' || !Array.isArray(d.groups)) throw new Error('no-groups'); return d; });
+    })).then(function(res){
+      structuredOK = true;
+      var byItem = {};
+      res.forEach(function(d){ d.groups.forEach(function(g){ if (g && g.item) byItem[g.item] = g; }); });
+      return units.map(function(u){
+        var g = byItem[u.item] || { total_matches: 0, results: {} };
+        return { id: u.key, data: { results: g.results || {}, total_matches: g.total_matches }, total: Number(g.total_matches) || 0 };
       });
+    });
   }
-  // Vaihe A: jokaisesta vaatteesta oma tekstihaku rinnakkain
+  // Vaihe A: jokaisesta vaatteesta oma tekstihaku rinnakkain (varapolku: alatyypit ja merkit eivät rajaa)
   function textSearch(st){
     return Promise.all(st.opts.map(function(id){
       return fetch('/api/search?q=' + encodeURIComponent(catQuery(id, st)) + '&lang=' + LANG)
@@ -3034,6 +3288,7 @@
 
   function runCatSearch(st){
     var mySeq = ++searchSeq;
+    st.subs = st.subs || {}; st.brands = st.brands || [];
     catMode = st; catFilterId = ''; catGroups = [];
     setCatUrl(st);
     setAllInputs('');
