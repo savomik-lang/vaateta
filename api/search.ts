@@ -13,6 +13,7 @@ import { searchWebForProducts } from "../src/ai/agent-search";
 import { filterChildSafe } from "../src/safety/filter-products";
 import { Product } from "../src/types";
 import { parseLang, resolveMarket } from "../src/lang";
+import { resolveCountry } from "../src/geo";
 import { structuredSearchResponse } from "../src/structured/handlers";
 import {
   Notice, findRelaxation, buildNoResultsNotice, buildPartialSizeNotice, buildLimitedCoverageNotice,
@@ -25,7 +26,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   // UI:n kieli ja kävijän markkina (lang=fi|sv|en, market=FI|SE|other). Puuttuva/tuntematon -> fi / FI.
   const lang = parseLang(req.query.lang);
   const market = resolveMarket(req.query.market, req.headers["x-vercel-ip-country"]);
-  const view = { lang, market };
+  // Kävijän maa piilottaa kaupat, jotka eivät toimita maahan (shipsTo). Puuttuu -> kaikki näkyvät.
+  const country = resolveCountry(req.query.country, req.headers["x-vercel-ip-country"]);
+  const view = { lang, market, country };
 
   if (req.method !== "GET") {
     res.status(405).json({ error: { fi: "Vain GET-pyynnöt tuettu", sv: "Endast GET-förfrågningar stöds", en: "Only GET requests are supported" }[lang] });
@@ -80,14 +83,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const adapter = new MultiStoreAdapter();
-    const allProducts = await adapter.loadAllProducts();
+    const allProducts = await adapter.loadProductsFor(country);
     // LAPSITURVALLISUUS (korkea prioriteetti): viimeinen varmistus ennen
     // näyttämistä. Ks. filterChildSafe-funktion kommentti yllä.
     const fitCtx = fitContextFromCriteria(criteria, market);
     // Samat tuotteet eri väreissä (sama kauppa, sama hinta) näytetään kerran.
     const runSafe = (c: typeof criteria, opts = {}) =>
       dedupeResults(filterChildSafe(allProducts.filter((p) => matchesCriteria(p, c, opts))), fitContextFromCriteria(c, market), view);
-    const rawCatalogMatches = await adapter.search(criteria);
+    const rawCatalogMatches = allProducts.filter((p) => matchesCriteria(p, criteria));
     let catalogMatches = dedupeResults(filterChildSafe(rawCatalogMatches), fitCtx, view);
     let notice: Notice | undefined;
 

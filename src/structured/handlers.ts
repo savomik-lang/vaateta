@@ -4,6 +4,7 @@ import { Lang, ViewOpts } from "../lang";
 import { parseItemList, parseFilters } from "./items";
 import { runStructuredSearch, runFacets } from "./search";
 import { cachedJson, cacheKey } from "./cache";
+import { hiddenStoreKeys } from "../geo";
 
 // Rakenteisen haun ja facetsin pyyntölogiikka ilman HTTP-kerrosta (testattavissa InMemory-kaupoilla).
 // api/search.ts ja api/facets.ts ovat ohuita kuoria näiden ympärillä.
@@ -39,12 +40,12 @@ export async function structuredSearchResponse(
   if (!items.ok) return itemsError(items, MAX_SEARCH_ITEMS, lang);
   const filters = parseFilters(query);
   if (!filters.ok) return { status: 400, body: { error: MSG.params_invalid[lang], invalid_params: filters.invalid_params } };
-  const [products, lastImported] = await Promise.all([adapter.loadAllProducts(), adapter.lastImportedAt()]);
+  const [products, lastImported] = await Promise.all([adapter.loadProductsFor(view.country), adapter.lastImportedAt()]);
   return { status: 200, body: runStructuredSearch(products, items.items, filters.filters, view, lastImported) };
 }
 
 export async function facetsResponse(
-  query: Record<string, unknown>, lang: Lang, adapter: MultiStoreAdapter, kv: IKeyValueStore | null,
+  query: Record<string, unknown>, lang: Lang, adapter: MultiStoreAdapter, kv: IKeyValueStore | null, country?: string,
 ): Promise<HandlerResult> {
   const items = parseItemList(query.items, MAX_FACET_ITEMS);
   if (!items.ok) return itemsError(items, MAX_FACET_ITEMS, lang);
@@ -61,11 +62,16 @@ export async function facetsResponse(
   // luokittelu tai suodatus), joten versioon liitetään julkaisun commit.
   const importVersion = await adapter.importVersion();
   const version = importVersion ? `${importVersion}#${(process.env.VERCEL_GIT_COMMIT_SHA || "dev").slice(0, 12)}` : "";
-  // Määrät eivät riipu kielestä eivätkä markkinasta -> avaimessa vain itemit, brändi-itemit ja suodattimet.
-  const key = cacheKey("facets:v2", { items: items.items.map((i) => i.id), brand_items: brandItems.map((i) => i.id), filters: filters.filters });
+  // Määrät eivät riipu kielestä eivätkä markkinasta. Kävijän maa vaikuttaa vain sen kautta, mitkä kaupat
+  // piilotetaan (shipsTo), joten avaimessa on piilotettujen kauppojen lista eikä maakoodi: kaikki
+  // toimitusmaat jakavat saman välimuistin.
+  const hidden = hiddenStoreKeys(country);
+  const key = cacheKey("facets:v2", { items: items.items.map((i) => i.id), brand_items: brandItems.map((i) => i.id), filters: filters.filters, hidden });
   const { json, cache } = await cachedJson(kv, key, version, async () => {
-    const [products, lastImported] = await Promise.all([adapter.loadAllProducts(), adapter.lastImportedAt()]);
-    return JSON.stringify(runFacets(products, items.items, filters.filters, lastImported, brandItems, version || undefined));
+    const [products, lastImported] = await Promise.all([adapter.loadProductsFor(country), adapter.lastImportedAt()]);
+    // Alatyyppien kynnys lasketaan näkyvästä katalogista, joten muisti-avaimessa on myös piilotetut kaupat.
+    const catalogKey = version ? `${version}~${hidden.join(",")}` : undefined;
+    return JSON.stringify(runFacets(products, items.items, filters.filters, lastImported, brandItems, catalogKey));
   });
   return { status: 200, body: json, cache };
 }

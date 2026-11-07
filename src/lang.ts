@@ -7,6 +7,8 @@ export type ViewerMarket = "FI" | "SE" | "other";
 export interface ViewOpts {
   lang?: Lang;
   market?: ViewerMarket;
+  /** Kävijän maa (ISO alpha-2, AX -> FI). Puuttuu = maata ei tiedetä, kaikki kaupat näkyvät. */
+  country?: string;
 }
 
 export function parseLang(v: unknown): Lang {
