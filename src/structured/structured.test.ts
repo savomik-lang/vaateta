@@ -295,3 +295,21 @@ test("facets: virheellinen brand_items -> 400; eri brand_items eivät jaa välim
   assert.equal(all.brands[0].count, 4);
   assert.equal(only.brands[0].count, 2);
 });
+
+test("retkeilyvarusteet (polttoainepullon korkki, juomapullo) eivät tule vaatteina; väri 'bottle green' ei estä", async () => {
+  const { looksLikeNonClothing } = await import("../nlu/non-clothing");
+  for (const t of ["Primus Fuel Bottle Cap - Child proof Nocolour", "Klean Kanteen Kid Sippy Cap Green", "Klean Kanteen Baby Bottle 148 ml With Slow Flow Nipple", "MSR Fuel Bottle Cap Child Resistant", "Kids Water Bottle"]) {
+    assert.equal(looksLikeNonClothing(t), true, t);
+  }
+  for (const t of ["Kids Bottle Green Jacket", "Kids Cap", "Kids Beanie", "Reima Kids Boots"]) {
+    assert.equal(looksLikeNonClothing(t), false, t);
+  }
+  const a = adapter([
+    makeProduct({ id: "x:1", garment_type: "pipo", title: "Primus Fuel Bottle Cap - Child proof", brand: "Primus", size_available: ["One Size"], source: "outnorth-fi" }),
+    makeProduct({ id: "x:2", garment_type: "pipo", title: "Kids Beanie", brand: "Reima", size_available: [], source: "outnorth-fi" }),
+    makeProduct({ id: "x:3", garment_type: "pipo", title: "Kids Beanie 2", brand: "voghion", size_available: [], source: "outnorth-fi" }),
+  ]);
+  const f = await facets({ items: "pipo" }, a);
+  assert.equal(f.items.pipo, 2, "korkki ei ole pipo");
+  assert.deepEqual(f.brands, [{ name: "Reima", count: 1 }], "Primus ja Voghion pois");
+});

@@ -95,7 +95,8 @@ export function brandKey(brand: string): string {
 // muutettu yleisin asu. Vastaus `brands`-parametriin kelpaa takaisin sellaisenaan (sama avain).
 // ---------------------------------------------------------------------------
 
-const UNKNOWN_BRANDS = new Set(["", "tuntematon", "unknown", "okänd", "n/a", "na", "none", "-", "null", "undefined"]);
+// Myös kauppojen omat nimet, joita ne käyttävät brändinä silloin kun merkkiä ei tiedetä (Voghion-markkinapaikka).
+const UNKNOWN_BRANDS = new Set(["", "tuntematon", "unknown", "okänd", "n/a", "na", "none", "-", "null", "undefined", "voghion"]);
 
 export function isUnknownBrand(brand: string | null | undefined): boolean {
   return UNKNOWN_BRANDS.has(brandKey(brand ?? ""));
