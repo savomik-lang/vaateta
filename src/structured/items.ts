@@ -88,6 +88,42 @@ export function brandKey(brand: string): string {
   return brand.normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ");
 }
 
+// ---------------------------------------------------------------------------
+// Brändien näyttönimet facetsiin. Eri kaupat kirjoittavat saman merkin eri tavoin
+// ("color kids", "Color Kids", "COLOR KIDS"): ne yhdistetään brandKeyllä, ja näyttönimeksi
+// valitaan sekakirjaiminen kirjoitusasu, tai jos sellaista ei ole, isoiksi alkukirjaimiksi
+// muutettu yleisin asu. Vastaus `brands`-parametriin kelpaa takaisin sellaisenaan (sama avain).
+// ---------------------------------------------------------------------------
+
+const UNKNOWN_BRANDS = new Set(["", "tuntematon", "unknown", "okänd", "n/a", "na", "none", "-", "null", "undefined"]);
+
+export function isUnknownBrand(brand: string | null | undefined): boolean {
+  return UNKNOWN_BRANDS.has(brandKey(brand ?? ""));
+}
+
+function titleCaseWords(s: string): string {
+  return s.toLowerCase().replace(/(^|[\s(\-/&.])(\p{L})/gu, (_m, a: string, b: string) => a + b.toUpperCase());
+}
+
+/** Yhden kirjoitusasun siistiminen: kokonaan pienet tai kokonaan isot (yli 3 merkkiä) -> Isot Alkukirjaimet. */
+export function tidyBrandName(raw: string): string {
+  const t = raw.normalize("NFC").trim().replace(/\s+/g, " ");
+  const hasLower = /\p{Ll}/u.test(t);
+  const hasUpper = /\p{Lu}/u.test(t);
+  if (!hasUpper) return titleCaseWords(t);
+  if (!hasLower && t.length > 3) return titleCaseWords(t);
+  return t;
+}
+
+/** Valitsee brändin näyttönimen sen kirjoitusasuista ja niiden esiintymismääristä. */
+export function pickBrandDisplayName(variants: Map<string, number>): string {
+  const entries = [...variants.entries()];
+  const mixed = entries.filter(([v]) => /\p{Ll}/u.test(v) && /\p{Lu}/u.test(v));
+  const pool = mixed.length > 0 ? mixed : entries;
+  pool.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  return tidyBrandName(pool[0][0]);
+}
+
 /** Yhteiset suodatinparametrit: size_cm, shoe_eu, gender, brands. */
 export function parseFilters(query: Record<string, unknown>): FilterResult {
   const invalid: string[] = [];

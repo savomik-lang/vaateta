@@ -9,7 +9,7 @@ import { ViewOpts } from "../lang";
 import {
   Notice, findRelaxation, buildNoResultsNotice, buildPartialSizeNotice, buildLimitedCoverageNotice,
 } from "../search-notice";
-import { Filters, ParsedItem, brandKey } from "./items";
+import { Filters, ParsedItem, brandKey, isUnknownBrand, pickBrandDisplayName } from "./items";
 
 // ---------------------------------------------------------------------------
 // Rakenteinen haku ja facets. Käyttävät samaa suodatusta (matchesCriteria), turvasuodatusta,
@@ -140,14 +140,50 @@ export interface FacetsResponse {
   last_imported: string | null;
 }
 
-/** Määrät itemeittäin: täsmälleen sama luku kuin rakenteisen haun total_matches samoilla suodattimilla. */
-export function runFacets(products: Product[], items: ParsedItem[], filters: Filters, lastImported: string | null): FacetsResponse {
+export const MAX_FACET_BRANDS = 30;
+
+/**
+ * Määrät itemeittäin: täsmälleen sama luku kuin rakenteisen haun total_matches samoilla suodattimilla.
+ * Brändilista lasketaan `brandItems`-itemien (oletus: kaikki items) yhteisistä tuotteista ILMAN
+ * brands-rajausta, jotta jo valitut brändit eivät häviä listasta (monivalinta). Sama tuote
+ * lasketaan kerran, vaikka se osuisi useaan itemiin (esim. takki ja takki+wp).
+ */
+export function runFacets(
+  products: Product[], items: ParsedItem[], filters: Filters, lastImported: string | null, brandItems: ParsedItem[] = items,
+): FacetsResponse {
   const index = buildIndex(products);
   const counts: Record<string, number> = {};
+  const noBrandFilter: Filters = { ...filters, brands: [] };
+  // Brändittömien osumien välimuisti: jos brands-rajausta ei ole, itemien laskennan tulos kelpaa sellaisenaan.
+  const unrestricted = new Map<string, Product[]>();
   for (const item of items) {
     if (item.id in counts) continue;
-    counts[item.id] = collectMatches(index, item, filters, {}).matches.length;
+    const m = collectMatches(index, item, filters, {});
+    counts[item.id] = m.matches.length;
+    if (filters.brands.length === 0) unrestricted.set(item.id, m.matches);
   }
-  // Alatyypit ja brändit: vaihe B2.
-  return { items: counts, subtypes: {}, brands: [], last_imported: lastImported };
+
+  const byBrand = new Map<string, { count: number; variants: Map<string, number> }>();
+  const seenProducts = new Set<string>();
+  for (const item of brandItems) {
+    const matches = unrestricted.get(item.id) ?? collectMatches(index, item, noBrandFilter, {}).matches;
+    unrestricted.set(item.id, matches);
+    for (const p of matches) {
+      if (seenProducts.has(p.id) || isUnknownBrand(p.brand)) continue;
+      seenProducts.add(p.id);
+      const key = brandKey(p.brand);
+      const entry = byBrand.get(key) ?? { count: 0, variants: new Map<string, number>() };
+      entry.count++;
+      const raw = p.brand.normalize("NFC").trim().replace(/\s+/g, " ");
+      entry.variants.set(raw, (entry.variants.get(raw) ?? 0) + 1);
+      byBrand.set(key, entry);
+    }
+  }
+  const brands = [...byBrand.values()]
+    .map((e) => ({ name: pickBrandDisplayName(e.variants), count: e.count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, MAX_FACET_BRANDS);
+
+  // Alatyypit: vaihe B2, seuraava osa.
+  return { items: counts, subtypes: {}, brands, last_imported: lastImported };
 }

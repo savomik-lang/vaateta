@@ -4,8 +4,8 @@ import { RedisKeyValueStore } from "../src/store/kv-store";
 import { parseLang } from "../src/lang";
 import { facetsResponse } from "../src/structured/handlers";
 
-// GET /api/facets?items=haalari+winter,pipo,lapaset+wp&size_cm=110&shoe_eu=30&gender=tytto&brands=Reima
-// -> { items: { "haalari+winter": 12, ... }, subtypes, brands, last_imported }
+// GET /api/facets?items=haalari+winter,pipo,lapaset+wp&brand_items=pipo&size_cm=110&shoe_eu=30&gender=tytto&brands=Reima
+// -> { items: { "haalari+winter": 12, ... }, subtypes, brands: [{ name, count }], last_imported }
 // Sopimus: claude/vaihe-b-rajapinta.md. Määrät ovat samat kuin rakenteisen haun total_matches.
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const lang = parseLang(req.query.lang);

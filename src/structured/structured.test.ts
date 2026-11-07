@@ -6,6 +6,7 @@ import { InMemoryProductStore } from "../store/product-store";
 import { InMemoryKeyValueStore } from "../store/kv-store";
 import { makeProduct } from "../fixtures/make-product";
 import { structuredSearchResponse, facetsResponse } from "./handlers";
+import { tidyBrandName, isUnknownBrand } from "./items";
 import { clearMemoryCache } from "./cache";
 import { productSizeFit, cmForShoeEu } from "../size";
 
@@ -157,7 +158,7 @@ test("facets-määrä = rakenteisen haun total_matches samoilla suodattimilla", 
   const search = (await structuredSearchResponse(query, {}, a)).body as any;
   for (const g of search.groups) assert.equal(facets.items[g.item], g.total_matches, g.item);
   assert.deepEqual(facets.subtypes, {});
-  assert.deepEqual(facets.brands, []);
+  assert.ok(Array.isArray(facets.brands));
 });
 
 test("facets: virheet ja enimmäismäärä 20", async () => {
@@ -205,4 +206,92 @@ test("rakenteinen haku: taulukon ulkopuolinen shoe_eu (28) rajaa tarkasti", asyn
   ]);
   const r = (await structuredSearchResponse({ items: "kengät", shoe_eu: "28" }, {}, a)).body as any;
   assert.deepEqual(r.groups[0].results.cheapest.map((p: any) => p.id), ["s:27"]);
+});
+
+const facets = async (query: Record<string, unknown>, a = adapter(), kv: InMemoryKeyValueStore | null = null) =>
+  JSON.parse((await facetsResponse(query, "fi", a, kv)).body as string);
+
+test("tidyBrandName ja isUnknownBrand", () => {
+  assert.equal(tidyBrandName("color kids"), "Color Kids");
+  assert.equal(tidyBrandName("COLOR KIDS"), "Color Kids");
+  assert.equal(tidyBrandName("Reima"), "Reima");
+  assert.equal(tidyBrandName("H&M"), "H&M");
+  assert.equal(tidyBrandName("polarn o. pyret"), "Polarn O. Pyret");
+  assert.equal(tidyBrandName("  Mini   Rodini "), "Mini Rodini");
+  for (const u of ["", "  ", "Tuntematon", "unknown", "OKÄND"]) assert.equal(isUnknownBrand(u), true, u);
+  assert.equal(isUnknownBrand("Reima"), false);
+});
+
+test("facets: brändit määrän mukaan, nimet siistittynä ja yhdistettynä", async () => {
+  const f = await facets({ items: "haalari+winter,pipo,lapaset+wp" });
+  // haalari+winter: Reima 1 (aikuisten haalari pois), pipo: color kids 1 + Reima 2, lapaset+wp: Reima 1
+  assert.deepEqual(f.brands, [{ name: "Reima", count: 4 }, { name: "Color Kids", count: 1 }]);
+});
+
+test("facets: brand_items rajaa brändilistan valittuihin itemeihin, items-määrät pysyvät", async () => {
+  const f = await facets({ items: "haalari+winter,pipo,lapaset+wp", brand_items: "pipo" });
+  assert.deepEqual(f.brands, [{ name: "Reima", count: 2 }, { name: "Color Kids", count: 1 }]);
+  assert.equal(f.items.pipo, 3);
+  assert.equal(f.items["haalari+winter"], 1);
+  const none = await facets({ items: "pipo", brand_items: "haalari+winter" });
+  assert.deepEqual(none.brands, [{ name: "Reima", count: 1 }]);
+});
+
+test("facets: brands-suodatin ei kavenna brändilistaa, mutta kaventaa määrät", async () => {
+  const f = await facets({ items: "pipo", brands: "Reima" });
+  assert.equal(f.items.pipo, 2);
+  assert.deepEqual(f.brands, [{ name: "Reima", count: 2 }, { name: "Color Kids", count: 1 }]);
+  // nimi palaa takaisin sellaisenaan (Color Kids vs raaka "color kids")
+  const ck = await facets({ items: "pipo", brands: "Color Kids" });
+  assert.equal(ck.items.pipo, 1);
+});
+
+test("facets: tuntematon ja tyhjä brändi pois listasta mutta mukana määrässä; kirjoitusasut yhdistyvät", async () => {
+  const a = adapter([
+    makeProduct({ id: "a:1", garment_type: "pipo", title: "Kids Beanie 1", brand: "Tuntematon", size_available: [], source: "outnorth-fi" }),
+    makeProduct({ id: "a:2", garment_type: "pipo", title: "Kids Beanie 2", brand: "", size_available: [], source: "outnorth-fi" }),
+    makeProduct({ id: "a:3", garment_type: "pipo", title: "Kids Beanie 3", brand: "reima", size_available: [], source: "outnorth-fi" }),
+    makeProduct({ id: "a:4", garment_type: "pipo", title: "Kids Beanie 4", brand: "REIMA", size_available: [], source: "outnorth-fi" }),
+    makeProduct({ id: "a:5", garment_type: "pipo", title: "Kids Beanie 5", brand: "Reima", size_available: [], source: "outnorth-fi" }),
+    makeProduct({ id: "a:6", garment_type: "pipo", title: "Kids Beanie 6", brand: "NAME IT", size_available: [], source: "outnorth-fi" }),
+  ]);
+  const f = await facets({ items: "pipo" }, a);
+  assert.equal(f.items.pipo, 6);
+  assert.deepEqual(f.brands, [{ name: "Reima", count: 3 }, { name: "Name It", count: 1 }]);
+});
+
+test("facets: sama tuote usean itemin osumana lasketaan brändilistassa kerran", async () => {
+  const a = adapter([
+    makeProduct({ id: "t:1", garment_type: "takki", title: "Kids Winter Jacket", brand: "Reima", winter: true, waterproof: true, size_available: [], source: "outnorth-fi" }),
+  ]);
+  const f = await facets({ items: "takki,takki+winter,takki+wp" }, a);
+  assert.deepEqual(f.items, { takki: 1, "takki+winter": 1, "takki+wp": 1 });
+  assert.deepEqual(f.brands, [{ name: "Reima", count: 1 }]);
+});
+
+test("facets: brändejä enintään 30, järjestys määrä laskevasti ja nimi nousevasti", async () => {
+  const products = [];
+  for (let b = 0; b < 35; b++) {
+    const n = b === 0 ? 3 : 1;
+    for (let i = 0; i < n; i++) {
+      products.push(makeProduct({ id: `m:${b}-${i}`, garment_type: "pipo", title: `Kids Beanie ${b} ${i}`, brand: `Brand${String(b).padStart(2, "0")}`, size_available: [], source: "outnorth-fi" }));
+    }
+  }
+  const f = await facets({ items: "pipo" }, adapter(products));
+  assert.equal(f.brands.length, 30);
+  assert.deepEqual(f.brands[0], { name: "Brand00", count: 3 });
+  assert.equal(f.brands[1].name, "Brand01");
+  assert.equal(f.brands[29].name, "Brand29");
+});
+
+test("facets: virheellinen brand_items -> 400; eri brand_items eivät jaa välimuistia", async () => {
+  const a = adapter();
+  const bad = await facetsResponse({ items: "pipo", brand_items: "foo" }, "fi", a, null);
+  assert.equal(bad.status, 400);
+  assert.deepEqual((bad.body as any).invalid_items, ["foo"]);
+  const kv = new InMemoryKeyValueStore();
+  const all = await facets({ items: "pipo,lapaset" }, a, kv);
+  const only = await facets({ items: "pipo,lapaset", brand_items: "lapaset" }, a, kv);
+  assert.equal(all.brands[0].count, 4);
+  assert.equal(only.brands[0].count, 2);
 });
