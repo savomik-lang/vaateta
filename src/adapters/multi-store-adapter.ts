@@ -68,6 +68,11 @@ export function isTeenSearch(c: SearchCriteria): boolean {
   return (cm !== undefined && cm >= 152) || (c.age !== undefined && c.age >= 12);
 }
 
+// Kauppa, jonka syötteessä ei ole kokotietoa (Kekäle): kokohaussa sen tuotteita ei voi arvioida.
+function hasNoSizeData(source: string): boolean {
+  return STORES.some((s) => s.storeKey === source && s.sizeUnknown);
+}
+
 function isTrustedForTeen(source: string): boolean {
   return STORES.some((s) => s.storeKey === source && s.trustedForTeen);
 }
@@ -154,6 +159,7 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
       // Muuten (esim. "Y2K Unisex Puffer Jacket") sopivuutta ei voi tietää.
       const inferred = inferSizeFromTitle(p.title);
       if (inferred.length > 0) sizes = inferred;
+      else if (hasNoSizeData(p.source)) return false;
       else if (!hasChildMarkers(p.title)) return false;
       // Nuorelle (>= 152 cm) kokotiedoton tuote kelpaa vain jos otsikko
       // viittaa isompiin lapsiin - "Baby/Toddler/Kids" ilman ikää on pienille.

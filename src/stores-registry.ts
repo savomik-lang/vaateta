@@ -60,6 +60,24 @@ export interface StoreDefinition {
   // näiden maiden kävijöille (maa x-vercel-ip-country-otsakkeesta; AX käsitellään kuten FI).
   // Jos kenttää ei ole, kauppa näkyy kaikkialla. Ks. geo.ts.
   shipsTo?: string[];
+  // Merkit, joiden tuotteet ovat aina lastenvaatteita (Adtraction + childOnly): syötteen age_group voi olla
+  // virheellisesti "adult" (esim. Kekäle: Name It, Kids Only, Jack and Jones Junior).
+  childBrands?: string[];
+  // true = syötteessä ei ole kokotietoa (Kekäle). Tuotteet näytetään vain, kun hakuun ei ole valittu
+  // kokoa: muuten esim. teinin farkut ilmestyisivät vauvan kokohakuun.
+  sizeUnknown?: boolean;
+  // Vain format "adtraction": syötteen erityispiirteet.
+  adtraction?: {
+    // g:product_type on polku ("lastenvaatteet  >  vaatteet  >  alaosat  >  housut"): käytetään viimeistä
+    // osaa tyyppinä eikä hylätä polkua (Metsolalla " > " tarkoittaa ei-vaatetta).
+    categoryPaths?: boolean;
+    // Vaatetyyppi otsikosta ensin, tuotepolku vasta toissijaisena (polun sanat, esim. "valikerrastot",
+    // eivät saa yliajaa otsikkoa "Pipo merinovillaa").
+    titleFirstTypes?: boolean;
+    // Koot ovat Polarn O. Pyretin järjestelmissä: sukat kenkäkokoina, pipot pään ympärysmittana,
+    // käsineet koot 0-6. Ne muunnetaan senttikooksi (ks. adtraction-sizes.ts), jotta kokohaku toimii.
+    convertSizes?: boolean;
+  };
 }
 
 // Outnorthin feedien sarakkeet (Datafeeds.csv 31.10.2026). SE-feedissä on
@@ -89,6 +107,9 @@ const METSOLA_SHIPS_TO = [
   "MT", "GR", "HR", "AT", "CZ", "SK", "PL", "HU", "RO", "BG",
 ];
 
+// Kekäleen lastenmerkit (syötteen age_group on näillä osin "adult"; tarkistettu syötteestä 8.11.2026).
+const KEKALE_CHILD_BRANDS = ["Name It", "Kids Only", "Only and Sons Junior", "Jack and Jones Junior", "Lil Atelier", "Reima"];
+
 export const STORES: StoreDefinition[] = [
   { storeKey: "outnorth-se", displayName: "Outnorth SE", feedIdEnvVar: "AWIN_OUTNORTH_SE_FEED_ID", format: "classic", childOnly: true, trustedForTeen: true, market: "SE", classicColumns: OUTNORTH_SE_COLUMNS, classicLanguage: "sv" },
   { storeKey: "outnorth-fi", displayName: "Outnorth FI", feedIdEnvVar: "AWIN_OUTNORTH_FI_FEED_ID", format: "classic", childOnly: true, trustedForTeen: true, basePriceIsSale: true, market: "FI", classicColumns: OUTNORTH_FI_COLUMNS, classicLanguage: "fi" },
@@ -96,6 +117,12 @@ export const STORES: StoreDefinition[] = [
   // Adtraction (hyväksytty 7.11.2026). Syöte sisältää jokaisen koon omana rivinään; tuonti kokoaa ne
   // yhdeksi tuotteeksi ja jättää pois aikuisten tuotteet, kankaat, lahjakortit ja loppuneet koot.
   { storeKey: "metsola-fi", displayName: "Metsola", feedIdEnvVar: "ADTRACTION_METSOLA_FI_FEED_URL", format: "adtraction", fixedBrand: "Metsola", market: "FI", shipsTo: METSOLA_SHIPS_TO },
+  // Polarn O. Pyret (hyväksytty 8.11.2026). Syötteessä on koko jokaisella rivillä (g:size), age_group (aikuisten
+  // rivit jätetään pois) ja toimituskulu. Koot muunnetaan senttikooksi (adtraction-sizes.ts).
+  { storeKey: "polarnopyret-fi", displayName: "Polarn O. Pyret", feedIdEnvVar: "ADTRACTION_POLARNOPYRET_FI_FEED_URL", format: "adtraction", market: "FI", adtraction: { categoryPaths: true, titleFirstTypes: true, convertSizes: true } },
+  // Kekäle (hyväksytty 8.11.2026). Pääosin aikuisten muotia (97 %) ja syötteessä EI ole kokoja, joten tuodaan vain
+  // lastenvaatteet ja ne näytetään vain ilman kokovalintaa.
+  { storeKey: "kekale-fi", displayName: "Kekäle", feedIdEnvVar: "ADTRACTION_KEKALE_FI_FEED_URL", format: "adtraction", market: "FI", childOnly: true, sizeUnknown: true, childBrands: KEKALE_CHILD_BRANDS, adtraction: { titleFirstTypes: true } },
   // PÄIVITÄ TÄHÄN uusi rivi kun Babyshop/Boozt tms. joskus hyväksyy:
   // { storeKey: "babyshop-fi", displayName: "Babyshop FI", feedIdEnvVar: "AWIN_BABYSHOP_FI_FEED_ID", format: "classic" },
 ];

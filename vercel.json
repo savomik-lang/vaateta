@@ -11,6 +11,14 @@
     {
       "path": "/api/cron/import-all?store=metsola-fi",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/import-all?store=polarnopyret-fi",
+      "schedule": "45 3 * * *"
+    },
+    {
+      "path": "/api/cron/import-all?store=kekale-fi",
+      "schedule": "0 4 * * *"
     }
   ],
   "functions": {
