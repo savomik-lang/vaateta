@@ -51,6 +51,10 @@ const TYPE_OVERRIDES: Record<string, GarmentType> = {
   "jumpsuit": "haalari",
 };
 
+// Yksittäiset varalapaset ("Vedenpitävä kuorirukkanen, vasen", "Topattu yksittäinen rukkanen oikeaan käteen"):
+// asiakas luulisi ostavansa parin, joten ne jätetään pois.
+const SINGLE_ITEM_TITLE_REGEX = /(?<![\p{L}\p{N}])yksittäi\p{L}*|(?<![\p{L}\p{N}])(?:vasen|oikea)(?:\s+käteen)?\s*$/iu;
+
 // Alusvaatteet (bokserit, alushousut) eivät kuulu lastenvaatehakuun - sama turvalinja kuin child-safety-filterissä.
 const UNDERWEAR_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:bokseri\p{L}*|alushous\p{L}*|alusvaat\p{L}*|boxers?|briefs|underpants|underwear)(?![\p{L}\p{N}])/iu;
 
@@ -214,7 +218,7 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
     if (
       type.startsWith("aikuisten") || NON_CLOTHING_TYPES.has(type) || (!rules.categoryPaths && type.includes(" > ")) ||
       /women/i.test(r.brand || "") || ADULT_TITLE_REGEX.test(r.title) ||
-      (split.size === null && FABRIC_TITLE_REGEX.test(r.title)) || NON_CLOTHING_TITLE_REGEX.test(r.title) || UNDERWEAR_TITLE_REGEX.test(r.title) || adultSize
+      (split.size === null && FABRIC_TITLE_REGEX.test(r.title)) || NON_CLOTHING_TITLE_REGEX.test(r.title) || UNDERWEAR_TITLE_REGEX.test(r.title) || SINGLE_ITEM_TITLE_REGEX.test(r.title) || adultSize
     ) { stats.notClothingOrAdult++; continue; }
     // Alusvaatteet eivät kuulu lastenvaatehakuun (turvalinja, ks. child-safety-filter): Polarn O. Pyretin
     // "alusvaatteet"-polun alla on myös sukat ja sukkahousut, jotka hyväksytään.

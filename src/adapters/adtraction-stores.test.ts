@@ -213,3 +213,23 @@ test("Kekäle: kokohaku ohittaa tuotteet, haku ilman kokoa näyttää ne", async
   const other = makeProduct({ id: "x:1", source: "voghion-global", garment_type: "housut", title: "Kids Jeans", size_available: [] });
   assert.equal(matchesCriteria(other, { garment_type: "housut", child_signal: true, size_cm: 110, size_raw: "110" }), true);
 });
+
+test("POP: yksittäiset varalapaset (vasen/oikea/yksittäinen) jätetään pois, parit jäävät", async () => {
+  const rows = await load("adtraction-polarnopyret-sample.xml");
+  const base = rows.find((r) => /lapaset/i.test(r.title) && r["g:availability"] !== "out of stock")
+    ?? rows.find((r) => /lapaset/i.test(r.title))!;
+  assert.ok(base, "fixture sisältää lapaset-rivin");
+  const clone = (title: string, n: number) => ({ ...base, title, "g:id": `single-${n}`, "g:item_group_id": `single-grp-${n}` });
+  const singles = [
+    "Vedenpitävä kuorirukkanen, vasen",
+    "Vedenpitävä kuorirukkanen, oikea",
+    "Toppahanska oikea",
+    "Topattu yksittäinen rukkanen oikeaan käteen",
+    "Topattu yksittäinen kuorihanska vasen",
+  ];
+  const rowsIn = [base, ...singles.map((t, i) => clone(t, i))];
+  const { products } = mapAdtractionRecords(rowsIn, store("polarnopyret-fi"));
+  const titles = products.map((p) => p.title);
+  for (const s of singles) assert.ok(!titles.includes(s), `pitäisi suodattua: ${s}`);
+  assert.ok(products.some((p) => /lapaset/i.test(p.title)), "pari säilyy");
+});
