@@ -1729,8 +1729,9 @@
     var m = String(s || '').match(/\(([^)]*)\)/);
     if (!m) return '';
     var inner = m[1].trim(), r;
-    if ((r = inner.match(/^(\d{1,3})\s*-\s*(\d{1,3})$/))) return 'EU ' + r[1] + '–' + r[2];
-    if ((r = inner.match(/^pää\s+(\d{1,3})\s*-\s*(\d{1,3})$/i))) return t('size.head', { r: r[1] + '–' + r[2] });
+    var rng = function(a, b){ return b && b !== a ? a + '–' + b : a; };
+    if ((r = inner.match(/^(\d{1,3})(?:\s*-\s*(\d{1,3}))?$/))) return 'EU ' + rng(r[1], r[2]);
+    if ((r = inner.match(/^pää\s+(\d{1,3})(?:\s*-\s*(\d{1,3}))?$/i))) return t('size.head', { r: rng(r[1], r[2]) });
     if ((r = inner.match(/^koko\s+(\d{1,2})$/i))) return t('size.glove', { n: r[1] });
     return inner;
   }
