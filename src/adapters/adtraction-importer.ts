@@ -4,7 +4,8 @@ import { guessGarmentType } from "../nlu/garment-keywords";
 import { guessWinter } from "../season";
 import { parseSizeToken } from "../size";
 import { StoreDefinition } from "../stores-registry";
-import { isChildSafeProductForStore } from "../safety/child-safety-filter";
+import { isChildSafeProductForStore, hasChildMarkers } from "../safety/child-safety-filter";
+import { convertFeedSize } from "./adtraction-sizes";
 import { readXmlItems } from "./xml-feed-stream";
 import type { ImportResult } from "./generic-awin-importer";
 
@@ -31,6 +32,9 @@ const NON_CLOTHING_TYPES = new Set([
   "kangas", "kankaat", "lahjakortit", "muut tuotteet", "pussilakana", "peitto", "torkkupeitto",
   "vaunuverho", "koristetyynyliina", "tyynyliina", "pyyhe", "tapetti", "matto", "verhot",
   "laukku", "kassi", "kori", "maski", "vaatelaastari", "scrunchie", "harso",
+  // Polarn O. Pyret (tuotepolun viimeinen osa)
+  "unilelut", "viltit", "paikkaus-merkitseminen", "tekstiilien-hoito", "aurinkolasit", "kaulalappu",
+  "vastasyntynyt-unituotteet", "farkunsininen",
 ]);
 
 // Metsolan tuotetyyppi -> tyyppi silloin kun yleinen arvaus menisi väärin.
@@ -46,6 +50,12 @@ const TYPE_OVERRIDES: Record<string, GarmentType> = {
   "haalari / jumpsuit": "haalari",
   "jumpsuit": "haalari",
 };
+
+// Alusvaatteet (bokserit, alushousut) eivät kuulu lastenvaatehakuun - sama turvalinja kuin child-safety-filterissä.
+const UNDERWEAR_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:bokseri\p{L}*|alushous\p{L}*|alusvaat\p{L}*|boxers?|briefs|underpants|underwear)(?![\p{L}\p{N}])/iu;
+
+// "alusvaatteet"-polun alla hyväksytyt tuotteet (viimeinen osa).
+const UNDERWEAR_PATH_OK = new Set(["sukat", "sukkahousut"]);
 
 const ADULT_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:for\s+(?:women|men)|womens?|mens?|naisten|miesten)(?![\p{L}\p{N}])/iu;
 // Metritavara: "RIB 2X2 SUNFLOWER 1M", "College (harjattu) 2M", "Trikoo, Heather 2 m".
@@ -118,8 +128,38 @@ export interface AdtractionStats {
   rows: number;
   outOfStock: number;
   notClothingOrAdult: number;
+  /** childOnly-kaupat: tuotteet, joissa ei ole lapsimerkkiä (Kekäle: aikuisten muotia). */
+  notChild: number;
   unsafe: number;
   noPrice: number;
+}
+
+/** Kauppakohtaiset tuontisäännöt (stores-registry). */
+export type AdtractionStoreRules = Pick<StoreDefinition, "storeKey" | "fixedBrand" | "childOnly" | "childBrands" | "sizeUnknown" | "adtraction">;
+
+/** Tuotepolku "a  >  b  >  c" -> viimeinen osa pienellä ("c"); ei polkua -> koko arvo. */
+export function lastCategorySegment(productType: string | undefined): string {
+  const parts = (productType || "").split(">").map((x) => x.trim()).filter(Boolean);
+  return (parts[parts.length - 1] || "").toLowerCase();
+}
+
+const GENDER_GIRL = /^(female|girls?|tyttö|tytöt|flicka)/i;
+const GENDER_BOY = /^(male|boys?|poika|pojat|pojke)/i;
+function genderOf(raw: string | undefined): "tyttö" | "poika" | null {
+  const g = (raw || "").trim();
+  if (GENDER_GIRL.test(g)) return "tyttö";
+  if (GENDER_BOY.test(g)) return "poika";
+  return null; // unisex tai tyhjä
+}
+
+// Toimituskulu g:shipping-lohkosta ("<g:country>FI</g:country><g:price>4.9 EUR</g:price>").
+function shippingFrom(raw: string | undefined): { amount: number; currency: Currency } | null {
+  const m = (raw || "").match(/<g:price>\s*([^<]*?)\s*<\/g:price>/);
+  if (!m) return null;
+  const p = m[1].trim().match(/^(\d+(?:[.,]\d+)?)\s*([A-Za-z]{3})?$/);
+  if (!p) return null;
+  const amount = parseFloat(p[1].replace(",", "."));
+  return Number.isFinite(amount) && amount >= 0 ? { amount, currency: ((p[2] || "EUR").toUpperCase()) as Currency } : null;
 }
 
 interface Variant {
@@ -129,24 +169,68 @@ interface Variant {
   original: { amount: number; currency: Currency } | null;
 }
 
+// Vaatetyyppi: Metsolalla tuotetyyppi + otsikko yhdessä (ennallaan); titleFirstTypes-kaupoilla otsikko ensin
+// ja tuotepolun viimeinen osa vasta, jos otsikosta ei tunnistu mitään.
+export function garmentFor(productType: string | undefined, baseTitle: string, rules: NonNullable<StoreDefinition["adtraction"]>): GarmentType {
+  const typeKey = (productType || "").trim().toLowerCase();
+  const leaf = lastCategorySegment(productType);
+  const override = TYPE_OVERRIDES[typeKey] ?? (rules.categoryPaths ? TYPE_OVERRIDES[leaf] : undefined);
+  if (override) return override;
+  if (rules.titleFirstTypes) {
+    const byTitle = guessGarmentType(baseTitle);
+    if (byTitle !== "muu") return byTitle;
+    return guessGarmentType((rules.categoryPaths ? leaf : productType || "").replace(/-/g, " "));
+  }
+  return guessGarmentType(productType, baseTitle);
+}
+
+// Syötteen g:color (Polarn O. Pyret englanniksi pienellä, Kekäle suomeksi isoilla): "blue" -> "Blue".
+function feedColor(raw: string | undefined): string | null {
+  const c = (raw || "").replace(/\s+/g, " ").trim();
+  if (!c || c.length > 40) return null;
+  const t = titleCaseIfShouting(c);
+  return t === t.toLowerCase() ? t.charAt(0).toUpperCase() + t.slice(1) : t;
+}
+
 // Puhdas muunnos: syöterivit -> tuotteet. Testattava ilman verkkoa ja Redisiä.
-export function mapAdtractionRecords(records: Raw[], store: Pick<StoreDefinition, "storeKey" | "fixedBrand">): { products: Product[]; stats: AdtractionStats } {
-  const stats: AdtractionStats = { rows: 0, outOfStock: 0, notClothingOrAdult: 0, unsafe: 0, noPrice: 0 };
+export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules): { products: Product[]; stats: AdtractionStats } {
+  const stats: AdtractionStats = { rows: 0, outOfStock: 0, notClothingOrAdult: 0, notChild: 0, unsafe: 0, noPrice: 0 };
+  const rules = store.adtraction ?? {};
+  const childBrands = new Set((store.childBrands ?? []).map((b) => b.trim().toLowerCase()));
   const groups = new Map<string, { base: string; variants: Variant[] }>();
 
   for (const r of records) {
     stats.rows++;
     if ((r.availability || "").toLowerCase().replace(/\s+/g, "_") !== "in_stock") { stats.outOfStock++; continue; }
     if (!r.id || !r.title || !r.link) continue;
-    const type = (r.product_type || "").trim().toLowerCase();
-    const { baseTitle, size, adultSize } = splitTitleSize(r.title, r.size);
+    const type = rules.categoryPaths ? lastCategorySegment(r.product_type) : (r.product_type || "").trim().toLowerCase();
+    const split = splitTitleSize(r.title, r.size);
+    const { baseTitle, adultSize } = split;
+    // Muunnettavat koot (Polarn O. Pyret) säilytetään alkuperäisinä: "1 - 3" ei ole tunnistettu koko ennen muunnosta.
+    const size = rules.convertSizes && r.size && !adultSize ? r.size.trim() : split.size;
+    if ((r.age_group || "").trim().toLowerCase() === "adult" && !childBrands.has((r.brand || "").trim().toLowerCase())) {
+      stats.notClothingOrAdult++; continue;
+    }
     if (
-      type.startsWith("aikuisten") || NON_CLOTHING_TYPES.has(type) || type.includes(" > ") ||
+      type.startsWith("aikuisten") || NON_CLOTHING_TYPES.has(type) || (!rules.categoryPaths && type.includes(" > ")) ||
       /women/i.test(r.brand || "") || ADULT_TITLE_REGEX.test(r.title) ||
-      (size === null && FABRIC_TITLE_REGEX.test(r.title)) || NON_CLOTHING_TITLE_REGEX.test(r.title) || adultSize
+      (split.size === null && FABRIC_TITLE_REGEX.test(r.title)) || NON_CLOTHING_TITLE_REGEX.test(r.title) || UNDERWEAR_TITLE_REGEX.test(r.title) || adultSize
     ) { stats.notClothingOrAdult++; continue; }
+    // Alusvaatteet eivät kuulu lastenvaatehakuun (turvalinja, ks. child-safety-filter): Polarn O. Pyretin
+    // "alusvaatteet"-polun alla on myös sukat ja sukkahousut, jotka hyväksytään.
+    const pathParts = (r.product_type || "").split(">").map((x) => x.trim().toLowerCase()).filter(Boolean);
+    if (rules.categoryPaths && pathParts.includes("alusvaatteet") && !UNDERWEAR_PATH_OK.has(pathParts[pathParts.length - 1])) {
+      stats.notClothingOrAdult++; continue;
+    }
+    if (store.childOnly && !childBrands.has((r.brand || "").trim().toLowerCase()) && !hasChildMarkers(`${r.title} ${r.product_type || ""}`, r.age_group)) {
+      stats.notChild++; continue;
+    }
     const safety = isChildSafeProductForStore(store.storeKey, {
-      title: r.title, category: r.product_type, description: r.description, ageGroup: r.age_group,
+      // Tuotepolusta turvatarkistukseen vain viimeinen osa (polun "alusvaatteet" estäisi sukat).
+      title: r.title, category: rules.categoryPaths ? lastCategorySegment(r.product_type) : r.product_type,
+      // Tunnetun lastenmerkin tuotteen "adult"-merkintä on syötteen virhe (Kekäle) -> ei hylkäysperusteena.
+      description: r.description,
+      ageGroup: childBrands.has((r.brand || "").trim().toLowerCase()) && (r.age_group || "").trim().toLowerCase() === "adult" ? "kids" : r.age_group,
     });
     if (!safety.safe) { stats.unsafe++; continue; }
     const list = parsePrice(r.price);
@@ -174,12 +258,25 @@ export function mapAdtractionRecords(records: Raw[], store: Pick<StoreDefinition
     ordered.forEach((variants, i) => {
       const first = variants[0];
       const r = first.raw;
-      const sizes = Array.from(new Set(variants.map((v) => v.size).filter((s): s is string => !!s)));
-      sizes.sort((a, b) => sizeSortKey(a) - sizeSortKey(b));
       const title = titleCaseIfShouting(g.base);
-      const typeKey = (r.product_type || "").trim().toLowerCase();
-      const garment = TYPE_OVERRIDES[typeKey] ?? guessGarmentType(r.product_type, g.base);
+      const garment = garmentFor(r.product_type, g.base, rules);
+      // Koot: muunnettavat (sukat, pipot, käsineet) pituudeksi; aikuisten koot pois.
+      const sizeSet = new Set<string>();
+      let adultVariants = 0;
+      for (const v of variants) {
+        if (!v.size) continue;
+        if (rules.convertSizes) {
+          const conv = convertFeedSize(v.size, garment);
+          if (conv.adult) { adultVariants++; continue; }
+          sizeSet.add(conv.size ?? (parseSizeToken(v.size).kind === "unknown" ? "One Size" : v.size));
+        } else sizeSet.add(v.size);
+      }
+      if (adultVariants > 0 && sizeSet.size === 0) { stats.notClothingOrAdult += adultVariants; return; }
+      const sizes = Array.from(sizeSet);
+      sizes.sort((a, b) => sizeSortKey(a) - sizeSortKey(b));
       const discount = first.original ? Math.round((1 - first.price.amount / first.original.amount) * 100) : null;
+      const shipping = variants.map((v) => shippingFrom(v.raw.shipping)).filter((x): x is NonNullable<typeof x> => !!x)
+        .sort((a, b) => a.amount - b.amount)[0] ?? null;
       products.push({
         id: `${store.storeKey}:${groupKey}${i === 0 ? "" : `-${i + 1}`}`,
         source: store.storeKey,
@@ -190,16 +287,17 @@ export function mapAdtractionRecords(records: Raw[], store: Pick<StoreDefinition
         original_price: first.original,
         discount_percent: discount,
         // Ei kokoa otsikossa (esim. kintaat, tuubihuivit): "One Size" on kokohaussa neutraali.
-        size_available: sizes.length ? sizes : ["One Size"],
+        // Kokotiedottomassa syötteessä (Kekäle) lista jää tyhjäksi ja kauppa on merkitty sizeUnknown.
+        size_available: sizes.length ? sizes : store.sizeUnknown ? [] : ["One Size"],
         size_normalized: null,
         material: null,
         waterproof: /vedenpitävä|waterproof/i.test(`${r.description || ""} ${r.title}`) ? true : null,
-        color: colorFromTitle(g.base),
-        gender: null,
+        color: feedColor(r.color) ?? colorFromTitle(g.base),
+        gender: genderOf(r.gender),
         url_affiliate: r.link,
         image_url: variants.map((v) => v.raw.image_link).find(Boolean) || "",
         in_stock: true,
-        shipping_cost_from: null,
+        shipping_cost_from: shipping,
         free_shipping_threshold: null,
         rating: null,
         rating_count: null,
@@ -290,9 +388,9 @@ export async function importAdtractionStore(store: StoreDefinition & { feedId: s
     displayName: store.displayName,
     fetchedRows,
     importedProducts: products.length,
-    skippedRows: outOfStock + stats.notClothingOrAdult + stats.unsafe + stats.noPrice,
+    skippedRows: outOfStock + stats.notClothingOrAdult + stats.notChild + stats.unsafe + stats.noPrice,
     outOfStockRows: outOfStock,
-    notChildRows: stats.notClothingOrAdult,
+    notChildRows: stats.notClothingOrAdult + stats.notChild,
     durationMs: savedAt - startedAt,
     timings: { headersMs: headersAt - startedAt, streamMs: streamedAt - headersAt, dedupeMs: mappedAt - streamedAt, saveMs: savedAt - mappedAt },
   };

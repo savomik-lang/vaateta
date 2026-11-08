@@ -17,14 +17,14 @@ export const GARMENT_KEYWORDS: Record<GarmentType, string[]> = {
   housut: ["housut", "pants", "trousers", "farkut", "jeans", "verkkarit", "collegehousut", "leggingsit", "shorts"],
   // sukat ennen kenkiä: sukkien kategoriassa/otsikossa esiintyy usein sana "shoes"
   sukat: ["sukat", "socks", "strumpor", "sukkahousut"],
-  kengät: ["kengät", "shoes", "boots", "saappaat", "tennarit", "nilkkurit", "sandaal", "sandal", "lenkkar", "sneaker", "tossut"],
-  paita: ["paita", "shirt", "t-paita", "tpaita", "tröja", "collegepaita", "hupparipaita", "huppari", "pusero"],
+  kengät: ["kengät", "kenkä", "saapas", "mokkasiini", "shoes", "boots", "saappaat", "tennarit", "nilkkurit", "sandaal", "sandal", "lenkkar", "sneaker", "tossut"],
+  paita: ["paita", "shirt", "t-paita", "tpaita", "tröja", "collegepaita", "hupparipaita", "huppari", "pusero", "paidat", "toppi", "topit"],
   haalari: ["haalari", "overall", "jumpsuit", "kokohaalari", "ulkoiluhaalari", "talvihaalari", "kuoriasu", "sadeasu", "shell suit"],
-  mekko: ["mekko", "dress", "klänning", "juhlamekko", "kesämekko"],
+  mekko: ["mekko", "dress", "klänning", "juhlamekko", "kesämekko", "mekot"],
   body: ["body", "bodysuit", "vauvanbody", "potkupuku"],
-  pyjama: ["pyjama", "pyjamat", "yöpuku", "yövaate", "yövaatteet", "yöasu", "pajamas", "nukkumapuku"],
+  pyjama: ["pyjama", "pyjamat", "yöpuku", "yöpuvut", "yövaate", "yövaatteet", "yöasu", "pajamas", "nukkumapuku"],
   pipo: ["pipo", "beanie", "myssy", "aurinkohattu", "lippalakki", "lippis", "balaklava", "balaclava", "hattu"],
-  lapaset: ["lapaset", "mittens", "vantar", "sormikkaat", "käsineet"],
+  lapaset: ["lapaset", "mittens", "vantar", "sormikkaat", "käsineet", "hanskat", "hanska", "rukkas"],
   muu: [],
 };
 

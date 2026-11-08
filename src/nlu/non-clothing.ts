@@ -31,4 +31,4 @@ export function looksLikeNonClothing(...texts: (string | null | undefined)[]): b
 
 // Aito body/potkupuku/romper-tuote. "Body" ei saa osua osaksi muita sanoja (crossbody, somebody, bodycon).
 export const BODY_PRODUCT_REGEX =
-  /(?<!cross|some|any|no|every|anti|busy)body(?:s|suits?)?(?!\p{L})|potkupuku|bodysuit|vauvanbody|kietaisu|romper|babygrow/iu;
+  /(?<!cross|some|any|no|every|anti|busy)body(?:s|t|suits?)?(?!\p{L})|potkupuku|bodysuit|vauvanbody|kietaisu|romper|babygrow/iu;
