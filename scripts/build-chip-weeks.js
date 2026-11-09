@@ -2,16 +2,17 @@
 /*
  * Hakukentän esimerkit viikoittain (vaihe 1, "esimerkit Google Trendsistä").
  *
- * Lukee Google Trendsin viiden vuoden viikkodatan (data/trends/FI.json, data/trends/SE.json)
- * ja laskee jokaiselle ISO-viikolle 1–52 kahdeksan suosituinta lastenvaatehakua.
+ * Lukee Google Trendsin viiden vuoden viikkodatasta lasketut viikkoprofiilit
+ * (data/trends/FI.json, data/trends/SE.json) ja valitsee jokaiselle ISO-viikolle 1–52
+ * kahdeksan ajankohtaisinta lastenvaatehakua.
  * Tulos kirjoitetaan index.html:n CHIP_WEEKS-taulukkoon merkkien
  * /*CHIP_WEEKS*\/ ja /*END_CHIP_WEEKS*\/ väliin; sen jälkeen aja scripts/build-i18n.js.
  *
  * Datan muoto (data/trends/<GEO>.json):
- *   { geo, fetched, anchor, weeks: [unix-sekunnit…],
- *     terms: { <id>: { query, series: [0–100 …], level } } }
- *   series = hakusanan oma Trends-käyrä (huippu 100), level = keskimääräinen hakumäärä
- *   suhteessa ankkurisanaan (samasta vertailusta laskettu summien suhde).
+ *   { geo, fetched, anchor, source, terms: { <id>: { query, level, weeksWithData, profile: [52] } } }
+ *   query = Trends-haku (TAI-yhdistelmä "a + b"), level = hakumäärä suhteessa ankkurisanaan
+ *   (5 vuoden summien suhde samasta vertailusta), profile = ISO-viikkojen keskiarvo 5 vuodelta,
+ *   tasoitettu ±1 viikko, keskiarvo 100. Datan haku: ks. docs/esimerkit-trends.md.
  *
  * Käyttö: node scripts/build-chip-weeks.js [--check]
  */
@@ -23,7 +24,7 @@ const ROOT = path.join(__dirname, '..');
 const GEOS = ['FI', 'SE'];
 const PER_WEEK = 8;          // ehdokkaita viikolle (UI näyttää 5, varalla tuotteettomien tilalle)
 const MAX_PER_GROUP = 2;     // monipuolisuus: enintään 2 samasta ryhmästä (esim. päähineet)
-const SMOOTH = [0.25, 0.5, 0.25]; // viikkojen tasoitus (edellinen, sama, seuraava)
+const MIN_WEEKS = 25;        // vähintään näin monella viikolla (262:sta) dataa, muuten kohinaa
 
 // Ryhmät monipuolisuutta varten: sama ryhmä = sama vaatetyyppi asiakkaan silmissä.
 const GROUP = {
@@ -38,56 +39,41 @@ const GROUP = {
   huppari: 'paita', neule: 'paita', tpaita: 'paita', pyjama: 'yo', body: 'vauva'
 };
 
-function isoWeek(date) {
-  const t = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  const day = t.getUTCDay() || 7;
-  t.setUTCDate(t.getUTCDate() + 4 - day);
-  const y0 = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-  return Math.ceil(((t - y0) / 864e5 + 1) / 7);
-}
-
-// Viikkoprofiili: keskimääräinen hakumäärä (ankkurin mittakaavassa) kullekin ISO-viikolle 1–52.
-function weeklyProfile(term, weeks) {
-  const s = term.series;
-  const mean = s.reduce((a, b) => a + b, 0) / s.length;
-  const sum = new Array(52).fill(0), n = new Array(52).fill(0);
-  weeks.forEach((ts, i) => {
-    // Trendsin viikko alkaa sunnuntaista; keskiviikko kertoo ISO-viikon.
-    const w = Math.min(isoWeek(new Date((ts + 3 * 86400) * 1000)), 52) - 1;
-    if (i === weeks.length - 1) return; // viimeinen viikko on kesken
-    sum[w] += mean ? (s[i] / mean) * term.level : 0;
-    n[w] += 1;
-  });
-  const raw = sum.map((v, w) => (n[w] ? v / n[w] : 0));
-  return raw.map((_, w) => SMOOTH[0] * raw[(w + 51) % 52] + SMOOTH[1] * raw[w] + SMOOTH[2] * raw[(w + 1) % 52]);
+// Pisteet viikolle w: sesonki (profiili, keskiarvo 100) kertaa hakumäärän neliöjuuri.
+// Neliöjuuri vaimentaa tason eroja: pelkät hakusanat ("toppahousut") sisältävät aikuisten haut ja
+// ovat moninkertaisia lapsiin rajattuihin ("lasten talvitakki") verrattuna, mutta sesonki ratkaisee.
+function score(term, w) {
+  return Math.sqrt(term.level) * term.profile[w];
 }
 
 function build(geo) {
   const file = path.join(ROOT, 'data', 'trends', geo + '.json');
   const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-  const ids = Object.keys(data.terms).filter((id) => data.terms[id].series && data.terms[id].level > 0);
-  const prof = {};
-  ids.forEach((id) => { prof[id] = weeklyProfile(data.terms[id], data.weeks); });
+  // Harvinaiset haut (Trends antaa alle MIN_WEEKS viikolle lukeman) ovat pelkkää kohinaa.
+  const ids = Object.keys(data.terms).filter((id) => {
+    const t = data.terms[id];
+    return t.level > 0 && t.weeksWithData >= MIN_WEEKS && Array.isArray(t.profile) && t.profile.length === 52;
+  });
   const table = [];
   for (let w = 0; w < 52; w++) {
-    const ranked = ids.slice().sort((a, b) => prof[b][w] - prof[a][w] || a.localeCompare(b));
+    const ranked = ids.slice().sort((a, b) => score(data.terms[b], w) - score(data.terms[a], w) || a.localeCompare(b));
     const pick = [], perGroup = {};
     for (const id of ranked) {
       const g = GROUP[id] || id;
       if ((perGroup[g] || 0) >= MAX_PER_GROUP) continue;
-      if (prof[id][w] <= 0) continue;
+      if (score(data.terms[id], w) <= 0) continue;
       pick.push(id); perGroup[g] = (perGroup[g] || 0) + 1;
       if (pick.length === PER_WEEK) break;
     }
     table.push(pick);
   }
-  return { table, fetched: data.fetched };
+  return { table, fetched: data.fetched, used: ids.length, total: Object.keys(data.terms).length };
 }
 
 function main() {
   const check = process.argv.includes('--check');
   const out = {}, meta = [];
-  GEOS.forEach((g) => { const r = build(g); out[g] = r.table; meta.push(g + ' ' + r.fetched); });
+  GEOS.forEach((g) => { const r = build(g); out[g] = r.table; meta.push(g + ' ' + r.fetched + ', ' + r.used + '/' + r.total + ' hakua'); });
   const literal = '/*CHIP_WEEKS*/' + JSON.stringify(out) + '/*END_CHIP_WEEKS*/';
   const htmlPath = path.join(ROOT, 'index.html');
   const html = fs.readFileSync(htmlPath, 'utf8');
@@ -104,4 +90,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { isoWeek, weeklyProfile, build };
+module.exports = { score, build };
