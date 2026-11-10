@@ -77,6 +77,14 @@ const ADULT_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:for\s+(?:women|men)|womens?|mens?
 const FABRIC_TITLE_REGEX = /(?:^|[\s,])\d+(?:[.,]\d+)?\s?m$/i;
 const NON_CLOTHING_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:bedlinen|bed\s?linen|towel|muslin\s?cloth|lahjakortti|gift\s?card|toimituskulu|kangaskassi|scrunchie|tupsut\/nauhat)(?![\p{L}\p{N}])/iu;
 
+// Merinovillakerrasto, jonka kauppa on luokitellut alusvaatteiksi (Lindex): otetaan mukaan kerrastona/bodyna.
+// Varsinaiset alusvaatteet (bokserit, stringit, rintaliivit) eivät kuulu tähän.
+const NOT_THERMAL_REGEX = /bokseri|boxer|brief|bikini|thong|stringi|rintaliivi|\bbra\b/i;
+function isMerinoBaseLayer(rules: NonNullable<StoreDefinition["adtraction"]>, type: string, title: string): boolean {
+  return !!rules.merinoBaseLayers && (type === "underwear" || type === "underwear & socks") &&
+    /merino/i.test(title) && !NOT_THERMAL_REGEX.test(title);
+}
+
 export interface MappedSize {
   baseTitle: string;
   size: string | null; // normalisoitu kokoteksti (esim. "98/104", "1-2Y")
@@ -233,6 +241,7 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
     const type = rules.categoryPaths ? lastCategorySegment(r.product_type) : (r.product_type || "").trim().toLowerCase();
     const split = splitTitleSize(r.title, r.size);
     const { baseTitle, adultSize } = split;
+    const thermal = isMerinoBaseLayer(rules, type, r.title);
     // Muunnettavat koot (Polarn O. Pyret) säilytetään alkuperäisinä: "1 - 3" ei ole tunnistettu koko ennen muunnosta.
     const size = rules.convertSizes && r.size && !adultSize ? r.size.trim() : split.size;
     // Lastentuote: tunnettu lastenmerkki tai kaupan lastentuotetyyppi (Björn Borg "Kids"), vaikka age_group olisi "adult".
@@ -244,7 +253,7 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
     if (
       type.startsWith("aikuisten") || NON_CLOTHING_TYPES.has(type) || (!rules.categoryPaths && type.includes(" > ")) ||
       /women/i.test(r.brand || "") || ADULT_TITLE_REGEX.test(r.title) ||
-      (split.size === null && FABRIC_TITLE_REGEX.test(r.title)) || NON_CLOTHING_TITLE_REGEX.test(r.title) || UNDERWEAR_TITLE_REGEX.test(r.title) || SINGLE_ITEM_TITLE_REGEX.test(r.title) || adultSize
+      (split.size === null && FABRIC_TITLE_REGEX.test(r.title)) || NON_CLOTHING_TITLE_REGEX.test(r.title) || (!thermal && UNDERWEAR_TITLE_REGEX.test(r.title)) || SINGLE_ITEM_TITLE_REGEX.test(r.title) || adultSize
     ) { stats.notClothingOrAdult++; continue; }
     // Alusvaatteet eivät kuulu lastenvaatehakuun (turvalinja, ks. child-safety-filter): Polarn O. Pyretin
     // "alusvaatteet"-polun alla on myös sukat ja sukkahousut, jotka hyväksytään.
@@ -252,7 +261,7 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
     if (rules.categoryPaths && pathParts.includes("alusvaatteet") && !UNDERWEAR_PATH_OK.has(pathParts[pathParts.length - 1])) {
       stats.notClothingOrAdult++; continue;
     }
-    if (rules.categoryPaths && (UNDERWEAR_LEAFS.has(type) || (type === "underwear & socks" && !SOCK_TITLE_REGEX.test(r.title)))) {
+    if (rules.categoryPaths && !thermal && (UNDERWEAR_LEAFS.has(type) || (type === "underwear & socks" && !SOCK_TITLE_REGEX.test(r.title)))) {
       stats.notClothingOrAdult++; continue;
     }
     if (store.childOnly && !childMarked && !hasChildMarkers(`${r.title} ${r.product_type || ""}`, r.age_group)) {
@@ -263,7 +272,7 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
       title: r.title,
       // Lindexin yleinen "underwear & socks" -luokka sisältää myös sukat (hyväksytty otsikon perusteella ylempänä):
       // luokan nimi ei saa osua alusvaate-estolistaan.
-      category: rules.categoryPaths ? (type === "underwear & socks" ? "" : type) : r.product_type,
+      category: rules.categoryPaths ? (type === "underwear & socks" || thermal ? "" : type) : r.product_type,
       // Tunnetun lastenmerkin tuotteen "adult"-merkintä on syötteen virhe (Kekäle) -> ei hylkäysperusteena.
       description: r.description,
       ageGroup: childMarked && (r.age_group || "").trim().toLowerCase() === "adult" ? "kids" : r.age_group,
@@ -295,7 +304,8 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
       const first = variants[0];
       const r = first.raw;
       const title = titleCaseIfShouting(g.base);
-      const garment = garmentFor(r.product_type, g.base, rules);
+      const thermal = isMerinoBaseLayer(rules, lastCategorySegment(r.product_type), r.title);
+      const garment: GarmentType = thermal ? (/body/i.test(g.base) ? "body" : "kerrasto") : garmentFor(r.product_type, g.base, rules);
       // Koot: muunnettavat (sukat, pipot, käsineet) pituudeksi; aikuisten koot pois.
       const sizeSet = new Set<string>();
       let adultVariants = 0;

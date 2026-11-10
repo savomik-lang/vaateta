@@ -84,6 +84,9 @@ export interface StoreDefinition {
     // g:age_group on kaikilla "adult", mutta lastentuotteet erottaa tuotetyypistä (Björn Borg: "Kids").
     // Täysi g:product_type pienellä; tällaiset rivit käsitellään lastentuotteina.
     childProductTypes?: string[];
+    // Merinovillaiset kerrastot, jotka kauppa on luokitellut alusvaatteiksi (Lindex "Underwear"), otetaan mukaan
+    // kerrastoina (tai bodyina). Muut alusvaatteet pysyvät poissa.
+    merinoBaseLayers?: boolean;
     // Kauppakohtainen otsikkosuodatin (regex-lähde, i-lippu): osuvat rivit jätetään pois
     // (Björn Borg: alusvaatesarja "Cotton Stretch", laukut).
     excludeTitle?: string;
@@ -135,7 +138,7 @@ export const STORES: StoreDefinition[] = [
   { storeKey: "kekale-fi", displayName: "Kekäle", feedIdEnvVar: "ADTRACTION_KEKALE_FI_FEED_URL", format: "adtraction", market: "FI", childOnly: true, sizeUnknown: true, childBrands: KEKALE_CHILD_BRANDS, adtraction: { titleFirstTypes: true } },
   // Lindex (hyväksytty 10.11.2026). Syötteessä ei ole item_group_id:tä (tuote = sivun osoite), age_group erottaa
   // lapset (Kids/Infant/Newborn/Teen; Adult pois) ja koot ovat osin ikävuosia ja kenkäkokoja (muunnos senttikooksi).
-  { storeKey: "lindex-fi", displayName: "Lindex", feedIdEnvVar: "ADTRACTION_LINDEX_FI_FEED_URL", format: "adtraction", market: "FI", adtraction: { categoryPaths: true, titleFirstTypes: true, convertSizes: "lindex", groupByLink: true } },
+  { storeKey: "lindex-fi", displayName: "Lindex", feedIdEnvVar: "ADTRACTION_LINDEX_FI_FEED_URL", format: "adtraction", market: "FI", adtraction: { categoryPaths: true, titleFirstTypes: true, convertSizes: "lindex", groupByLink: true, merinoBaseLayers: true } },
   // Björn Borg (hyväksytty 10.11.2026). age_group on kaikilla "adult"; lapset ovat tuotetyypillä "Kids"
   // (juniorikoot 122-128 ... 170). Miesten ja naisten tuotteet jätetään pois (childOnly).
   { storeKey: "bjornborg-fi", displayName: "Björn Borg", feedIdEnvVar: "ADTRACTION_BJORNBORG_FI_FEED_URL", format: "adtraction", market: "FI", fixedBrand: "Björn Borg", childOnly: true, adtraction: { titleFirstTypes: true, convertSizes: true, childProductTypes: ["kids"], excludeTitle: "cotton\\s+stretch|backpack|drawstring\\s+bag" } },

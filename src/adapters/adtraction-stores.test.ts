@@ -354,3 +354,15 @@ test("Björn Borg: vaatetyypit englanninkielisistä otsikoista, sukkien kenkäko
   assert.equal(socks.garment_type, "sukat");
   assert.deepEqual(socks.size_available, ["102-122 (26-30)", "122-142 (31-35)"]);
 });
+
+test("Lindex: merinovillakerrastot otetaan mukaan alusvaatteista, muut alusvaatteet pysyvät poissa", async () => {
+  const { products } = await lindex();
+  const leggings = products.find((p) => p.title === "Merinovillaleggingsit")!;
+  assert.equal(leggings.garment_type, "kerrasto");
+  assert.ok(leggings.size_available.includes("98/104"));
+  const long = products.find((p) => p.title === "Pitkät alushousut, merinovillaa")!;
+  assert.equal(long.garment_type, "kerrasto", "pitkät merinovillaalushousut ovat kerrastoalaosa");
+  assert.equal(products.find((p) => p.title === "Body, merinovillaa")?.garment_type, "body");
+  assert.ok(!products.some((p) => /bokseri/i.test(p.title)), "tavalliset alusvaatteet pois");
+  assert.equal(matchesCriteria(leggings, { garment_type: "kerrasto", child_signal: true, size_cm: 100, size_raw: "100" }), true);
+});
