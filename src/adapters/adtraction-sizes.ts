@@ -44,10 +44,50 @@ export interface ConvertedSize {
 
 const KEEP: ConvertedSize = { size: null, adult: false };
 
-/** Muuntaa Polarn O. Pyretin ryhmäkohtaisen koon pituudeksi vaatetyypin mukaan. */
-export function convertFeedSize(raw: string, garment: GarmentType): ConvertedSize {
+// Ikävuosi -> tyypillinen pituus (Lindexin pipot, käsineet, huivit ja ulkovaatekäsineet: "2-4", "5-7", "8-13").
+const AGE_POINTS: Point[] = [[1, 80], [2, 92], [3, 98], [4, 104], [5, 110], [6, 116], [7, 122], [8, 128], [9, 134], [10, 140], [11, 146], [12, 152], [13, 158], [14, 164]];
+
+// Lindex (todennettu syötteestä 10.11.2026): vaatteet ovat senttikokoja ("128", "134/140"), mutta
+//   pipot, käsineet, huivit   ikävuodet viivalla: "2-4", "5-7", "8-13" (kaikki alle 14)
+//   vauvojen pipot            pään ympärys vinoviivalla: "44/46", "48/50"
+//   sukat, tossut             EU-kenkäkoko vinoviivalla: "25/27", vauvoilla "10/12" (cm-koot ovat 44+: "62/68")
+//   "Yhden koon"              yksi koko
+function convertLindexSize(s: string, garment: GarmentType): ConvertedSize {
+  if (/^yhden\s+koon$/i.test(s)) return { size: "One Size", adult: false };
+  // Vauvojen käsineet: "0-1/2" (0-6 kk) ja "1/2-1" (6-12 kk) vuosina.
+  if (s === "0-1/2") return { size: "50-68 (0-1/2 v)", adult: false };
+  if (s === "1/2-1") return { size: "68-80 (1/2-1 v)", adult: false };
+  const m = s.match(/^(\d{1,3})\s*([-–/])\s*(\d{1,3})$/);
+  if (!m) return KEEP;
+  const a = parseInt(m[1], 10);
+  const b = parseInt(m[3], 10);
+  if (b < a) return KEEP;
+  if (m[2] !== "/" && a >= 1 && b <= 14) {
+    const lo = Math.round(interpolate(AGE_POINTS, a));
+    const hi = Math.round(interpolate(AGE_POINTS, b));
+    return { size: `${lo}-${hi} (${a}-${b} v)`, adult: false };
+  }
+  if (m[2] !== "/") return KEEP;
+  if ((garment === "sukat" || garment === "kengät") && a < 44) {
+    const lo = Math.round(interpolate(SOCK_POINTS, a));
+    const hi = Math.round(interpolate(SOCK_POINTS, b + 1));
+    return { size: `${lo}-${hi} (${a}-${b})`, adult: false };
+  }
+  if (garment === "pipo" && a >= 30 && b <= 58) {
+    const lo = Math.round(interpolate(HAT_POINTS, a));
+    const hi = Math.round(interpolate(HAT_POINTS, b));
+    return { size: `${lo === hi ? lo : `${lo}-${hi}`} (pää ${a}-${b})`, adult: false };
+  }
+  return KEEP;
+}
+
+export type SizeStyle = true | "lindex";
+
+/** Muuntaa kaupan oman kokojärjestelmän (POP: true, Lindex: "lindex") pituudeksi vaatetyypin mukaan. */
+export function convertFeedSize(raw: string, garment: GarmentType, style: SizeStyle = true): ConvertedSize {
   const s = raw.trim();
   if (/^one\s?size$/i.test(s)) return { size: "One Size", adult: false };
+  if (style === "lindex") return convertLindexSize(s, garment);
   const m = s.match(RANGE_RE);
   if (!m) return KEEP;
   const a = parseInt(m[1], 10);

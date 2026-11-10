@@ -18,7 +18,7 @@ export const GARMENT_KEYWORDS: Record<GarmentType, string[]> = {
   // sukat ennen kenkiä: sukkien kategoriassa/otsikossa esiintyy usein sana "shoes"
   sukat: ["sukat", "socks", "strumpor", "sukkahousut"],
   kengät: ["kengät", "kenkä", "saapas", "mokkasiini", "shoes", "boots", "saappaat", "tennarit", "nilkkurit", "sandaal", "sandal", "lenkkar", "sneaker", "tossut"],
-  paita: ["paita", "shirt", "t-paita", "tpaita", "tröja", "collegepaita", "hupparipaita", "huppari", "pusero", "paidat", "toppi", "topit"],
+  paita: ["paita", "shirt", "t-paita", "tpaita", "tröja", "collegepaita", "hupparipaita", "huppari", "pusero", "paidat", "toppi", "topit", "tank top", "tanktop", "sports top"],
   haalari: ["haalari", "overall", "jumpsuit", "kokohaalari", "ulkoiluhaalari", "talvihaalari", "kuoriasu", "sadeasu", "shell suit"],
   mekko: ["mekko", "dress", "klänning", "juhlamekko", "kesämekko", "mekot"],
   body: ["body", "bodysuit", "vauvanbody", "potkupuku"],
@@ -45,7 +45,16 @@ export function guessGarmentType(...texts: (string | undefined)[]): GarmentType 
   return fallback === "kengät" && SHOE_ACCESSORY_REGEX.test(haystack) ? "muu" : fallback;
 }
 
+// Yhdyssanat ja englanninkieliset poikkeukset, joissa avainsanalistan järjestys antaisi väärän tyypin:
+// "sukkahousut" sisältää sanan "housut", "pyjamahousut"/"pyjamapaita" sisältävät "housut"/"paita",
+// urheilun "short tights" on leggingsit eikä sukkahousut.
+const SPORT_TIGHTS_REGEX = /(?:^|[^a-zåäö])(?:short|running|training|sport|sports|gym|cycling|bike)\s+tights/;
+const PYJAMA_WORD_REGEX = /pyjama|pajama|yöpaita|yöasu/;
+
 function guessByKeyword(haystack: string): GarmentType {
+  if (SPORT_TIGHTS_REGEX.test(haystack)) return "housut";
+  if (PYJAMA_WORD_REGEX.test(haystack) && !haystack.includes("kerrasto")) return "pyjama";
+  if (haystack.includes("sukkahousut")) return "sukat";
   for (const [type, keywords] of Object.entries(GARMENT_KEYWORDS) as [GarmentType, string[]][]) {
     if (type === "kengät" && SHOE_ACCESSORY_REGEX.test(haystack)) continue;
     // "body" on osamerkkijono: vaadi oikea body/bodysuit/potkupuku-sana ("bodybuilding", "crossbody" eivät kelpaa).
