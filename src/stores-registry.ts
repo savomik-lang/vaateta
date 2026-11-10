@@ -74,9 +74,19 @@ export interface StoreDefinition {
     // Vaatetyyppi otsikosta ensin, tuotepolku vasta toissijaisena (polun sanat, esim. "valikerrastot",
     // eivät saa yliajaa otsikkoa "Pipo merinovillaa").
     titleFirstTypes?: boolean;
-    // Koot ovat Polarn O. Pyretin järjestelmissä: sukat kenkäkokoina, pipot pään ympärysmittana,
-    // käsineet koot 0-6. Ne muunnetaan senttikooksi (ks. adtraction-sizes.ts), jotta kokohaku toimii.
-    convertSizes?: boolean;
+    // Koot ovat kaupan omissa järjestelmissä (sukat kenkäkokoina, pipot pään ympärysmittana, käsineet
+    // koko- tai ikäkokoina). Ne muunnetaan senttikooksi (ks. adtraction-sizes.ts), jotta kokohaku toimii.
+    // true = Polarn O. Pyretin järjestelmä, "lindex" = Lindexin (ikävuodet, kenkäkoot "25/27").
+    convertSizes?: boolean | "lindex";
+    // Syötteessä ei ole g:item_group_id:tä, ja eri tuotteilla on sama otsikko: tuote tunnistetaan
+    // tuotesivun osoitteen viimeisestä osasta ("…/p/3009518-7483"). Lindex.
+    groupByLink?: boolean;
+    // g:age_group on kaikilla "adult", mutta lastentuotteet erottaa tuotetyypistä (Björn Borg: "Kids").
+    // Täysi g:product_type pienellä; tällaiset rivit käsitellään lastentuotteina.
+    childProductTypes?: string[];
+    // Kauppakohtainen otsikkosuodatin (regex-lähde, i-lippu): osuvat rivit jätetään pois
+    // (Björn Borg: alusvaatesarja "Cotton Stretch", laukut).
+    excludeTitle?: string;
   };
 }
 
@@ -123,6 +133,12 @@ export const STORES: StoreDefinition[] = [
   // Kekäle (hyväksytty 8.11.2026). Pääosin aikuisten muotia (97 %) ja syötteessä EI ole kokoja, joten tuodaan vain
   // lastenvaatteet ja ne näytetään vain ilman kokovalintaa.
   { storeKey: "kekale-fi", displayName: "Kekäle", feedIdEnvVar: "ADTRACTION_KEKALE_FI_FEED_URL", format: "adtraction", market: "FI", childOnly: true, sizeUnknown: true, childBrands: KEKALE_CHILD_BRANDS, adtraction: { titleFirstTypes: true } },
+  // Lindex (hyväksytty 10.11.2026). Syötteessä ei ole item_group_id:tä (tuote = sivun osoite), age_group erottaa
+  // lapset (Kids/Infant/Newborn/Teen; Adult pois) ja koot ovat osin ikävuosia ja kenkäkokoja (muunnos senttikooksi).
+  { storeKey: "lindex-fi", displayName: "Lindex", feedIdEnvVar: "ADTRACTION_LINDEX_FI_FEED_URL", format: "adtraction", market: "FI", adtraction: { categoryPaths: true, titleFirstTypes: true, convertSizes: "lindex", groupByLink: true } },
+  // Björn Borg (hyväksytty 10.11.2026). age_group on kaikilla "adult"; lapset ovat tuotetyypillä "Kids"
+  // (juniorikoot 122-128 ... 170). Miesten ja naisten tuotteet jätetään pois (childOnly).
+  { storeKey: "bjornborg-fi", displayName: "Björn Borg", feedIdEnvVar: "ADTRACTION_BJORNBORG_FI_FEED_URL", format: "adtraction", market: "FI", fixedBrand: "Björn Borg", childOnly: true, adtraction: { titleFirstTypes: true, convertSizes: true, childProductTypes: ["kids"], excludeTitle: "cotton\\s+stretch|backpack|drawstring\\s+bag" } },
   // PÄIVITÄ TÄHÄN uusi rivi kun Babyshop/Boozt tms. joskus hyväksyy:
   // { storeKey: "babyshop-fi", displayName: "Babyshop FI", feedIdEnvVar: "AWIN_BABYSHOP_FI_FEED_ID", format: "classic" },
 ];

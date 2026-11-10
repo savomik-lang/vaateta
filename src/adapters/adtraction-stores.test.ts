@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { readXmlItems } from "./xml-feed-stream";
-import { mapAdtractionRecords, lastCategorySegment, garmentFor } from "./adtraction-importer";
+import { mapAdtractionRecords, lastCategorySegment, garmentFor, landingKey } from "./adtraction-importer";
 import { convertFeedSize } from "./adtraction-sizes";
 import { matchesCriteria } from "./multi-store-adapter";
 import { parseSizeToken, productSizeFit } from "../size";
@@ -89,7 +89,7 @@ test("POP: rivit koottu tuotteiksi, aikuiset/alusvaatteet/bikinit/loppuneet pois
   assert.equal(stats.rows, 26);
   assert.ok(stats.outOfStock >= 1);
   assert.ok(stats.notClothingOrAdult >= 4, "aikuiset, alushousut, viltti");
-  assert.ok(stats.unsafe >= 1, "bikini on estolistalla");
+  assert.ok(stats.unsafe + stats.notClothingOrAdult >= 5, "bikini on estetty (estolista tai otsikkosuodatin)");
   assert.ok(products.length >= 10 && products.length < rows.length);
   for (const p of products) {
     assert.equal(p.source, "polarnopyret-fi");
@@ -232,4 +232,125 @@ test("POP: yksittäiset varalapaset (vasen/oikea/yksittäinen) jätetään pois,
   const titles = products.map((p) => p.title);
   for (const s of singles) assert.ok(!titles.includes(s), `pitäisi suodattua: ${s}`);
   assert.ok(products.some((p) => /lapaset/i.test(p.title)), "pari säilyy");
+});
+
+// ---------------------------------------------------------------------------
+// Lindex ja Björn Borg (hyväksytty 10.11.2026). Näytteet oikeista syötteistä, kuvaukset typistetty.
+// ---------------------------------------------------------------------------
+async function lindex() {
+  const rows = await load("adtraction-lindex-sample.xml");
+  return { rows, ...mapAdtractionRecords(rows, store("lindex-fi")) };
+}
+async function bjornborg() {
+  const rows = await load("adtraction-bjornborg-sample.xml");
+  return { rows, ...mapAdtractionRecords(rows, store("bjornborg-fi")) };
+}
+
+test("rekisteri: Lindex ja Björn Borg ovat Adtraction-kauppoja omilla muuttujillaan", () => {
+  const l = store("lindex-fi");
+  const b = store("bjornborg-fi");
+  assert.equal(l.feedIdEnvVar, "ADTRACTION_LINDEX_FI_FEED_URL");
+  assert.equal(b.feedIdEnvVar, "ADTRACTION_BJORNBORG_FI_FEED_URL");
+  assert.equal(l.adtraction?.groupByLink, true);
+  assert.equal(b.childOnly, true);
+  assert.deepEqual(b.adtraction?.childProductTypes, ["kids"]);
+});
+
+test("landingKey: tuotesivun tunniste seurantalinkistä", () => {
+  assert.equal(landingKey("https://track.adtraction.com/t/t?a=1&epi=X&cupa_sku=9&fid=107&url=https://www.lindex.com/fi/p/3009518-7483"), "3009518-7483");
+  assert.equal(landingKey("https://track.adtraction.com/t/t?a=1&url=https://www.bjornborg.com/fi/core-flannel-pyjama-pants-10004904-p0924/"), "core-flannel-pyjama-pants-10004904-p0924");
+  assert.equal(landingKey("https://example.com/no-url-param"), null);
+});
+
+test("convertFeedSize (lindex): ikävuodet, kenkäkoot, pään ympärys; senttikoot ennallaan", () => {
+  assert.equal(convertFeedSize("2-4", "pipo", "lindex").size, "92-104 (2-4 v)");
+  assert.equal(convertFeedSize("5-7", "lapaset", "lindex").size, "110-122 (5-7 v)");
+  assert.equal(convertFeedSize("8-13", "pipo", "lindex").size, "128-158 (8-13 v)");
+  assert.equal(convertFeedSize("25/27", "sukat", "lindex").size, "98-110 (25-27)");
+  assert.equal(convertFeedSize("10/12", "sukat", "lindex").size, "44-50 (10-12)");
+  assert.equal(convertFeedSize("25/26", "kengät", "lindex").size, "98-106 (25-26)");
+  assert.equal(convertFeedSize("48/50", "pipo", "lindex").size, "92-104 (pää 48-50)");
+  assert.equal(convertFeedSize("Yhden koon", "pipo", "lindex").size, "One Size");
+  assert.equal(convertFeedSize("0-1/2", "lapaset", "lindex").size, "50-68 (0-1/2 v)");
+  // Senttikoot (vauvojen sukkahousut 62/68, vaatteet 134/140, 92-104) eivät muunnu.
+  assert.equal(convertFeedSize("62/68", "sukat", "lindex").size, null);
+  assert.equal(convertFeedSize("134/140", "sukat", "lindex").size, null);
+  assert.equal(convertFeedSize("92-104", "pipo", "lindex").size, null);
+  assert.equal(convertFeedSize("128", "paita", "lindex").size, null);
+  // Haettava pituus löytyy muunnetusta koosta
+  assert.equal(productSizeFit([convertFeedSize("5-7", "pipo", "lindex").size!], 116, false), "exact");
+});
+
+test("Lindex: vain lastenrivit, alusvaatteet/bikinit/korut/vauvatarvikkeet pois, tuote tunnistetaan sivun osoitteesta", async () => {
+  const { products, rows } = await lindex();
+  assert.ok(rows.length >= 30);
+  const titles = products.map((p) => p.title);
+  for (const gone of ["3-pakkaus bokserit", "Saumaton lyhyt toppi", "Bikinisetti", "8-pakkaus hiusklipsejä", "Pehmeä helistin", "Pyjamahousut", "Hihaton pusero", "Flora kaarituettomat rintaliivit"]) {
+    assert.ok(!titles.some((t) => t.replace(/\s+/g, " ") === gone), `pitäisi puuttua: ${gone}`);
+  }
+  assert.ok(!titles.some((t) => /kuukautis/i.test(t)), "kuukautisalushousut pois");
+  for (const p of products) {
+    assert.equal(p.brand, "Lindex");
+    assert.equal(p.source, "lindex-fi");
+    assert.match(p.id, /^lindex-fi:\d+-\d+/, p.title);
+    assert.ok(p.size_available.length > 0, p.title);
+  }
+  // Sama tuote eri koissa kootaan yhdeksi, samanniminen mutta eri sivun tuote ei sekoitu
+  const dress = products.filter((p) => p.title === "Mekko jossa röyhelöt");
+  assert.equal(dress.length, 1);
+  assert.deepEqual([...dress[0].size_available].sort(), ["134", "140", "146", "152", "158"]);
+  assert.equal(dress[0].id, "lindex-fi:3010801-300");
+  assert.equal(dress[0].garment_type, "mekko");
+});
+
+test("Lindex: koot ja vaatetyypit (ikävuodet, kenkäkoot, sukkahousut, aamutakki)", async () => {
+  const { products } = await lindex();
+  const hat = products.find((p) => p.title === "Pipo, merinovillaa")!;
+  assert.equal(hat.garment_type, "pipo");
+  assert.deepEqual(hat.size_available, ["92-104 (2-4 v)", "110-122 (5-7 v)", "128-158 (8-13 v)"]);
+  const baby = products.find((p) => p.title === "Tupsupipo")!;
+  assert.deepEqual(baby.size_available, ["92-104 (pää 48-50)"]);
+  const mitt = products.find((p) => p.title === "Lapaset, karvajäljitelmää")!;
+  assert.equal(mitt.garment_type, "lapaset");
+  assert.deepEqual(mitt.size_available, ["104-116 (4-6 v)", "122-134 (7-9 v)", "140-152 (10-12 v)"]);
+  const socks = products.find((p) => p.title.replace(/\s+/g, " ") === "3-pakkaus sukkia" && p.size_available.some((s) => s.includes("25-27")))!;
+  assert.equal(socks.garment_type, "sukat");
+  const tights = products.find((p) => /^Sukkahousut/.test(p.title))!;
+  assert.equal(tights.garment_type, "sukat", "sukkahousut eivät ole housut");
+  assert.deepEqual(tights.size_available, ["134/140"]);
+  assert.equal(products.find((p) => p.title === "Fleece-aamutakki")?.garment_type, "muu", "aamutakki ei ole takki");
+  assert.equal(products.find((p) => p.title === "Pyjamashortsihaalarit")?.garment_type, "pyjama");
+  assert.equal(products.find((p) => p.title === "Korvanlämmittimet")?.size_available[0], "One Size");
+  // Kokohaku löytää 116 cm lapsen pipon
+  assert.equal(matchesCriteria(hat, { garment_type: "pipo", child_signal: true, size_cm: 116, size_raw: "116" }), true);
+  assert.equal(matchesCriteria(hat, { garment_type: "pipo", child_signal: true, size_cm: 80, size_raw: "80" }), false);
+});
+
+test("Björn Borg: vain Kids-tuotetyyppi (age_group on kaikilla adult), alusvaatesarja ja laukut pois", async () => {
+  const { products } = await bjornborg();
+  const titles = new Set(products.map((p) => p.title));
+  assert.ok(titles.has("Borg Essential 1 Hoodie"));
+  for (const gone of ["Cotton Stretch Boxers 3-pack", "Cotton Stretch Logo Soft Top 2-pack", "Borg Junior Backpack 15L", "Centre Tapered Sweatpants", "Studio Oversized Straight Sweatpants", "Core Loungewear T-Shirt"]) {
+    assert.ok(!titles.has(gone), `pitäisi puuttua: ${gone}`);
+  }
+  for (const p of products) {
+    assert.equal(p.brand, "Björn Borg");
+    assert.ok(p.shipping_cost_from && p.shipping_cost_from.amount === 4.95, p.title);
+  }
+  const hoodie = products.find((p) => p.title === "Borg Essential 1 Hoodie")!;
+  assert.deepEqual(hoodie.size_available, ["122-128", "134-140", "146-152"]);
+  assert.equal(hoodie.garment_type, "paita");
+  assert.equal(matchesCriteria(hoodie, { garment_type: "paita", child_signal: true, size_cm: 130, size_raw: "130" }), true);
+});
+
+test("Björn Borg: vaatetyypit englanninkielisistä otsikoista, sukkien kenkäkoot senttikooksi", async () => {
+  const { products } = await bjornborg();
+  const g = (t: string) => products.find((p) => p.title === t)?.garment_type;
+  assert.equal(g("Core Flannel Pyjama Pants"), "pyjama");
+  assert.equal(g("Borg Short Tights"), "housut", "urheilun tights on leggingsit");
+  assert.equal(g("Borg Racerback Tank Top"), "paita");
+  assert.equal(g("Borg Print Swim Shorts"), "uimapuku");
+  const socks = products.find((p) => p.title === "Core Crew Sock 3-pack")!;
+  assert.equal(socks.garment_type, "sukat");
+  assert.deepEqual(socks.size_available, ["102-122 (26-30)", "122-142 (31-35)"]);
 });

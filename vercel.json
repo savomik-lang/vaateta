@@ -19,6 +19,14 @@
     {
       "path": "/api/cron/import-all?store=kekale-fi",
       "schedule": "0 4 * * *"
+    },
+    {
+      "path": "/api/cron/import-all?store=lindex-fi",
+      "schedule": "15 4 * * *"
+    },
+    {
+      "path": "/api/cron/import-all?store=bjornborg-fi",
+      "schedule": "30 4 * * *"
     }
   ],
   "functions": {
