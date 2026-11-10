@@ -557,6 +557,7 @@
   @media (max-width: 720px){
     .categories{ padding-top: 40px; }
     .cat-grid{ grid-template-columns: repeat(2, 1fr); gap: 12px 12px; }
+    .cat-grid li.cat-now{ grid-column: 1 / -1; }
     .cat-name{ font-size: 15px; min-height: 40px; }
   }
 
@@ -1099,22 +1100,34 @@
 <section class="categories" id="kategoriat" aria-labelledby="catHeading">
   <div class="wrap">
     <h2 id="catHeading" data-i18n="cat.title">Kategorier</h2>
-    <ul class="cat-grid">
+    <ul class="cat-grid" id="catGrid">
       <li><button type="button" class="cat-tile" data-cat="talvi" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-talvi-ulkoilu-480.webp 480w, /images/kategoria-talvi-ulkoilu-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-talvi-ulkoilu-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
-        <span class="cat-name" data-i18n="cat.winter">Vinter och utomhus</span>
+        <span class="cat-name" data-i18n="cat.winter">Vinter</span>
       </button></li>
-      <li><button type="button" class="cat-tile" data-cat="sade" aria-haspopup="dialog">
-        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-sade-kura-480.webp 480w, /images/kategoria-sade-kura-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-sade-kura-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
-        <span class="cat-name" data-i18n="cat.rain">Regn och lera</span>
+      <li><button type="button" class="cat-tile" data-cat="kevat" aria-haspopup="dialog">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-kevat-480.webp 480w, /images/kategoria-kevat-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-kevat-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.spring">Vår</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-cat="kesa" aria-haspopup="dialog">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-kesa-480.webp 480w, /images/kategoria-kesa-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-kesa-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.summer">Sommar</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-cat="syksy" aria-haspopup="dialog">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-syksy-480.webp 480w, /images/kategoria-syksy-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-syksy-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.autumn">Höst</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-cat="urheilu" aria-haspopup="dialog">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-urheilu-480.webp 480w, /images/kategoria-urheilu-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-urheilu-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.sport">Sport och rörelse</span>
+      </button></li>
+      <li><button type="button" class="cat-tile" data-cat="juhla" aria-haspopup="dialog">
+        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-juhla-480.webp 480w, /images/kategoria-juhla-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-juhla-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
+        <span class="cat-name" data-i18n="cat.party">Fest</span>
       </button></li>
       <li><button type="button" class="cat-tile" data-cat="kengat" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-kengat-480.webp 480w, /images/kategoria-kengat-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-kengat-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
         <span class="cat-name" data-i18n="cat.shoes">Skor</span>
-      </button></li>
-      <li><button type="button" class="cat-tile" data-cat="pipot" aria-haspopup="dialog">
-        <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-pipot-lapaset-480.webp 480w, /images/kategoria-pipot-lapaset-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-pipot-lapaset-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
-        <span class="cat-name" data-i18n="cat.hats">Mössor och vantar</span>
       </button></li>
       <li><button type="button" class="cat-tile" data-cat="arki" aria-haspopup="dialog">
         <span class="cat-media"><picture><source type="image/webp" srcset="/images/kategoria-arki-paivakoti-480.webp 480w, /images/kategoria-arki-paivakoti-960.webp 960w" sizes="(max-width: 720px) 50vw, 360px"><img src="/images/kategoria-arki-paivakoti-960.jpg" alt="" width="960" height="720" loading="lazy" decoding="async"></picture></span>
@@ -1208,6 +1221,12 @@
   <symbol id="ic-saappaat" viewBox="0 0 32 32"><path d="M10 4h9v15l5.5 1.8c2.2.7 3.3 2.2 3.3 4.2v1H8.5z"/><path d="M8.5 26h19.3v2.5H8.5zM10 7.5h9"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
   <symbol id="ic-kengat" viewBox="0 0 32 32"><path d="M4 22c0-3.6 1.8-5.8 4.2-6.1l5-.7 3.8-4c.8-.8 2.2-.7 2.8.3l2 4c3.3 1 6.2 3 6.2 6.5v2H4z"/><path d="M4 24h24v2.6H4zM14.6 13.8l2 2M16.8 11.9l2 2"/></symbol>
   <symbol id="ic-lapaset_wp" viewBox="0 0 32 32"><path d="M10.5 26.5V14.6C10.5 10.2 12.8 7 16 7s5.5 3.2 5.5 7.6v11.9z"/><path d="M10.5 15.6c-2.7-1.4-4.8.5-3.8 3l3.8 4.6"/><path d="M10.5 22.6h11"/><path d="M27 1.6c-1.6 2.3-2.5 3.7-2.5 4.8a2.5 2.5 0 0 0 5 0c0-1.1-.9-2.5-2.5-4.8z"/></symbol>
+  <!-- Kategoriat v2 (kesä, urheilu, juhla) -->
+  <symbol id="ic-uimapuku" viewBox="0 0 32 32"><path d="M11 3.5v5.2c0 1.6-1.6 2.6-1.6 4.8 0 2.6 1.6 4.2 1.6 6.6 0 2.1-1.4 3.6-2.5 5.6 3.4.1 5.5 1.5 7.5 3 2-1.5 4.1-2.9 7.5-3-1.1-2-2.5-3.5-2.5-5.6 0-2.4 1.6-4 1.6-6.6 0-2.2-1.6-3.2-1.6-4.8V3.5"/><path d="M11 8.7c1.6 2.6 8.4 2.6 10 0"/></symbol>
+  <symbol id="ic-kauluspaita" viewBox="0 0 32 32"><path d="M12 4.5 6 7.5 3.5 24h3.6L9 13v15h14V13l1.9 11h3.6L26 7.5l-6-3"/><path d="M12 4.5 13.4 9.2 16 8.4l2.6.8L20 4.5M12 4.5h8M16 8.4V28"/><circle cx="16.9" cy="13" r=".55"/><circle cx="16.9" cy="17.5" r=".55"/><circle cx="16.9" cy="22" r=".55"/></symbol>
+  <symbol id="ic-pikkutakki" viewBox="0 0 32 32"><path d="M11 4.5 6.5 7C5.4 7.6 5 8.6 4.9 9.9L4 23h3.6L9 15v13h14V15l1.4 8H28l-.9-13.1c-.1-1.3-.5-2.3-1.6-2.9L21 4.5"/><path d="M11 4.5 13.6 13 16 18.5l2.4-5.5L21 4.5M18.6 22.5h3"/><circle cx="16" cy="21.5" r=".6"/></symbol>
+  <symbol id="ic-juhlakengat" viewBox="0 0 32 32"><path d="M4 21.5c0-2.4 1.6-4 4-4.2 3.2-.3 5.6-1.6 8-3 1-.6 2.2-.4 2.9.4 1.6 1.9 4.6 3 7.2 3.6 1.4.3 2.4 1.5 2.4 3v1.7H4z"/><path d="M4 23h24.5v1.7a1.6 1.6 0 0 1-1.6 1.6H5.6A1.6 1.6 0 0 1 4 24.7z"/><path d="M16.5 17.2l-2.4-1.6v3.2zM16.5 17.2l2.4-1.6v3.2z"/></symbol>
+  <symbol id="ic-jalkapallokengat" viewBox="0 0 32 32"><path d="M3.5 20.5c0-2.6 1.4-4.3 3.6-4.7l5.9-1.1 3.4-4.1c.7-.8 2-.8 2.6.1l1.6 2.5 4.2 1.6c2.7 1 4.7 3.1 4.7 5.7z"/><path d="M3.5 20.5h25.9v2.2a1.8 1.8 0 0 1-1.8 1.8H5.3a1.8 1.8 0 0 1-1.8-1.8z"/><path d="M13.6 14.2l1.7 1.6M15.9 11.8l1.7 1.6M7 24.5v3M11.5 24.5v3M19 24.5v3M25 24.5v3"/></symbol>
   <!-- Alatyypit (vaihe B2) -->
   <symbol id="ic-s-lenkkarit" viewBox="0 0 32 32"><path d="M3.5 21.5c0-2.6 1.4-4.3 3.6-4.7l5.9-1.1 3.4-4.1c.7-.8 2-.8 2.6.1l1.6 2.5 4.2 1.6c2.7 1 4.7 3.1 4.7 5.7z"/><path d="M3.5 21.5h25.9v2.4a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z"/><path d="M13.6 15.2l1.7 1.6M15.9 12.8l1.7 1.6M20 19l4.2-1.3"/></symbol>
   <symbol id="ic-s-sandaalit" viewBox="0 0 32 32"><path d="M16 3.5c3.6 0 5.8 3 5.8 7.2 0 3.3-1.3 5.6-1.6 8.8-.3 3.3.9 5.4.9 7.1 0 1.9-2.2 3.4-5.1 3.4s-5.1-1.5-5.1-3.4c0-1.7 1.2-3.8.9-7.1-.3-3.2-1.6-5.5-1.6-8.8 0-4.2 2.2-7.2 5.8-7.2z"/><path d="M10.4 9.8h11.2M11.2 16h9.6M11 23.5h10"/></symbol>
@@ -1431,6 +1450,7 @@
       'opt.takki': 'Takki', 'opt.paita': 'Paita', 'opt.housut': 'Housut',
       'opt.mekko': 'Mekko', 'opt.haalari': 'Haalari', 'opt.sukat': 'Sukat',
       'opt.pyjama': 'Pyjama', 'opt.body': 'Body',
+      'opt.valikausihaalari': 'Välikausi\u00adhaalari', 'opt.valikausitakki': 'Välikausi\u00adtakki', 'opt.softshell': 'Softshell', 'opt.fleece': 'Fleece', 'opt.shortsit': 'Shortsit', 'opt.tpaita': 'T-paita', 'opt.sandaalit': 'Sandaalit', 'opt.aurinkohattu': 'Aurinko\u00adhattu', 'opt.lippis': 'Lippis', 'opt.uimapuku': 'Uima-asut', 'opt.lenkkarit': 'Lenkkarit', 'opt.leggingsit': 'Leggingsit', 'opt.treenihousut': 'Treeni\u00adhousut', 'opt.urheilupaita': 'Urheilu\u00adpaita', 'opt.ulkoiluhousut': 'Ulkoilu\u00adhousut', 'opt.sisapelikengat': 'Sisäpeli\u00adkengät', 'opt.jalkapallokengat': 'Jalkapallo\u00adkengät', 'opt.juhlamekko': 'Juhla\u00admekko', 'opt.kauluspaita': 'Kaulus\u00adpaita', 'opt.pikkutakki': 'Pikku\u00adtakki', 'opt.juhlahousut': 'Juhla\u00adhousut', 'opt.juhlakengat': 'Juhla\u00adkengät',
       'cp.showN': 'Näytä {n} tuotetta', 'cp.showOne': 'Näytä 1 tuote', 'cp.showNone': 'Ei tuotteita näillä valinnoilla',
       'cp.countSr': '{n} tuotetta', 'cp.countSrOne': '1 tuote',
       'cp.refine': 'Tarkenna: {g}', 'cp.optional': '(valinnainen)', 'cp.brandsAll': 'Näytä kaikki merkit ({n})', 'cp.brandsLess': 'Näytä vähemmän',
@@ -1498,6 +1518,7 @@
       'opt.takki': 'Jacka', 'opt.paita': 'Tröja', 'opt.housut': 'Byxor',
       'opt.mekko': 'Klänning', 'opt.haalari': 'Overall', 'opt.sukat': 'Strumpor',
       'opt.pyjama': 'Pyjamas', 'opt.body': 'Body',
+      'opt.valikausihaalari': 'Skal\u00adoverall', 'opt.valikausitakki': 'Skal\u00adjacka', 'opt.softshell': 'Softshell', 'opt.fleece': 'Fleece', 'opt.shortsit': 'Shorts', 'opt.tpaita': 'T-shirt', 'opt.sandaalit': 'Sandaler', 'opt.aurinkohattu': 'Solhatt', 'opt.lippis': 'Keps', 'opt.uimapuku': 'Bad\u00adkläder', 'opt.lenkkarit': 'Gympaskor', 'opt.leggingsit': 'Leggings', 'opt.treenihousut': 'Tränings\u00adbyxor', 'opt.urheilupaita': 'Tränings\u00adtröja', 'opt.ulkoiluhousut': 'Frilufts\u00adbyxor', 'opt.sisapelikengat': 'Inomhus\u00adskor', 'opt.jalkapallokengat': 'Fotbolls\u00adskor', 'opt.juhlamekko': 'Fest\u00adklänning', 'opt.kauluspaita': 'Skjorta', 'opt.pikkutakki': 'Kavaj', 'opt.juhlahousut': 'Fin\u00adbyxor', 'opt.juhlakengat': 'Finskor',
       'cp.showN': 'Visa {n} produkter', 'cp.showOne': 'Visa 1 produkt', 'cp.showNone': 'Inga produkter med de här valen',
       'cp.countSr': '{n} produkter', 'cp.countSrOne': '1 produkt',
       'cp.refine': 'Precisera: {g}', 'cp.optional': '(valfritt)', 'cp.brandsAll': 'Visa alla märken ({n})', 'cp.brandsLess': 'Visa färre',
@@ -1565,6 +1586,7 @@
       'opt.takki': 'Jacket', 'opt.paita': 'Top', 'opt.housut': 'Trousers',
       'opt.mekko': 'Dress', 'opt.haalari': 'Overall', 'opt.sukat': 'Socks',
       'opt.pyjama': 'Pyjamas', 'opt.body': 'Bodysuit',
+      'opt.valikausihaalari': 'Shell overall', 'opt.valikausitakki': 'Shell jacket', 'opt.softshell': 'Softshell', 'opt.fleece': 'Fleece', 'opt.shortsit': 'Shorts', 'opt.tpaita': 'T-shirt', 'opt.sandaalit': 'Sandals', 'opt.aurinkohattu': 'Sun hat', 'opt.lippis': 'Cap', 'opt.uimapuku': 'Swimwear', 'opt.lenkkarit': 'Trainers', 'opt.leggingsit': 'Leggings', 'opt.treenihousut': 'Training trousers', 'opt.urheilupaita': 'Sports top', 'opt.ulkoiluhousut': 'Outdoor trousers', 'opt.sisapelikengat': 'Indoor shoes', 'opt.jalkapallokengat': 'Football boots', 'opt.juhlamekko': 'Party dress', 'opt.kauluspaita': 'Shirt', 'opt.pikkutakki': 'Blazer', 'opt.juhlahousut': 'Smart trousers', 'opt.juhlakengat': 'Smart shoes',
       'cp.showN': 'Show {n} products', 'cp.showOne': 'Show 1 product', 'cp.showNone': 'No products with these choices',
       'cp.countSr': '{n} products', 'cp.countSrOne': '1 product',
       'cp.refine': 'Narrow down: {g}', 'cp.optional': '(optional)', 'cp.brandsAll': 'Show all brands ({n})', 'cp.brandsLess': 'Show fewer',
@@ -2720,16 +2742,45 @@
     haalari: { item: 'haalari', icon: 'haalari', q: { fi: 'haalari', sv: 'overall', en: 'overall' } },
     sukat: { item: 'sukat', icon: 'sukat', q: { fi: 'sukat', sv: 'strumpor', en: 'socks' } },
     pyjama: { item: 'pyjama', icon: 'pyjama', q: { fi: 'pyjama', sv: 'pyjamas', en: 'pyjamas' } },
-    body: { item: 'body', icon: 'body', q: { fi: 'body', sv: 'body', en: 'bodysuit' } }
+    body: { item: 'body', icon: 'body', q: { fi: 'body', sv: 'body', en: 'bodysuit' } },
+    // Kategoriat v2 (10.11.2026): vuodenajat ja teemat. Alatyyppi-itemit (vaate.alatyyppi) näytetään
+    // vain, jos backend tukee alatyyppiä (facetsin subtypes-lista), muuten vaihtoehto piilotetaan.
+    valikausihaalari: { item: 'haalari.välikausi', icon: 'haalari', q: { fi: 'välikausihaalari', sv: 'skaloverall', en: 'shell overall' } },
+    valikausitakki: { item: 'takki.välikausi', icon: 's-kuoritakki', q: { fi: 'välikausitakki', sv: 'skaljacka', en: 'shell jacket' } },
+    softshell: { item: 'takki.softshell', icon: 's-softshell', q: { fi: 'softshell-takki', sv: 'softshelljacka', en: 'softshell jacket' } },
+    fleece: { item: 'paita.fleece', icon: 's-fleece', q: { fi: 'fleece', sv: 'fleece', en: 'fleece' } },
+    shortsit: { item: 'housut.shortsit', icon: 's-shortsit', q: { fi: 'shortsit', sv: 'shorts', en: 'shorts' } },
+    tpaita: { item: 'paita.t-paita', icon: 's-tpaita', q: { fi: 't-paita', sv: 't-shirt', en: 't-shirt' } },
+    sandaalit: { item: 'kengät.sandaalit', icon: 's-sandaalit', shoe: true, q: { fi: 'sandaalit', sv: 'sandaler', en: 'sandals' } },
+    aurinkohattu: { item: 'pipo.aurinkohattu', icon: 's-aurinkohattu', q: { fi: 'aurinkohattu', sv: 'solhatt', en: 'sun hat' } },
+    lippis: { item: 'pipo.lippis', icon: 's-lippis', q: { fi: 'lippis', sv: 'keps', en: 'cap' } },
+    uimapuku: { item: 'uimapuku', icon: 'uimapuku', q: { fi: 'uimapuku', sv: 'baddräkt', en: 'swimsuit' } },
+    lenkkarit: { item: 'kengät.lenkkarit', icon: 's-lenkkarit', shoe: true, q: { fi: 'lenkkarit', sv: 'gympaskor', en: 'trainers' } },
+    leggingsit: { item: 'housut.leggingsit', icon: 's-leggingsit', q: { fi: 'leggingsit', sv: 'leggings', en: 'leggings' } },
+    treenihousut: { item: 'housut.treenihousut', icon: 'housut', q: { fi: 'treenihousut', sv: 'träningsbyxor', en: 'training trousers' } },
+    urheilupaita: { item: 'paita.urheilupaita', icon: 's-tpaita', q: { fi: 'urheilupaita', sv: 'träningströja', en: 'sports top' } },
+    ulkoiluhousut: { item: 'housut.ulkoiluhousut', icon: 's-ulkoiluhousut', q: { fi: 'ulkoiluhousut', sv: 'friluftsbyxor', en: 'outdoor trousers' } },
+    sisapelikengat: { item: 'kengät.sisäpelikengät', icon: 'kengat', shoe: true, q: { fi: 'sisäpelikengät', sv: 'inomhusskor', en: 'indoor shoes' } },
+    jalkapallokengat: { item: 'kengät.jalkapallokengät', icon: 'jalkapallokengat', shoe: true, q: { fi: 'jalkapallokengät', sv: 'fotbollsskor', en: 'football boots' } },
+    juhlamekko: { item: 'mekko.juhlamekko', icon: 'mekko', q: { fi: 'juhlamekko', sv: 'festklänning', en: 'party dress' } },
+    kauluspaita: { item: 'paita.kauluspaita', icon: 'kauluspaita', q: { fi: 'kauluspaita', sv: 'skjorta', en: 'shirt' } },
+    pikkutakki: { item: 'takki.pikkutakki', icon: 'pikkutakki', q: { fi: 'pikkutakki', sv: 'kavaj', en: 'blazer' } },
+    juhlahousut: { item: 'housut.juhlahousut', icon: 'housut', q: { fi: 'juhlahousut', sv: 'finbyxor', en: 'smart trousers' } },
+    juhlakengat: { item: 'kengät.juhlakengät', icon: 'juhlakengat', shoe: true, q: { fi: 'juhlakengät', sv: 'finskor', en: 'smart shoes' } }
   };
   var CATS = {
-    talvi: { img: 'talvi-ulkoilu', def: 'talvihaalari', opts: ['talvihaalari', 'talvitakki', 'toppahousut', 'pipo', 'lapaset', 'kerrasto', 'villasukat', 'talvikengat'] },
-    sade: { img: 'sade-kura', def: 'kurahousut', opts: ['kurahousut', 'sadetakki', 'sadeasu', 'kurakengat', 'kuralapaset'] },
+    talvi: { img: 'talvi-ulkoilu', season: true, def: 'talvihaalari', opts: ['talvihaalari', 'talvitakki', 'toppahousut', 'pipo', 'lapaset', 'kerrasto', 'villasukat', 'talvikengat'] },
+    kevat: { img: 'kevat', season: true, def: 'valikausihaalari', opts: ['valikausihaalari', 'softshell', 'valikausitakki', 'kurahousut', 'kurakengat', 'kuralapaset', 'fleece'] },
+    kesa: { img: 'kesa', season: true, def: 'shortsit', opts: ['shortsit', 'tpaita', 'mekko', 'sandaalit', 'aurinkohattu', 'lippis', 'uimapuku'] },
+    syksy: { img: 'syksy', season: true, def: 'sadeasu', opts: ['sadeasu', 'sadetakki', 'valikausitakki', 'kurahousut', 'kurakengat', 'kuralapaset', 'fleece'] },
+    urheilu: { img: 'urheilu', def: 'lenkkarit', opts: ['lenkkarit', 'leggingsit', 'treenihousut', 'urheilupaita', 'ulkoiluhousut', 'fleece', 'sisapelikengat', 'jalkapallokengat', 'uimapuku'] },
+    juhla: { img: 'juhla', def: 'juhlamekko', opts: ['juhlamekko', 'kauluspaita', 'pikkutakki', 'juhlahousut', 'juhlakengat'] },
     kengat: { img: 'kengat', def: 'talvikengat', opts: ['talvikengat', 'kurakengat', 'kengat'] },
-    pipot: { img: 'pipot-lapaset', def: 'pipo', opts: ['pipo', 'lapaset', 'kuralapaset', 'villasukat'] },
     arki: { img: 'arki-paivakoti', def: 'takki', opts: ['takki', 'paita', 'housut', 'mekko', 'haalari', 'sukat', 'pipo', 'kengat'] },
     vauvat: { img: 'vauvat', def: 'haalari', baby: true, opts: ['haalari', 'body', 'pyjama', 'housut', 'paita', 'takki', 'pipo', 'lapaset'] }
   };
+  // Vanhat kategoriat (ennen 10.11.2026) jaetuissa linkeissä
+  var CAT_ALIAS = { sade: 'syksy', pipot: 'talvi' };
   // Body ja pyjama: Vauvat-kategoriassa 7.11. alkaen (tuotteet Metsolasta, PR #30).
   // Ennen ensimmäistä tuontia määrä on 0, jolloin kuvake on himmennetty eikä valittavissa.
   // Kerrasto palautettu 2.11. (84 tuotetta tuonnin jälkeen).
@@ -2834,9 +2885,30 @@
 
   function sizeList(){ return CATS[panelState.cat].baby ? SIZES.filter(function(c){ return c <= BABY_MAX; }) : SIZES; }
 
+  // Alatyyppivaihtoehto (item vaate.alatyyppi) vain, jos backend tukee alatyyppiä: facetsin
+  // subtypes-listassa (vähintään 8 tuotetta). Ennen ensimmäistä facets-vastausta näytetään kaikki.
+  var subtypesKnown = false;
+  function optSupported(id){
+    var it = OPTS[id].item, d = it.indexOf('.');
+    if (d === -1 || !subtypesKnown) return true;
+    var l = subtypeLists[it.slice(0, d)];
+    return Array.isArray(l) && l.indexOf(it.slice(d + 1)) !== -1;
+  }
+  function visibleOpts(cat){ return CATS[cat].opts.filter(optSupported); }
+  // Tukemattomat pois valinnoista; jos mitään ei jää, kategorian ensimmäinen näkyvä vaihtoehto
+  function pruneUnsupported(){
+    var st = panelState, vis = visibleOpts(st.cat);
+    var kept = st.opts.filter(function(id){ return vis.indexOf(id) !== -1; });
+    if (!kept.length && vis.length) kept = [vis.indexOf(CATS[st.cat].def) !== -1 ? CATS[st.cat].def : vis[0]];
+    var changed = kept.join() !== st.opts.join();
+    st.opts.forEach(function(id){ if (kept.indexOf(id) === -1) delete st.subs[id]; });
+    st.opts = kept;
+    return changed;
+  }
   function renderOpts(){
     var cat = CATS[panelState.cat];
-    cpOpts.innerHTML = cat.opts.map(function(id){
+    var a = document.activeElement, focusId = a && cpOpts.contains(a) ? a.getAttribute('data-opt') : null;
+    cpOpts.innerHTML = visibleOpts(panelState.cat).map(function(id){
       var on = panelState.opts.indexOf(id) !== -1;
       return '<li><button type="button" class="cp-opt" data-opt="' + id + '" aria-pressed="' + on + '">' +
         '<svg aria-hidden="true"><use href="#ic-' + OPTS[id].icon + '"/></svg>' +
@@ -2845,6 +2917,8 @@
         '<span class="cp-check" aria-hidden="true"><svg fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><use href="#ic-check"/></svg></span>' +
         '</button></li>';
     }).join('');
+    cpOpts.__shown = visibleOpts(panelState.cat).join();
+    if (focusId) { var f = cpOpts.querySelector('[data-opt="' + focusId + '"]') || cpOpts.querySelector('.cp-opt'); if (f) f.focus(); }
     renderCounts();
   }
 
@@ -2900,7 +2974,11 @@
           });
           facetCounts = counts;
           facetBrands = res[0] && Array.isArray(res[0].brands) ? res[0].brands : null;
+          subtypesKnown = true;
+          var pruned = pruneUnsupported();
+          if (pruned || cpOpts.__shown !== visibleOpts(st.cat).join()) { renderOpts(); renderSize(); }
           renderSubs(); renderCounts(); renderBrands();
+          if (pruned) { requestFacets(0); return; }
           // Uusia alatyyppejä valitulle vaatteelle: niiden määrät heti perään
           if (newLists && facetItemList(st).some(function(it){ return !(it in counts); })) requestFacets(0);
         })
@@ -3242,6 +3320,7 @@
   }
   function stateFromUrl(){
     var p = new URLSearchParams(location.search), cat = p.get('kat');
+    if (CAT_ALIAS[cat]) cat = CAT_ALIAS[cat];
     if (!CATS[cat]) return null;
     var opts = String(p.get('v') || '').split(',').filter(function(o){ return CATS[cat].opts.indexOf(o) !== -1; });
     if (!opts.length) opts = [CATS[cat].def];
@@ -3452,6 +3531,31 @@
       .forEach(function(p){ if (eu >= p[0]) best = p[1]; });
     return best;
   }
+
+  // ---------- KATEGORIOIDEN JÄRJESTYS: ajankohtainen vuodenaika ensin ----------
+  // Viikot Google Trends -datasta (docs/esimerkit-trends.md): kevät 11–20, kesä 21–31, syksy 32–42,
+  // talvi 43–10. Järjestys: nyt, seuraava, ..., sitten teemat. Mobiilissa ajankohtainen ruutu koko levyinen.
+  // Testaus: ?viikko=1–52.
+  (function(){
+    var grid = document.getElementById('catGrid');
+    if (!grid) return;
+    var forced = parseInt(new URLSearchParams(location.search).get('viikko'), 10), w = forced;
+    if (!(forced >= 1 && forced <= 53)) {
+      var d = new Date(), t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+      t.setUTCDate(t.getUTCDate() + 4 - (t.getUTCDay() || 7));
+      w = Math.ceil(((t - new Date(Date.UTC(t.getUTCFullYear(), 0, 1))) / 864e5 + 1) / 7);
+    }
+    var SEASONS = ['talvi', 'kevat', 'kesa', 'syksy'];
+    var now = w >= 11 && w <= 20 ? 'kevat' : w >= 21 && w <= 31 ? 'kesa' : w >= 32 && w <= 42 ? 'syksy' : 'talvi';
+    var k = SEASONS.indexOf(now), order = SEASONS.slice(k).concat(SEASONS.slice(0, k)).concat(['urheilu', 'juhla', 'kengat', 'arki', 'vauvat']);
+    order.forEach(function(cat){
+      var tile = grid.querySelector('.cat-tile[data-cat="' + cat + '"]');
+      if (!tile) return;
+      var li = tile.parentNode;
+      li.classList.toggle('cat-now', cat === now);
+      grid.appendChild(li);
+    });
+  })();
 
   // Jaettu linkki (?kat=talvi&v=pipo,lapaset&koko=110): haku suoraan
   (function(){
