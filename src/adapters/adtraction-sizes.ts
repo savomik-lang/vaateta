@@ -81,13 +81,76 @@ function convertLindexSize(s: string, garment: GarmentType): ConvertedSize {
   return KEEP;
 }
 
-export type SizeStyle = true | "lindex";
+// Kuukaudet -> pituus (Outdoorexperten: "6M", "12M", "18M").
+const MONTH_POINTS: Point[] = [[3, 62], [6, 68], [9, 74], [12, 80], [18, 86], [24, 92]];
 
-/** Muuntaa kaupan oman kokojärjestelmän (POP: true, Lindex: "lindex") pituudeksi vaatetyypin mukaan. */
+// Outdoorexperten (todennettu syötteestä 20.11.2026). Koot ovat merkkikohtaisia:
+//   vaatteet   senttikoko, usein yksikkö perässä ("130 cl", "116 cm", "110/116 cl") -> yksikkö pois
+//   vauvat     "6M", "12M" (kuukaudet), "2T" (vuodet), "2-4y", "5-8 år", "2/4Y" (ikävuodet)
+//   huivit     "2-5", "6-10" (ikävuodet)
+//   sukat      EU-kenkäkoko ("22-24", "26/29", "30")
+//   pipot      pään ympärys ("52/54", "48-50 cm", "50")
+//   käsineet   koko 1-9 (Hestra, Reima)
+//   kengät     EU-kenkäkoko, ennallaan
+function convertOutdoorSize(raw: string, garment: GarmentType): ConvertedSize {
+  let orig = raw.trim();
+  // Lindberg-käsineet: "13cm/2-5y" (käden pituus + ikä) -> käytetään ikää.
+  const lead = orig.match(/^\d+\s*cm\s*\/\s*(.+)$/i);
+  if (lead) orig = lead[1];
+  // Mittasana "1 x 1m" (peittokoko) ei ole vaatekoko: variantti jätetään pois.
+  if (/^\d+\s*x\s*\d+\s*m$/i.test(orig)) return { size: null, adult: true };
+  const t = orig.replace(/\s*(?:cl|cm)$/i, "").trim();
+  const hadUnit = t !== orig;
+  const mm = t.match(/^(\d{1,2})\s*M$/i);
+  if (mm) {
+    const n = parseInt(mm[1], 10);
+    return { size: `${Math.round(interpolate(MONTH_POINTS, n))} (${n} kk)`, adult: false };
+  }
+  const mt = t.match(/^(\d)\s*T$/i);
+  if (mt) {
+    const n = parseInt(mt[1], 10);
+    return { size: `${Math.round(interpolate(AGE_POINTS, n))} (${n}T)`, adult: false };
+  }
+  const ageRange = (a: number, b: number, suffix: string): ConvertedSize => {
+    const lo = Math.round(interpolate(AGE_POINTS, a));
+    const hi = Math.round(interpolate(AGE_POINTS, b));
+    return { size: `${lo === hi ? lo : `${lo}-${hi}`} (${a === b ? a : `${a}-${b}`} ${suffix})`, adult: false };
+  };
+  const my = t.match(/^(\d{1,2})(?:\s*[-/]\s*(\d{1,2}))?\s*(?:y|yr|yrs|år|v)$/i);
+  if (my) {
+    const a = parseInt(my[1], 10);
+    const b = my[2] ? parseInt(my[2], 10) : a;
+    return b >= a && b <= 16 ? ageRange(a, b, "v") : KEEP;
+  }
+  const mr = t.match(/^(\d{1,3})(?:\s*[-–/]\s*(\d{1,3}))?$/);
+  if (!mr) return KEEP;
+  const a = parseInt(mr[1], 10);
+  const b = mr[2] ? parseInt(mr[2], 10) : a;
+  if (b < a) return KEEP;
+  const norm = a === b && !mr[2] ? String(a) : `${a}-${b}`;
+  if (garment === "kengät") return hadUnit ? { size: t, adult: false } : KEEP;
+  if (garment === "sukat") return convertFeedSize(norm, garment);
+  if (garment === "pipo") {
+    if (!hadUnit && b <= 14) return ageRange(a, b, "v");
+    return convertFeedSize(norm, garment);
+  }
+  if (garment === "lapaset") {
+    if (a >= 1 && b <= 6) return convertFeedSize(norm, garment);
+    if (a >= 7 && b <= 12) return ageRange(a, b, "v");
+    return KEEP;
+  }
+  if (!hadUnit && a >= 1 && b <= 14) return ageRange(a, b, "v");
+  return hadUnit ? { size: t, adult: false } : KEEP;
+}
+
+export type SizeStyle = true | "lindex" | "outdoor";
+
+/** Muuntaa kaupan oman kokojärjestelmän (POP: true, Lindex: "lindex", Outdoorexperten: "outdoor") pituudeksi vaatetyypin mukaan. */
 export function convertFeedSize(raw: string, garment: GarmentType, style: SizeStyle = true): ConvertedSize {
   const s = raw.trim();
   if (/^one\s?size$/i.test(s)) return { size: "One Size", adult: false };
   if (style === "lindex") return convertLindexSize(s, garment);
+  if (style === "outdoor") return convertOutdoorSize(s, garment);
   const m = s.match(RANGE_RE);
   if (!m) return KEEP;
   const a = parseInt(m[1], 10);
