@@ -85,6 +85,18 @@ Kielletty: #C98A2B (vanha sinappi) tekstinä, kontrasti 2,7:1.
 - Alkuperäiset: `images/lahde/` (ei julkaista). Tekoälykuvat: alatunnisteessa "Kuvat on luotu tekoälyllä".
 - Tuotekuvissa ei logoja tai merkkien tunnusmerkkejä ("plain unbranded").
 
+## Kategoriat (v2)
+
+- 9 ruutua (8 näkyvissä, Juhla piilossa): neljä vuodenaikaa (Talvi, Kevät, Kesä, Syksy), teemat Urheilu ja liikunta sekä Juhla, sitten Kengät,
+  Arki ja päiväkoti, Vauvat 50–92 cm. Työpöydällä 3 × 3.
+- Järjestys ISO-viikon mukaan: ajankohtainen vuodenaika ensin (Kevät 11–20, Kesä 21–31, Syksy 32–42, Talvi muut),
+  muut vuodenajat kiertävästi, sitten teemat ja muut. `li.cat-now` = ajankohtainen; mobiilissa koko levyinen.
+  Testaus `?viikko=N`.
+- Alatyyppiin perustuva vaihtoehto (`type.subtype`) näkyy vasta, kun facetsin `subtypes` sisältää sen; muuten piilossa
+  ja oletus siirtyy ensimmäiseen näkyvään. Vanhat id:t: `CAT_ALIAS` (`sade` → `syksy`, `pipot` → `talvi`).
+- `hidden: true` CATSissa piilottaa ruudun ja sen linkit (Juhla 20.11. alkaen, kunnes juhla-alatyypit ovat backendissä).
+  8 ruutua: työpöydällä 4 × 2; mobiilissa ajankohtainen ja viimeinen koko levyisiä (viimeinen 16:9).
+
 ## Kategoriapaneeli ja vaatekuvakkeet
 
 - Kategoriaruutu avaa paneelin (`<dialog id="catPanel">`): vaatteet monivalintana, lapsi (Tyttö · Poika · Kaikki),
