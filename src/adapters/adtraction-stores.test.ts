@@ -366,3 +366,63 @@ test("Lindex: merinovillakerrastot otetaan mukaan alusvaatteista, muut alusvaatt
   assert.ok(!products.some((p) => /bokseri/i.test(p.title)), "tavalliset alusvaatteet pois");
   assert.equal(matchesCriteria(leggings, { garment_type: "kerrasto", child_signal: true, size_cm: 100, size_raw: "100" }), true);
 });
+
+// Outdoorexperten (yleinen ulkoiluliike, ~30 000 riviä): tuotteista otetaan vain lastentuotteet.
+async function outdoor() {
+  const rows = await load("adtraction-outdoorexperten-sample.xml");
+  return { rows, ...mapAdtractionRecords(rows, store("outdoorexperten-fi")) };
+}
+
+test("rekisteri: Outdoorexperten on Adtraction-kauppa omalla muuttujallaan, vain lapsille", () => {
+  const o = store("outdoorexperten-fi");
+  assert.equal(o.format, "adtraction");
+  assert.equal(o.feedIdEnvVar, "ADTRACTION_OUTDOOREXPERTEN_FI_FEED_URL");
+  assert.equal(o.childOnly, true);
+  assert.equal(o.adtraction?.convertSizes, "outdoor");
+});
+
+test("convertFeedSize (outdoor): kuukaudet, vuodet, yksiköt pois, käsine- ja sukkakoot", () => {
+  const c = (s: string, g: Parameters<typeof convertFeedSize>[1]) => convertFeedSize(s, g, "outdoor");
+  assert.equal(c("12M", "paita").size, "80 (12 kk)");
+  assert.equal(c("2T", "paita").size, "92 (2T)");
+  assert.equal(c("2-5", "muu").size, "92-110 (2-5 v)");
+  assert.equal(c("5-8 år", "lapaset").size, "110-128 (5-8 v)");
+  assert.equal(c("13cm/2-5y", "lapaset").size, "92-110 (2-5 v)"); // Lindberg: käden pituus + ikä
+  assert.equal(c("3", "lapaset").size, "98-110 (koko 3)"); // Hestra/Reima koko 1-6
+  assert.equal(c("22-24", "sukat").size, "86-98 (22-24)");
+  assert.equal(c("52/54", "pipo").size, "116-134 (pää 52-54)");
+  assert.equal(c("130 cl", "takki").size, "130"); // yksikkö pois, senttikoko ennallaan
+  assert.equal(c("110/116 cl", "kerrasto").size, "110/116");
+  assert.equal(c("One Size", "pipo").size, "One Size");
+  assert.equal(c("1 x 1m", "sukat").adult, true); // peittokoko ei ole vaatekoko
+  assert.equal(c("38", "kengät").size, null); // kenkäkoko ennallaan
+  // Muunnetut koot ymmärretään kokohaussa
+  for (const s of ["80 (12 kk)", "92-110 (2-5 v)", "116-134 (pää 52-54)"]) assert.equal(parseSizeToken(s).kind, "cm", s);
+});
+
+test("Outdoorexperten: vain lastentuotteet, ei varusteita eikä aikuisten vaatteita", async () => {
+  const { products, stats } = await outdoor();
+  const titles = products.map((p) => p.title).join(" | ");
+  for (const bad of ["Harness", "Klean Kanteen", "Corker", "Pole Element", "miesten", "Miesten", "Naisten"]) {
+    assert.ok(!titles.includes(bad), `ei saa sisältää: ${bad}`);
+  }
+  assert.equal(stats.outOfStock, 1);
+  assert.ok(stats.notClothingOrAdult >= 6, "varusteet ja aikuisten tuotteet hylätty");
+  // Lapsimerkitty tuote aikuisten Vaatteet-haarasta tulee mukaan (Vaude Kids)
+  assert.ok(products.some((p) => p.title.startsWith("Vaude Kids Kikimora Jacket") && p.garment_type === "takki"));
+});
+
+test("Outdoorexperten: koot muunnetaan senttikooksi, tuotteet ryhmitellään ja vaatetyypit tunnistetaan", async () => {
+  const { products } = await outdoor();
+  const by = (s: string) => products.find((p) => p.title.startsWith(s))!;
+  assert.deepEqual(by("Reima Stavanger").size_available, ["110", "122"]); // " cl" pois
+  assert.equal(by("Reima Stavanger").garment_type, "haalari");
+  assert.deepEqual(by("Patagonia Baby").size_available, ["80 (12 kk)", "86 (18 kk)", "92 (2T)"]);
+  assert.deepEqual(by("Woolpower Kids Socks").size_available, ["86-98 (22-24)", "98-110 (25-27)"]);
+  assert.equal(by("Woolpower Kids Socks").garment_type, "sukat");
+  assert.equal(by("Lindberg Alaska Hat").garment_type, "pipo");
+  assert.equal(by("Hestra Baby Zip Mitt").garment_type, "lapaset"); // Kintaat-lehti
+  assert.equal(by("Lindberg Sundsvall").garment_type, "lapaset");
+  assert.equal(by("Woolpower Kids Crewneck").garment_type, "kerrasto");
+  assert.ok(!products.some((p) => p.title.includes("Booties")), "peittokokoiset tossut pois");
+});

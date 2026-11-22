@@ -57,6 +57,8 @@ const TYPE_OVERRIDES: Record<string, GarmentType> = {
   "panta": "muu",
   "hame": "muu",
   "robes": "muu", // Lindex: aamutakit ja kylpytakit
+  "kintaat": "lapaset", // Outdoorexperten: lapaset ("mitt") ovat kintaat-lehdessä
+  "maastojuoksu": "kengät", // Outdoorexperten: Juoksu > Kengät > Maastojuoksu
   "haalari/jumpsuit": "haalari",
   "haalari / jumpsuit": "haalari",
   "jumpsuit": "haalari",
@@ -100,7 +102,8 @@ export function splitTitleSize(title: string, explicitSize?: string): MappedSize
   const idx = clean.lastIndexOf(" - ");
   if (idx > 0) {
     const seg = clean.slice(idx + 3).trim();
-    if (looksLikeSize(seg)) {
+    // Kaupan oma kokosuffiksi ("... - 130 cl") irrotetaan, vaikka sitä ei tunnistettaisi koko-merkinnäksi.
+    if (looksLikeSize(seg) || (raw !== "" && seg.toLowerCase() === raw.toLowerCase())) {
       base = clean.slice(0, idx).trim();
       if (!raw) raw = seg;
     }
@@ -232,6 +235,7 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
   const childBrands = new Set((store.childBrands ?? []).map((b) => b.trim().toLowerCase()));
   const childTypes = new Set((rules.childProductTypes ?? []).map((x) => x.trim().toLowerCase()));
   const excludeTitle = rules.excludeTitle ? new RegExp(rules.excludeTitle, "i") : null;
+  const excludeRoots = new Set((rules.excludeRoots ?? []).map((x) => x.trim().toLowerCase()));
   const groups = new Map<string, { base: string; variants: Variant[] }>();
 
   for (const r of records) {
@@ -245,11 +249,16 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
     // Muunnettavat koot (Polarn O. Pyret) säilytetään alkuperäisinä: "1 - 3" ei ole tunnistettu koko ennen muunnosta.
     const size = rules.convertSizes && r.size && !adultSize ? r.size.trim() : split.size;
     // Lastentuote: tunnettu lastenmerkki tai kaupan lastentuotetyyppi (Björn Borg "Kids"), vaikka age_group olisi "adult".
-    const childMarked = childBrands.has((r.brand || "").trim().toLowerCase()) || childTypes.has((r.product_type || "").trim().toLowerCase());
+    const childMarked = childBrands.has((r.brand || "").trim().toLowerCase()) || childTypes.has((r.product_type || "").trim().toLowerCase()) ||
+      childTypes.has((r.product_type || "").split(">")[0].trim().toLowerCase());
     if ((r.age_group || "").trim().toLowerCase() === "adult" && !childMarked) {
       stats.notClothingOrAdult++; continue;
     }
     if (excludeTitle && excludeTitle.test(r.title)) { stats.notClothingOrAdult++; continue; }
+    if (excludeRoots.size) {
+      const parts = (r.product_type || "").split(">").map((x) => x.trim().toLowerCase()).filter(Boolean);
+      if (parts.length && excludeRoots.has(parts[0]) && !parts.includes("vaatteet")) { stats.notClothingOrAdult++; continue; }
+    }
     if (
       type.startsWith("aikuisten") || NON_CLOTHING_TYPES.has(type) || (!rules.categoryPaths && type.includes(" > ")) ||
       /women/i.test(r.brand || "") || ADULT_TITLE_REGEX.test(r.title) ||
@@ -313,7 +322,7 @@ export function mapAdtractionRecords(records: Raw[], store: AdtractionStoreRules
         if (!v.size) continue;
         // Sukkahousujen koot ovat senttikokoja (ei kenkäkokoja kuten sukkien): ei muunneta.
         if (rules.convertSizes && !TIGHTS_TITLE_REGEX.test(g.base)) {
-          const conv = convertFeedSize(v.size, garment, rules.convertSizes === "lindex" ? "lindex" : true);
+          const conv = convertFeedSize(v.size, garment, rules.convertSizes === "lindex" || rules.convertSizes === "outdoor" ? rules.convertSizes : true);
           if (conv.adult) { adultVariants++; continue; }
           sizeSet.add(conv.size ?? (parseSizeToken(v.size).kind === "unknown" ? "One Size" : v.size));
         } else sizeSet.add(v.size);
