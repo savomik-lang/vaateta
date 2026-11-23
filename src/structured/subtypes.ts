@@ -49,10 +49,11 @@ export const SUBTYPE_RULES: Partial<Record<GarmentType, Rule[]>> = {
     { id: "neule", re: any(word("sweaters?", "jumpers?", "knit(?:ted)?", "knitwear", "cardigans?", "pullovers?", "stickad", "stickade", "stickat"), stem("neule", "neuletakki", "villapaid", "villapusero")) },
   ],
   housut: [
-    { id: "farkut", re: any(word("jeans", "denim\\s+(?:pants|trousers)", "denim"), stem("farkku", "farkut", "jeanshous")) },
-    { id: "shortsit", re: any(word("shorts", "short\\s+pants", "bermudas?", "swim\\s?shorts"), stem("shortsi", "shortsit", "bermuda")) },
-    { id: "leggingsit", re: any(word("leggings?", "leggins", "tights\\s+(?:kids|girls)"), stem("leggingsi", "leggingsit", "leggins")) },
+    // Järjestys ratkaisee: "Farkkushortsit" on shortsit ja "Collegehousut denim-tyylillä" collegehousut, ei farkut.
+    { id: "shortsit", re: any(word("shorts", "short\\s+pants", "bermudas?", "swim\\s?shorts"), stem("\\p{L}*shortsi", "bermuda")) },
     { id: "collegehousut", re: any(word("sweat\\s?pants", "joggers?", "jogger\\s+pants", "track\\s?pants", "jogging\\s+pants"), stem("collegehous", "college-hous", "mjukisbyx", "verkkari", "verryttelyhous", "collegebyx", "joggingbyx")) },
+    { id: "leggingsit", re: any(word("leggings?", "leggins", "tights\\s+(?:kids|girls)"), stem("leggingsi", "leggingsit", "leggins")) },
+    { id: "farkut", re: any(word("jeans", "denim\\s+(?:pants|trousers)", "denim"), stem("farkku", "farkut", "jeanshous")) },
     { id: "ulkoiluhousut", re: any(word("softshell", "hiking", "trekking", "outdoor", "shell\\s+pants", "trail", "walking\\s+pants", "cargo\\s+pants"), stem("ulkoilu", "retkeily", "vaellus", "friluft", "softshell")) },
   ],
   takki: [
@@ -65,6 +66,11 @@ export const SUBTYPE_RULES: Partial<Record<GarmentType, Rule[]>> = {
 // Vain vapaan tekstin hakuun: alatyyppejä, joita ei näytetä facetsissa (kuvakkeita ei ole), mutta joilla
 // haku voi rajata. Fleece-takit ovat kannassa osin takkeina, osin paitoina (paita.fleece).
 export const FREE_TEXT_SUBTYPE_RULES: Partial<Record<GarmentType, Rule[]>> = {
+  // Sadeasu = sadevaatteeksi nimetty haalari. Pelkkä "vedenpitävä"-merkintä ei riitä: fleece- ja välikausihaalareita
+  // on merkitty vedenpitäviksi, mutta ne eivät ole sadeasuja.
+  haalari: [
+    { id: "sadeasu", re: any(word("rain\\s?(?:suits?|sets?|overalls?|outfits?)", "waterproof\\s+(?:suits?|overalls?|sets?)", "shell\\s+(?:suits?|overalls?|sets?)", "puddle\\s?suits?"), stem("sadeasu", "sadehaalari", "kuoriasu", "kuorihaalari", "regnställ", "regnoverall", "skalställ", "skaloverall")) },
+  ],
   takki: [
     { id: "fleece", re: any(word("fleece", "pile", "windfleece", "wind\\s+fleece"), stem("fleecetakk", "fleecejack", "fleecejakk", "mikrofleece", "pilejack", "pilejakk")) },
   ],
@@ -90,7 +96,7 @@ export function subtypeBelongsTo(garment: GarmentType | undefined, subtype: stri
 // Lyhyet, monitulkintaiset sanat (ulkoiluhousut: "trail", "outdoor"; pitkähihainen) jätetään pois.
 const IMPLIES_GARMENT = new Set([
   "kypärämyssy", "sadehattu", "aurinkohattu", "lippis", "kumisaappaat", "lenkkarit", "sandaalit", "tossut",
-  "sormikkaat", "huppari", "t-paita", "neule", "fleece", "farkut", "shortsit", "leggingsit", "collegehousut", "softshell", "kuoritakki", "toppatakki",
+  "sormikkaat", "huppari", "t-paita", "neule", "fleece", "farkut", "shortsit", "leggingsit", "collegehousut", "softshell", "kuoritakki", "toppatakki", "sadeasu",
 ]);
 const PLAIN_PIPO_RE = /(?<![\p{L}\p{N}])(?:pipo|pipot|pipon|pipoa|pipoja|beanies?|mössa|mössor|myssy|myssyt|myssyn)(?![\p{L}\p{N}])/iu;
 
