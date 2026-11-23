@@ -35,6 +35,7 @@ export function buildIndex(products: Product[]): ProductIndex {
 
 export function criteriaForItem(item: ParsedItem, filters: Filters): SearchCriteria {
   const c: SearchCriteria = { garment_type: item.garment, child_signal: true };
+  if (item.subtype) c.subtype = item.subtype;
   if (item.winter) c.season = "winter";
   if (item.wp) c.waterproof = true;
   if (filters.gender) c.child_gender_pref = filters.gender;

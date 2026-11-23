@@ -29,7 +29,7 @@ export const SUBTYPE_RULES: Partial<Record<GarmentType, Rule[]>> = {
     { id: "kumisaappaat", re: any(word("rain\\s?boots?", "wellies", "wellingtons?", "rubber\\s+boots?", "rain\\s+wellies"), stem("kumisaapp", "kurasaapp", "gummistövl", "gummistöv", "regnstövl")) },
     { id: "lenkkarit", re: any(word("sneakers?", "trainers?", "running\\s+shoes?", "sport\\s+shoes?", "gym\\s+shoes?", "tennis\\s+shoes?"), stem("lenkkar", "lenkkitossu", "juoksukeng", "urheilukeng", "tennari", "löparsko", "löparskor", "joggingsko", "joggingskor", "träningssko", "träningsskor", "gympasko", "gympaskor")) },
     { id: "sandaalit", re: any(word("sandals?", "flip[\\s-]?flops?", "slides?", "sliders?"), stem("sandaal", "sandaler", "sandalett", "varvassandal")) },
-    { id: "tossut", re: any(word("slippers?", "house\\s+shoes?", "indoor\\s+shoes?"), stem("tohvel", "tossu", "tofflor", "toffel", "innesko", "inneskor", "sisäkeng")) },
+    { id: "tossut", re: any(word("slippers?", "house\\s+shoes?", "indoor\\s+shoes?"), stem("tohvel", "\\p{L}*tossu", "tofflor", "toffel", "innesko", "inneskor", "sisäkeng")) },
   ],
   pipo: [
     { id: "kypärämyssy", re: any(word("balaclavas?", "balaklavas?", "helmet\\s+hats?", "helmet\\s+beanies?"), stem("kypärämyss", "kypärälakk", "balaklav", "hjälmmöss")) },
