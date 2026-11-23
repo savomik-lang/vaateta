@@ -124,6 +124,13 @@ export const NEAREST_MAX_GAP_EU = 4;
 
 // Lämpimän sään ja sisäkengät: eivät kuulu talvikenkähaun tuloksiin, vaikka kuvauksessa mainittaisiin talvi.
 const WARM_SHOE_REGEX = /(?<![\p{L}])(?:sandals?|sandaal\p{L}*|sandaler|flip[\s-]?flops?|slides?|sliders?|swim\s?shoes?|water\s?shoes?|aqua\s?shoes?|beach\s?shoes?|uimakeng\p{L}*|badsko\p{L}*|varvastossu\p{L}*|birkenstock|birki|crocs|clogs?|mules?|espadrilles?|ballerinas?|ballet\s?flats?|loafers?|boat\s?shoes?|jelly|mokkasiin\p{L}*)(?![\p{L}])/iu;
+// Kurakenkähaku (kengät + vedenpitävä): sandaalit, Birkenstockit, crocsit ja tossut eivät ole kurakenkiä,
+// vaikka materiaali (EVA) tai kuvaus olisi vedenpitävä. Tossu-sanan yhdyssanat ("toppatossut") mukaan.
+const NON_RAIN_SHOE_REGEX = new RegExp(
+  `${WARM_SHOE_REGEX.source}|(?<![\\p{L}\\p{N}])\\p{L}*(?:tossu|tohvel|toffel|toffl|slippers?|innesko|sisäkeng)\\p{L}*`, "iu");
+// Fleece/pile/windfleece otsikossa; sade-/kuorisana otsikossa pelastaa ("Rain Set Fleece" on sadeasu).
+const FLEECE_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:\p{L}*fleece|pile)(?![\p{L}\p{N}])/iu;
+const RAIN_TITLE_REGEX = /(?<![\p{L}])(?:rain\p{L}*|regn\p{L}*|sade\p{L}*|shell|skal\p{L}*|kuori\p{L}*|waterproof|vedenpit\p{L}*|vattent\p{L}*)(?![\p{L}])/iu;
 // Talvikenkä: otsikossa talvi-/saapas-vihje. Pelkkä kuvauksesta johdettu talvimerkintä ei riitä (kesäkengissä esiintyy "winter"-sanoja).
 const WINTER_SHOE_HINT_REGEX = /(?<![\p{L}])(?:\p{L}*boots?|saapa\p{L}*|saapp\p{L}*|kängor|känga|stövl\p{L}*|chelsea|nilkkur\p{L}*|talvi\p{L}*|vinter\p{L}*|winter|warm|frost|snow\p{L}*|lumi\p{L}*|kuura|pakkas\p{L}*|thermo\p{L}*|gtx|gore-?tex|insulated|vuorat\p{L}*|fur|fleece-?lined|kamik|sorel|bogs|moon\s?boots?|arctic|polar|tundra|storm|blizzard|expedition)(?![\p{L}])/iu;
 
@@ -161,7 +168,12 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
     const allowed = c.brand_allow.some((b) => brandMatches(p.brand, b));
     if (!allowed) return false;
   }
-  if (c.waterproof === true && p.waterproof !== true) return false;
+  if (c.waterproof === true) {
+    if (p.waterproof !== true) return false;
+    // Vedenpitävyys-merkintä tulee usein kuvauksesta: se ei tee sandaalista/tossusta kurakenkää eikä fleecestä sadetakkia.
+    if (p.garment_type === "kengät" && c.subtype !== "sandaalit" && c.subtype !== "tossut" && NON_RAIN_SHOE_REGEX.test(p.title)) return false;
+    if ((p.garment_type === "takki" || p.garment_type === "haalari") && FLEECE_TITLE_REGEX.test(p.title) && !RAIN_TITLE_REGEX.test(p.title)) return false;
+  }
   if (c.child_gender_pref && p.gender && p.gender !== "unisex") {
     if (c.child_gender_pref !== "unisex" && p.gender !== c.child_gender_pref) return false;
   }
@@ -172,7 +184,10 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
   }
   if (c.season === "winter" && p.garment_type && SEASON_FILTERED_GARMENTS.has(p.garment_type)) {
     if (p.garment_type === "kengät" && !isWinterShoeTitle(p.title)) return false;
-    const winter = p.winter !== undefined ? p.winter : guessWinter(p.title);
+    // Otsikon selvä "ei talvea" (fleece, välikausi, kuori, Half Zip, playsuit) ratkaisee, vaikka kantaan olisi tallennettu
+    // kuvauksesta johdettu talvimerkintä.
+    const byTitle = guessWinter(p.title);
+    const winter = byTitle === false ? false : p.winter !== undefined ? p.winter : byTitle;
     if (winter !== true) return false;
   }
   const targetCm = targetSizeCm(c);

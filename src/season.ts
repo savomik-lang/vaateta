@@ -7,9 +7,13 @@ const POSITIVE = new RegExp(
   `(?<!${L})(?:winter|vinter|talvi${L}*|toppa${L}*|untuva${L}*|padded|insulated|isolerad${L}*|eristetty|` +
   `down|dun|puffer|parka|thinsulate|primaloft|wadded|vadderad${L}*|täck${L}*|snow|ski|skid${L}*|` +
   `laskettelu${L}*|thermo${L}*)(?!${L})`, "iu");
+// Yhdyssanat lasketaan mukaan (fleecetakki, pilefleece-takki, softshellhaalari, kuorihaalari, välikausihaalari);
+// "Full Zip"/"Half Zip" on fleece- tai neulevälikerros, "2-Lags"/"2-layer" kuorivaate ilman eristettä, playsuit leikki-/yöpuku.
 const NEGATIVE = new RegExp(
-  `(?<!${L})(?:rain${L}*|regn${L}*|sade${L}*|drizzle|shell|skal${L}*|fleece|softshell|uv${L}*|sun|sun-?proof|sun-?safe|sun-?protect${L}*|sol|summer|sommar|` +
-  `kesä${L}*|windbreaker|tuuli${L}*|lightweight|thin|mid-?layer|base-?layer)(?!${L})`, "iu");
+  `(?<!${L})(?:rain${L}*|regn${L}*|sade${L}*|drizzle|shell|skal${L}*|${L}*fleece${L}*|softshell${L}*|kuori${L}*|uv${L}*|sun|sun-?proof|sun-?safe|sun-?protect${L}*|sol|summer|sommar|` +
+  `kesä${L}*|windbreaker|tuuli${L}*|lightweight|thin|mid-?layer|base-?layer|` +
+  `välikausi${L}*|mellansäsong${L}*|(?:full|half)[\\s-]?zip|[23][\\s-]?(?:lags|layers?)|` +
+  `play[\\s-]?suits?|leikkipuku${L}*|lekdräkt${L}*)(?!${L})`, "iu");
 
 function classify(text: string): boolean | null {
   if (POSITIVE.test(text)) return true;

@@ -71,7 +71,26 @@ const FLEECE_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:\p{L}*fleece|pile)(?![\p{L}\p{N}
 const BASE_LAYER_TITLE_REGEX = /base[\s-]?layer|merino|wool|(?<![\p{L}])ull(?![\p{L}])|villa|thermal|kerrasto|underställ|long\s?johns?|alushous|thermo|(?<![\p{L}])(?:pants?|bottoms?|tights|leggings|byxor|housut)(?![\p{L}])/iu;
 const JACKET_TITLE_REGEX = /(?<![\p{L}])(?:jackets?|jacka|jackor|takki|jakku|cardigan)(?![\p{L}])/iu;
 
+// Outnorthin kategoria "Base layers" sisältää myös alushousuja ja hupparipaitoja; "Jackets" taas hoodie- ja Half Zip -paitoja.
+const UNDERWEAR_TITLE_REGEX = /(?<![\p{L}])(?:boxers?|briefs|underpants|panties|bokserit?|bokserikalsar\p{L}*|trosor|kalsonger)(?![\p{L}])/iu;
+const HOODIE_TITLE_REGEX = /(?<![\p{L}])(?:hoodies?|hupparit?|huvtröj\p{L}*|hettetröj\p{L}*)(?![\p{L}])/iu;
+const HALF_ZIP_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:half[\s-]?zip|1\/2[\s-]?zip|zip[\s-]?neck|halvzip|puolivetoketju\p{L}*)(?![\p{L}\p{N}])/iu;
+const COVER_WORD_REGEX = /(?<![\p{L}])(?:jackets?|jacka|jackor|takki|jakku|coat|parka|vest|liivi|väst)(?![\p{L}])/iu;
+// "Setti, jossa neuletakki ja housut": useamman vaatteen setti ei ole takki ("Rain Set" ei osu: setti on otsikon alussa
+// pilkun, viivan tai liitesanan kanssa). Vain takit: housut- ja paita-luokkien setit (Lindex "Setti - Paita ja shortsit")
+// jäävät toistaiseksi näkyviin, koska niitä on kymmeniä eikä setille ole omaa kategoriaa.
+const MULTI_GARMENT_SET_REGEX = /^\s*(?:setti|set|sett)\s*(?:[,\-–]|(?:jossa|joka|sisältää|med|with|of|som)\b)/iu;
+const SET_REFINED_TYPES = new Set<GarmentType>(["takki"]);
+
 export function refineGarmentType(type: GarmentType, title: string): GarmentType {
-  if (type !== "kerrasto" || !FLEECE_TITLE_REGEX.test(title) || BASE_LAYER_TITLE_REGEX.test(title)) return type;
-  return JACKET_TITLE_REGEX.test(title) ? "takki" : "paita";
+  if (SET_REFINED_TYPES.has(type) && MULTI_GARMENT_SET_REGEX.test(title)) return "muu";
+  if (type === "kerrasto") {
+    if (UNDERWEAR_TITLE_REGEX.test(title)) return "muu";
+    if (FLEECE_TITLE_REGEX.test(title) && !BASE_LAYER_TITLE_REGEX.test(title)) return JACKET_TITLE_REGEX.test(title) ? "takki" : "paita";
+    if (!BASE_LAYER_TITLE_REGEX.test(title) && (HOODIE_TITLE_REGEX.test(title) || HALF_ZIP_TITLE_REGEX.test(title)) && !COVER_WORD_REGEX.test(title)) return "paita";
+    return type;
+  }
+  // Hupparit ja Half Zip -paidat ovat paitoja (huppari-alatyyppi), vaikka kauppa luokittelisi ne takeiksi.
+  if (type === "takki" && !COVER_WORD_REGEX.test(title) && (HOODIE_TITLE_REGEX.test(title) || HALF_ZIP_TITLE_REGEX.test(title))) return "paita";
+  return type;
 }
