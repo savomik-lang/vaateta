@@ -4,6 +4,7 @@ import { IKeyValueStore } from "../store/kv-store";
 import { checkAndIncrementDailyLimit } from "../ai/rate-limit";
 import { DetectedLanguage, detectLanguage } from "./language";
 import { LlmExtraction, LlmLanguage, sanitizeLlmExtraction } from "./llm-spec";
+import { subtypeBelongsTo } from "../structured/subtypes";
 
 // ---------------------------------------------------------------------------
 // LLM-tulkinta sääntöparserin VARAPOLKUNA.
@@ -114,6 +115,13 @@ export function mergeCriteria(rules: SearchCriteria, llm: SearchCriteria, prefer
   if (sizeSource.size_cm !== undefined) merged.size_cm = sizeSource.size_cm;
   if (sizeSource.size_raw !== undefined) merged.size_raw = sizeSource.size_raw;
   if (sizeSource.age !== undefined) merged.age = sizeSource.age;
+
+  // Kenkien EU-koko kulkee koon mukana samasta lähteestä.
+  delete merged.shoe_eu;
+  if (sizeSource.shoe_eu !== undefined) merged.shoe_eu = sizeSource.shoe_eu;
+
+  // Alatyyppi tulee säännöistä; jos LLM valitsi eri vaatetyypin, alatyyppi ei enää päde.
+  if (merged.subtype && !subtypeBelongsTo(merged.garment_type, merged.subtype)) delete merged.subtype;
 
   const deny = [...(rules.brand_deny ?? []), ...(llm.brand_deny ?? [])];
   if (deny.length) merged.brand_deny = [...new Set(deny)];

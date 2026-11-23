@@ -15,8 +15,9 @@ import { Product } from "../src/types";
 import { parseLang, resolveMarket } from "../src/lang";
 import { resolveCountry } from "../src/geo";
 import { structuredSearchResponse } from "../src/structured/handlers";
+import { catalogSearch } from "../src/search-catalog";
 import {
-  Notice, findRelaxation, buildNoResultsNotice, buildPartialSizeNotice, buildLimitedCoverageNotice,
+  Notice, findRelaxation, buildNoResultsNotice, buildLimitedCoverageNotice,
   buildNoGarmentNotice, buildRateLimitedNotice,
 } from "../src/search-notice";
 
@@ -84,25 +85,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const adapter = new MultiStoreAdapter();
     const allProducts = await adapter.loadProductsFor(country);
-    // LAPSITURVALLISUUS (korkea prioriteetti): viimeinen varmistus ennen
-    // näyttämistä. Ks. filterChildSafe-funktion kommentti yllä.
+    // LAPSITURVALLISUUS (korkea prioriteetti): viimeinen varmistus ennen näyttämistä (filterChildSafe, ks. catalogSearch).
+    // Samat tuotteet eri väreissä (sama kauppa, sama hinta) näytetään kerran. Koko-varasäännöt (hieman pienemmät,
+    // alatyypin lähimmät koot) ja niiden ilmoitus: src/search-catalog.ts.
     const fitCtx = fitContextFromCriteria(criteria, market);
-    // Samat tuotteet eri väreissä (sama kauppa, sama hinta) näytetään kerran.
-    const runSafe = (c: typeof criteria, opts = {}) =>
-      dedupeResults(filterChildSafe(allProducts.filter((p) => matchesCriteria(p, c, opts))), fitContextFromCriteria(c, market), view);
-    const rawCatalogMatches = allProducts.filter((p) => matchesCriteria(p, criteria));
-    let catalogMatches = dedupeResults(filterChildSafe(rawCatalogMatches), fitCtx, view);
-    let notice: Notice | undefined;
-
-    // Vähän täsmälleen sopivia -> otetaan mukaan myös hieman pienemmät koot
-    // ja kerrotaan siitä käyttäjälle.
-    if (targetSizeCm(criteria) !== undefined && catalogMatches.length < 5) {
-      const extended = runSafe(criteria, { allowSmaller: true });
-      if (extended.length > catalogMatches.length) {
-        catalogMatches = extended;
-        notice = buildPartialSizeNotice(criteria, lang);
-      }
-    }
+    const { rawMatches: rawCatalogMatches, matches: catalogMatches, notice: sizeNotice, runSafe } = catalogSearch(allProducts, criteria, view);
+    let notice: Notice | undefined = sizeNotice;
 
     if (catalogMatches.length > 0) {
       if (!notice && isTeenSearch(criteria) && catalogMatches.length <= 5) notice = buildLimitedCoverageNotice(lang);

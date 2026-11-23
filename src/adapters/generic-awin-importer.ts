@@ -2,7 +2,7 @@ import { readCsvRecords } from "./feed-stream";
 import { config } from "../config";
 import { Product, Currency } from "../types";
 import { RedisProductStore } from "../store/product-store";
-import { guessGarmentType } from "../nlu/garment-keywords";
+import { guessGarmentType, refineGarmentType } from "../nlu/garment-keywords";
 import { guessWinter } from "../season";
 import { StoreDefinition } from "../stores-registry";
 import { isChildSafeProductForStore, hasChildMarkers } from "../safety/child-safety-filter";
@@ -93,7 +93,7 @@ function mapGoogleRow(row: GoogleFeedRow, storeKey: string): Product | null {
     source: storeKey,
     title: row.title,
     brand: row.brand || "Tuntematon",
-    garment_type: guessGarmentType(row.google_product_category, row.product_type, row.title),
+    garment_type: refineGarmentType(guessGarmentType(row.google_product_category, row.product_type, row.title), row.title),
     price: effectivePrice, original_price: originalPrice, discount_percent: discountPercent,
     size_available: row.size ? [row.size] : [],
     size_normalized: null,
@@ -189,7 +189,7 @@ export function mapRow(row: RawFeedRow, storeKey: string, opts: { basePriceIsSal
     source: storeKey,
     title: row.product_name,
     brand: row.brand_name || "Tuntematon",
-    garment_type: guessGarmentType(row.merchant_category || row.category_name, row.product_type || row.merchant_product_category_path, row.product_name),
+    garment_type: refineGarmentType(guessGarmentType(row.merchant_category || row.category_name, row.product_type || row.merchant_product_category_path, row.product_name), row.product_name),
     price, original_price: originalPrice, discount_percent: discountPercent,
     size_available: sizeRaw ? [sizeRaw] : [],
     size_normalized: null,

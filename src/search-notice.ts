@@ -110,6 +110,33 @@ const GARMENT_PLURAL: Record<Lang, Record<GarmentType, string>> = {
     sukat: "socks", pipo: "beanies", lapaset: "mittens", kerrasto: "base layers", muu: "clothes",
   },
 };
+// Alatyypin hakusana (fi, sv, en); parseCriteriaFromText tulkitsee sen takaisin samaksi alatyypiksi.
+const SUBTYPE_WORD: Record<Lang, Record<string, string>> = {
+  fi: {
+    kumisaappaat: "kumisaappaat", lenkkarit: "lenkkarit", sandaalit: "sandaalit", tossut: "tossut",
+    kypärämyssy: "kypärämyssy", sadehattu: "sadehattu", aurinkohattu: "aurinkohattu", lippis: "lippis", pipo: "pipo",
+    sormikkaat: "sormikkaat", lapaset: "lapaset",
+    huppari: "huppari", fleece: "fleece", "t-paita": "t-paita", pitkähihainen: "pitkähihainen paita", neule: "neule",
+    farkut: "farkut", shortsit: "shortsit", leggingsit: "leggingsit", collegehousut: "collegehousut", ulkoiluhousut: "ulkoiluhousut",
+    softshell: "softshelltakki", kuoritakki: "sadetakki", toppatakki: "toppatakki", "takki.fleece": "fleecetakki",
+  },
+  sv: {
+    kumisaappaat: "gummistövlar", lenkkarit: "sneakers", sandaalit: "sandaler", tossut: "tofflor",
+    kypärämyssy: "balaklava", sadehattu: "regnhatt", aurinkohattu: "solhatt", lippis: "keps", pipo: "mössa",
+    sormikkaat: "fingervantar", lapaset: "vantar",
+    huppari: "huvtröja", fleece: "fleece", "t-paita": "t-shirt", pitkähihainen: "långärmad tröja", neule: "stickad tröja",
+    farkut: "jeans", shortsit: "shorts", leggingsit: "leggings", collegehousut: "mjukisbyxor", ulkoiluhousut: "friluftsbyxor",
+    softshell: "softshelljacka", kuoritakki: "regnjacka", toppatakki: "täckjacka", "takki.fleece": "fleecejacka",
+  },
+  en: {
+    kumisaappaat: "rain boots", lenkkarit: "sneakers", sandaalit: "sandals", tossut: "slippers",
+    kypärämyssy: "balaclava", sadehattu: "rain hat", aurinkohattu: "sun hat", lippis: "cap", pipo: "beanie",
+    sormikkaat: "gloves", lapaset: "mittens",
+    huppari: "hoodie", fleece: "fleece", "t-paita": "t-shirt", pitkähihainen: "long sleeve", neule: "sweater",
+    farkut: "jeans", shortsit: "shorts", leggingsit: "leggings", collegehousut: "sweatpants", ulkoiluhousut: "hiking pants",
+    softshell: "softshell jacket", kuoritakki: "rain jacket", toppatakki: "down jacket", "takki.fleece": "fleece jacket",
+  },
+};
 const WINTER_PREFIX_GARMENTS = new Set<GarmentType>(["takki", "haalari", "kengät"]);
 const WINTER_PREFIX: Record<Lang, string> = { fi: "talvi", sv: "vinter", en: "winter " };
 
@@ -136,7 +163,10 @@ function money(amount: number, currency: Currency): string {
 export function buildQuery(c: SearchCriteria, lang: Lang = "fi"): string {
   const parts: string[] = [];
   const g = c.garment_type;
-  if (g) {
+  // Alatyyppi korvaa yleisen vaatesanan ("kypärämyssy" eikä "pipo"), jotta ehdotus säilyttää rajauksen.
+  const subWord = c.subtype ? (SUBTYPE_WORD[lang][`${c.garment_type}.${c.subtype}`] ?? SUBTYPE_WORD[lang][c.subtype]) : undefined;
+  if (g && subWord) parts.push(subWord);
+  else if (g) {
     const word = GARMENT_WORD[lang][g];
     if (c.season === "winter" && WINTER_PREFIX_GARMENTS.has(g) && lang !== "en") parts.push(`${WINTER_PREFIX[lang]}${word}`);
     else if (c.season === "winter") parts.push(WINTER_PREFIX[lang].trim(), word);
@@ -148,7 +178,9 @@ export function buildQuery(c: SearchCriteria, lang: Lang = "fi"): string {
   else if (c.child_gender_pref === "poika") parts.push(boy);
   else if (c.child_gender_pref === "unisex") parts.push("unisex");
   const cm = targetSizeCm(c);
-  if (cm) parts.push(`${cm} cm`);
+  // Kenkien koko on EU-koko: "28 cm" tulkittaisiin uudelleen senttikooksi.
+  if (c.shoe_eu) parts.push(`${{ fi: "koko", sv: "storlek", en: "size" }[lang]} ${c.shoe_eu}`);
+  else if (cm) parts.push(`${cm} cm`);
   if (!c.child_gender_pref && !cm && c.child_signal) parts.push({ fi: "lapselle", sv: "barn", en: "kids" }[lang]);
   if (c.max_price) parts.push(`max ${money(c.max_price.amount, c.max_price.currency)}`);
   if (c.waterproof) parts.push({ fi: "vedenpitävä", sv: "vattentät", en: "waterproof" }[lang]);
@@ -275,6 +307,21 @@ export function buildPartialSizeNotice(c: SearchCriteria, lang: Lang = "fi"): No
       fi: `Osa tuloksista on hieman pienempiä kuin haettu koko${suffix}. Tarkista koot ennen tilaamista.`,
       sv: `Några av resultaten är något mindre än den sökta storleken${suffix}. Kontrollera storlekarna innan du beställer.`,
       en: `Some of the results are slightly smaller than the size you searched for${suffix}. Check the sizes before ordering.`,
+    }[lang],
+  };
+}
+
+/** Alatyypillä on haetussa koossa vähän tuotteita: mukana saman alatyypin lähimmät koot (ei muita alatyyppejä). */
+export function buildNearestSizeNotice(c: SearchCriteria, lang: Lang = "fi"): Notice {
+  const cm = targetSizeCm(c);
+  const shoe = c.shoe_eu;
+  const suffix = shoe ? ` ${shoe}` : cm ? ` ${cm}` : "";
+  return {
+    code: "partial_size",
+    message: {
+      fi: `Haetussa koossa${suffix} on vain vähän tähän hakuun sopivia tuotteita, joten mukana on myös lähimpiä kokoja. Tarkista koot ennen tilaamista.`,
+      sv: `I den sökta storleken${suffix} finns det få produkter som passar sökningen, så närmaste storlekar visas också. Kontrollera storlekarna innan du beställer.`,
+      en: `There are only a few matching products in the size you searched for${suffix}, so the nearest sizes are included too. Check the sizes before ordering.`,
     }[lang],
   };
 }

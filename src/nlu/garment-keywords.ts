@@ -23,7 +23,7 @@ export const GARMENT_KEYWORDS: Record<GarmentType, string[]> = {
   mekko: ["mekko", "dress", "klänning", "juhlamekko", "kesämekko", "mekot"],
   body: ["body", "bodysuit", "vauvanbody", "potkupuku"],
   pyjama: ["pyjama", "pyjamat", "yöpuku", "yöpuvut", "yövaate", "yövaatteet", "yöasu", "pajamas", "nukkumapuku"],
-  pipo: ["pipo", "beanie", "myssy", "aurinkohattu", "lippalakki", "lippis", "balaklava", "balaclava", "hattu"],
+  pipo: ["pipo", "beanie", "myssy", "aurinkohattu", "lippalakki", "lippis", "balaklava", "balaclava", "kypärälakki", "hattu"],
   lapaset: ["lapaset", "mittens", "vantar", "sormikkaat", "käsineet", "hanskat", "hanska", "rukkas"],
   muu: [],
 };
@@ -62,4 +62,16 @@ function guessByKeyword(haystack: string): GarmentType {
     if (keywords.some((kw) => haystack.includes(kw))) return type;
   }
   return "muu";
+}
+
+// Kerrastoksi luokiteltu fleece-/pile-tuote ei ole kerrasto: se on välikerros (Outnorthin kategoria "Base layers"
+// sisältää myös fleece-takkeja). Takkisanalla -> takki, muuten paita (paita.fleece). Oikeat kerrastot (merino, villa,
+// "base layer", alushousut) ja kerrastohousut jäävät ennalleen.
+const FLEECE_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:\p{L}*fleece|pile)(?![\p{L}\p{N}])/iu;
+const BASE_LAYER_TITLE_REGEX = /base[\s-]?layer|merino|wool|(?<![\p{L}])ull(?![\p{L}])|villa|thermal|kerrasto|underställ|long\s?johns?|alushous|thermo|(?<![\p{L}])(?:pants?|bottoms?|tights|leggings|byxor|housut)(?![\p{L}])/iu;
+const JACKET_TITLE_REGEX = /(?<![\p{L}])(?:jackets?|jacka|jackor|takki|jakku|cardigan)(?![\p{L}])/iu;
+
+export function refineGarmentType(type: GarmentType, title: string): GarmentType {
+  if (type !== "kerrasto" || !FLEECE_TITLE_REGEX.test(title) || BASE_LAYER_TITLE_REGEX.test(title)) return type;
+  return JACKET_TITLE_REGEX.test(title) ? "takki" : "paita";
 }

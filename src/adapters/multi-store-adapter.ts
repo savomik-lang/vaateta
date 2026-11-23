@@ -3,7 +3,10 @@ import { RedisProductStore, InMemoryProductStore, IProductStore } from "../store
 import { toEur } from "../currency";
 import { colorMatches } from "../nlu/colors";
 import { looksLikeNonClothing, BODY_PRODUCT_REGEX } from "../nlu/non-clothing";
-import { productSizeFit, inferSizeFromTitle } from "../size";
+import { productSizeFit, inferSizeFromTitle, sizeGap } from "../size";
+import { matchesSubtype } from "../structured/subtypes";
+import { productHasMaterial } from "../nlu/materials";
+import { refineGarmentType } from "../nlu/garment-keywords";
 import { hasChildMarkers } from "../safety/child-safety-filter";
 import { guessWinter, SEASON_FILTERED_GARMENTS } from "../season";
 import { STORES, getConfiguredStores } from "../stores-registry";
@@ -103,7 +106,16 @@ export interface MatchOptions {
   // Salli myös hieman (yksi koko) haettua pienemmät koot - käytetään kun
   // täsmälleen sopivia on vähän (notice partial_size).
   allowSmaller?: boolean;
+  // Salli myös lähimmät koot (enintään NEAREST_MAX_GAP_CM cm / NEAREST_MAX_GAP_EU kokoa haetusta, kumpaankin suuntaan).
+  // Vapaan tekstin haun varasääntö, kun alatyypillä on haetussa koossa vähän tuotteita.
+  allowNearest?: boolean;
 }
+
+export const NEAREST_MAX_GAP_CM = 24;
+export const NEAREST_MAX_GAP_EU = 4;
+
+// Lämpimän sään kengät: eivät kuulu talvikenkähakuun, vaikka kuvauksessa mainittaisiin talvi.
+const WARM_SHOE_REGEX = /(?<![\p{L}])(?:sandals?|sandaal\p{L}*|sandaler|flip[\s-]?flops?|slides?|sliders?|swim\s?shoes?|water\s?shoes?|aqua\s?shoes?|beach\s?shoes?|uimakeng\p{L}*|badsko\p{L}*|varvastossu\p{L}*)(?![\p{L}])/iu;
 
 export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOptions = {}): boolean {
   if (!p.in_stock) return false;
@@ -123,6 +135,8 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
     if (c.child_gender_pref === "poika" && WOMENS_TITLE_REGEX.test(p.title) && !MENS_TITLE_REGEX.test(p.title)) return false;
   }
   if (c.garment_type && p.garment_type !== c.garment_type) return false;
+  // Alatyyppi (kypärämyssy, farkut, softshell...): sama rajaus kuin rakenteisen haun items=tyyppi.alatyyppi.
+  if (c.subtype && !matchesSubtype(p, c.subtype)) return false;
   // Liivi ei ole takki: takkihaku ei näytä liivejä, ellei liiviä haeta nimenomaan.
   if (c.garment_type === "takki" && !c.vest && VEST_TITLE_REGEX.test(p.title)) return false;
   // Vertailu EUR:ssa, jotta SEK/NOK/DKK-hintaiset tuotteet (Outnorth SE)
@@ -143,10 +157,11 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
   }
   if (c.color && p.color && !colorMatches(p.color, c.color)) return false;
   if (c.material_keywords?.length) {
-    const haystack = (p.material || "").toLowerCase();
-    if (!c.material_keywords.some((kw) => haystack.includes(kw.toLowerCase()))) return false;
+    // Materiaali materiaalikentästä tai otsikosta (kenttä on useimmiten tyhjä); villa = villa/ull/wool/merino.
+    if (!c.material_keywords.some((kw) => productHasMaterial(p.material, p.title, kw))) return false;
   }
   if (c.season === "winter" && p.garment_type && SEASON_FILTERED_GARMENTS.has(p.garment_type)) {
+    if (p.garment_type === "kengät" && WARM_SHOE_REGEX.test(p.title)) return false;
     const winter = p.winter !== undefined ? p.winter : guessWinter(p.title);
     if (winter !== true) return false;
   }
@@ -165,9 +180,18 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
       // viittaa isompiin lapsiin - "Baby/Toddler/Kids" ilman ikää on pienille.
       else if (targetCm >= 152 && !TEEN_TITLE_REGEX.test(p.title)) return false;
     }
-    const fit = productSizeFit(sizes, targetCm, p.garment_type === "kengät", c.shoe_eu);
-    if (fit === null) return false;
-    if (fit === "smaller" && !opts.allowSmaller) return false;
+    const isShoe = p.garment_type === "kengät";
+    const fit = productSizeFit(sizes, targetCm, isShoe, c.shoe_eu);
+    if (opts.allowNearest) {
+      // Lähimmät koot: mikä tahansa tulkittava koko riittävän lähellä (kumpaankin suuntaan).
+      if (fit === null) {
+        const gap = sizeGap(sizes, targetCm, isShoe, c.shoe_eu);
+        if (gap === null || gap > (isShoe ? NEAREST_MAX_GAP_EU : NEAREST_MAX_GAP_CM)) return false;
+      }
+    } else {
+      if (fit === null) return false;
+      if (fit === "smaller" && !opts.allowSmaller) return false;
+    }
   }
   return true;
 }
@@ -191,7 +215,10 @@ export class MultiStoreAdapter {
       const allResults = await Promise.all(this.stores.map((s) => s.loadAll()));
       // Suojaverkko vanhalle datalle: alkuperäinen hinta kelpaa vain jos se on
       // korkeampi kuin nykyinen (vanhat FI-importit käyttivät ALVitonta base_pricea).
-      this.cache = allResults.flat().map((p) => {
+      this.cache = allResults.flat().map((raw) => {
+        // Kerrastoksi luokiteltu fleece-välikerros siirretään takiksi/paidaksi (ks. refineGarmentType).
+        const type = refineGarmentType(raw.garment_type, raw.title);
+        const p = type === raw.garment_type ? raw : { ...raw, garment_type: type };
         const o = p.original_price;
         if (o && o.currency === p.price.currency && o.amount <= p.price.amount) {
           return { ...p, original_price: null, discount_percent: null };

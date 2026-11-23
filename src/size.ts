@@ -166,6 +166,27 @@ export function productSizeFit(sizes: string[], targetCm: number, isShoe: boolea
   return best;
 }
 
+function rangeGap(lo: number, hi: number, a: number): number {
+  return a < lo ? lo - a : a > hi ? a - hi : 0;
+}
+
+/**
+ * Lähin koko haetusta (cm; kengillä EU-koko): pienin etäisyys tuotteen tulkittavien kokojen ja haetun koon välillä.
+ * Null, jos tuotteella ei ole yhtään vertailukelpoista kokoa. Käytetään "lähimmät koot" -varasääntöön.
+ */
+export function sizeGap(sizes: string[], targetCm: number, isShoe: boolean, shoeEu?: number): number | null {
+  let best: number | null = null;
+  const eu = shoeEu ?? shoeEuForCm(targetCm);
+  for (const tok of sizes.map(parseSizeToken)) {
+    let gap: number | null = null;
+    if (tok.kind === "cm" && !isShoe) gap = rangeGap(tok.lo, tok.hi, targetCm);
+    else if (tok.kind === "eu" && isShoe) gap = rangeGap(tok.lo, tok.hi, eu);
+    else if (tok.kind === "eu" && !isShoe && tok.lo === tok.hi && tok.lo <= 17) gap = Math.abs(AGE_TO_CM[tok.lo] - targetCm);
+    if (gap !== null && (best === null || gap < best)) best = gap;
+  }
+  return best;
+}
+
 // Suurin/pienin senttikoko tuotelistasta (viestejä varten, esim. "vain kokoon 152 asti").
 export function sizeRangeCm(sizeLists: string[][]): { min: number; max: number } | null {
   let min = Infinity, max = -Infinity;
