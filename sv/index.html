@@ -2923,7 +2923,8 @@
   function pruneUnsupported(){
     var st = panelState, vis = visibleOpts(st.cat);
     var kept = st.opts.filter(function(id){ return vis.indexOf(id) !== -1; });
-    if (!kept.length && vis.length) kept = [vis.indexOf(CATS[st.cat].def) !== -1 ? CATS[st.cat].def : vis[0]];
+    // Varavalinta vain, jos karsinta poisti viimeisen valinnan (käyttäjän tyhjentämä valinta saa jäädä tyhjäksi)
+    if (!kept.length && st.opts.length && vis.length) { kept = [vis.indexOf(CATS[st.cat].def) !== -1 ? CATS[st.cat].def : vis[0]]; st.autoDef = true; }
     var changed = kept.join() !== st.opts.join();
     st.opts.forEach(function(id){ if (kept.indexOf(id) === -1) delete st.subs[id]; });
     st.opts = kept;
@@ -3127,7 +3128,8 @@
 
   function stateFromMemory(cat){
     var m = loadMemory();
-    return { cat: cat, opts: [CATS[cat].def], subs: {}, brands: [], cm: validCm(m.cm, cat), shoe: validShoe(m.shoe), gender: GENDER_URL[m.gender] ? m.gender : '' };
+    // autoDef: oletusvaate on esivalinta, jonka ensimmäinen muu valinta korvaa (ei lisää siihen)
+    return { cat: cat, opts: [CATS[cat].def], subs: {}, brands: [], cm: validCm(m.cm, cat), shoe: validShoe(m.shoe), gender: GENDER_URL[m.gender] ? m.gender : '', autoDef: true };
   }
 
   function openCatPanel(cat, tile, preset){
@@ -3241,11 +3243,15 @@
     var id = btn.getAttribute('data-opt');
     var i = panelState.opts.indexOf(id);
     if (i === -1 && btn.getAttribute('aria-disabled') === 'true') return;   // 0 tuotetta näillä rajauksilla
+    // Ensimmäinen valinta korvaa esivalitun oletusvaatteen ("Lapaset" ei tuo mukaan talvihaalareita)
+    var replaced = i === -1 && panelState.autoDef && panelState.opts.length === 1 && !panelState.subs[panelState.opts[0]];
+    panelState.autoDef = false;
+    if (replaced) { panelState.opts = []; panelState.subs = {}; }
     if (i === -1) panelState.opts.push(id); else { panelState.opts.splice(i, 1); delete panelState.subs[id]; }
     // Järjestys aina kategorian mukaan (tulokset ja sirut samassa järjestyksessä)
     var order = CATS[panelState.cat].opts;
     panelState.opts.sort(function(a, b){ return order.indexOf(a) - order.indexOf(b); });
-    btn.setAttribute('aria-pressed', i === -1 ? 'true' : 'false');
+    if (replaced) renderOpts(); else btn.setAttribute('aria-pressed', i === -1 ? 'true' : 'false');
     renderSize();
     renderSubs();
     renderCounts();
@@ -3255,6 +3261,7 @@
     var btn = e.target.closest('.cp-sub');
     if (!btn) return;
     var key = btn.getAttribute('data-sub'), d = key.indexOf('.'), id = key.slice(0, d), sub = key.slice(d + 1);
+    panelState.autoDef = false;   // tarkennus oletusvaatteeseen = käyttäjä valitsi sen
     var list = panelState.subs[id] || [], j = list.indexOf(sub);
     if (j === -1 && btn.getAttribute('aria-disabled') === 'true') return;
     if (j === -1) list.push(sub); else list.splice(j, 1);
