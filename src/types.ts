@@ -80,6 +80,8 @@ export interface Product {
 
 export interface SearchCriteria {
   garment_type?: GarmentType;
+  // Alatyyppi (ks. structured/subtypes.ts): rajaa tuotteet kuten rakenteisen haun items=tyyppi.alatyyppi.
+  subtype?: string;
   size_cm?: number;
   size_raw?: string;
   // Kenkien tarkka EU-koko (rakenteinen haku). Ilman tätä EU-koko johdetaan size_cm:stä.

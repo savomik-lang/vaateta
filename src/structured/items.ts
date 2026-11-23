@@ -85,7 +85,8 @@ export const MAX_BRANDS = 30;
 
 /** Normalisoitu vertailuavain brändille (tarkka vertailu, ei osamerkkijonoa). */
 export function brandKey(brand: string): string {
-  return brand.normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ");
+  // "Isbjörn of Sweden" ja "Isbjörn" ovat sama merkki (eri kaupat kirjoittavat eri tavoin).
+  return brand.normalize("NFC").trim().toLowerCase().replace(/\s+/g, " ").replace(/\s+of sweden$/, "");
 }
 
 // ---------------------------------------------------------------------------
@@ -122,7 +123,7 @@ export function pickBrandDisplayName(variants: Map<string, number>): string {
   const mixed = entries.filter(([v]) => /\p{Ll}/u.test(v) && /\p{Lu}/u.test(v));
   const pool = mixed.length > 0 ? mixed : entries;
   pool.sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
-  return tidyBrandName(pool[0][0]);
+  return tidyBrandName(pool[0][0]).replace(/\s+of sweden$/i, "");
 }
 
 /** Yhteiset suodatinparametrit: size_cm, shoe_eu, gender, brands. */

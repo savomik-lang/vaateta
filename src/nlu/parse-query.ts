@@ -11,9 +11,16 @@ import { findColor } from "./colors";
 import { Currency } from "../types";
 import { Lang } from "../lang";
 import { isKnownBrandWord } from "../ranking/brand-tiers";
+import { findSubtype } from "../structured/subtypes";
+import { WOOL_KEYWORD, WOOL_QUERY_REGEX } from "./materials";
 
-const WATERPROOF_KEYWORDS = ["vedenpitäv", "vedenkestäv", "sadeasu", "sadetakki", "sadehousut", ...WATERPROOF_SV_EN];
-const MATERIAL_KEYWORDS = ["luomupuuvilla", "gots", "villaa", "merinovilla", "fleece", "softshell"];
+const WATERPROOF_KEYWORDS = [
+  "vedenpitäv", "vedenkestäv", "sadeasu", "sadetakki", "sadehousut", ...WATERPROOF_SV_EN,
+  // Sadevaatteen nimi kertoo vedenpitävyyden myös ruotsiksi ja englanniksi.
+  "rain jacket", "rainjacket", "rain coat", "raincoat", "rain suit", "rainsuit", "rain set", "regnjacka", "regnställ", "regnkläder",
+];
+const MATERIAL_KEYWORDS = ["luomupuuvilla", "gots", "fleece", "softshell"];
+// Villa (fi), ull/ylle (sv), wool/merino (en): yksi "villa"-rajaus (ks. materials.ts).
 const GENDER_KEYWORDS: Record<"tyttö" | "poika" | "unisex", string[]> = {
   tyttö: ["tytölle", "tytön", "tyttöjen"],
   poika: ["pojalle", "pojan", "poikien"],
@@ -116,19 +123,19 @@ function stripPrices(text: string): string {
 // Pelkkä luku vaatteen perässä ("talvitakki 116", "winter jacket 116"): koko senteissä,
 // kengillä EU-koko. Hakee 2-3 numeron luvun, jonka edessä tai perässä ei ole yksikköä, ikämerkintää tai desimaalia.
 const BARE_NUMBER = /(?<![\d.,#/\p{L}-])(\d{2,3})(?![\d%]|[.,]\d|\s*[-/]?\s*(?:vuo|v(?!\p{L})|år|y(?!\p{L})|kk|mån|month|year))/u;
-function findBareSize(text: string, garmentType?: GarmentType): { size_raw: string; size_cm: number } | undefined {
+function findBareSize(text: string, garmentType?: GarmentType): { size_raw: string; size_cm: number; shoe_eu?: number } | undefined {
   const m = stripPrices(text).match(BARE_NUMBER);
   if (!m) return undefined;
   const n = parseInt(m[1], 10);
   if (n >= 44 && n <= 190) return { size_raw: String(n), size_cm: n };
   if (garmentType === "kengät" && n >= 18 && n <= 45) {
     const cm = cmForShoeEu(n);
-    return { size_raw: String(cm), size_cm: cm };
+    return { size_raw: String(cm), size_cm: cm, shoe_eu: n };
   }
   return undefined;
 }
 
-function findSize(text: string, garmentType?: GarmentType): { size_raw?: string; size_cm?: number; age?: number } {
+function findSize(text: string, garmentType?: GarmentType): { size_raw?: string; size_cm?: number; age?: number; shoe_eu?: number } {
   const cmMatch = text.match(/(\d{2,3})\s*(?:cm|sentti\p{L}*)/u);
   if (cmMatch) return { size_raw: cmMatch[1], size_cm: parseInt(cmMatch[1], 10) };
   // "storlek 116", "size 116", "koko 116"; kengillä 2-numeroinen luku on EU-koko.
@@ -137,7 +144,7 @@ function findSize(text: string, garmentType?: GarmentType): { size_raw?: string;
     if (sw >= 44 && sw <= 190) return { size_raw: String(sw), size_cm: sw };
     if (garmentType === "kengät" && sw >= 18 && sw <= 45) {
       const cm = cmForShoeEu(sw);
-      return { size_raw: String(cm), size_cm: cm };
+      return { size_raw: String(cm), size_cm: cm, shoe_eu: sw };
     }
   }
   // Kuukaudet (vauvat) ennen ikävuosia: "6 kk", "6 månader", "6 months" -> vauvakoko, ei ikä.
@@ -183,12 +190,19 @@ export function parseCriteriaFromText(rawText: string, hint: { lang?: Lang } = {
   const detected = detectLanguage(text);
   const swedish = detected === "sv" || (detected === "fi" && hint.lang === "sv");
   const bareCurrency: Currency = swedish ? "SEK" : "EUR";
-  const garmentType = findGarmentType(text);
+  // Alatyyppi ("kypärämyssy", "farkut", "softshelltakki"): rajaa kuten items=tyyppi.alatyyppi. Alatyypin sana voi
+  // kertoa myös vaatetyypin, kun muuta vaatesanaa ei ole ("kypärälakki", "neule").
+  const textGarment = findGarmentType(text);
+  const subtypeHit = findSubtype(text, textGarment);
+  const garmentType = textGarment ?? subtypeHit?.garment;
   if (garmentType) criteria.garment_type = garmentType;
+  if (subtypeHit && subtypeHit.garment === garmentType) criteria.subtype = subtypeHit.subtype;
   const maxPrice = findMaxPrice(text, bareCurrency);
   if (maxPrice) criteria.max_price = maxPrice;
   if (WATERPROOF_KEYWORDS.some((kw) => text.includes(kw))) criteria.waterproof = true;
-  const materialMatches = MATERIAL_KEYWORDS.filter((kw) => new RegExp(`\\b${kw}`, "i").test(text));
+  // Materiaali, jonka alatyyppi jo kattaa (fleece, softshell), ei ole erillinen rajaus.
+  const materialMatches = MATERIAL_KEYWORDS.filter((kw) => kw !== criteria.subtype && new RegExp(`\\b${kw}`, "i").test(text));
+  if (WOOL_QUERY_REGEX.test(text)) materialMatches.push(WOOL_KEYWORD);
   if (materialMatches.length > 0) criteria.material_keywords = materialMatches;
   if (VEST_QUERY_RE.test(text)) criteria.vest = true;
   const gender = findGender(text);
@@ -196,10 +210,12 @@ export function parseCriteriaFromText(rawText: string, hint: { lang?: Lang } = {
   if (CHILD_SIGNAL_KEYWORDS.some((kw) => text.includes(kw)) || hasChildSignalSvEn(text)) criteria.child_signal = true;
   const color = findColor(text);
   if (color) criteria.color = color;
-  const { size_raw, size_cm, age } = findSize(text, garmentType);
+  const { size_raw, size_cm, age, shoe_eu } = findSize(text, garmentType);
   if (size_raw) criteria.size_raw = size_raw;
   if (size_cm) criteria.size_cm = size_cm;
   if (age) criteria.age = age;
+  // Kenkien koko on EU-koko ("koko 28"), ei senttikoko: tulkinta näkyy käyttäjälle oikein.
+  if (shoe_eu) criteria.shoe_eu = shoe_eu;
   if (SEASON_WINTER_REGEX.test(text) || (text.includes("toppa") && garmentType && SEASON_TOPPA_GARMENTS.has(garmentType))) {
     criteria.season = "winter";
   }

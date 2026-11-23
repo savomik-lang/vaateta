@@ -32,13 +32,14 @@ export const SUBTYPE_RULES: Partial<Record<GarmentType, Rule[]>> = {
     { id: "tossut", re: any(word("slippers?", "house\\s+shoes?", "indoor\\s+shoes?"), stem("tohvel", "tossu", "tofflor", "toffel", "innesko", "inneskor", "sisäkeng")) },
   ],
   pipo: [
-    { id: "kypärämyssy", re: any(word("balaclavas?", "balaklavas?", "helmet\\s+hats?", "helmet\\s+beanies?"), stem("kypärämyss", "balaklav", "hjälmmöss")) },
+    { id: "kypärämyssy", re: any(word("balaclavas?", "balaklavas?", "helmet\\s+hats?", "helmet\\s+beanies?"), stem("kypärämyss", "kypärälakk", "balaklav", "hjälmmöss")) },
+    { id: "sadehattu", re: any(word("rain\\s?hats?", "sou'?wester", "sou-wester"), stem("sadehat", "sydväst", "regnhatt")) },
     { id: "aurinkohattu", re: any(word("sun\\s?hats?", "bucket\\s+hats?", "uv\\s+hats?", "safari\\s+hats?", "legionnaire\\s+hats?", "swim\\s+hats?"), stem("aurinkohat", "solhatt", "kalastajahat", "uv-hat", "uv-hatt")) },
     { id: "lippis", re: any(word("caps?", "baseball\\s+caps?", "trucker\\s+caps?", "keps", "kepsar", "visor"), stem("lippis", "lippalakk", "lippahatt")) },
   ],
   lapaset: [
-    { id: "sormikkaat", re: any(word("gloves?", "handskar", "handske", "fingervantar", "finger\\s+mittens?"), stem("sormikka", "sormikas", "fingervant")) },
-    { id: "lapaset", re: any(word("mittens?", "mitts?", "vantar", "vante", "lobster\\s+gloves?"), stem("lapanen", "lapaset", "lapas", "vant")) },
+    { id: "sormikkaat", re: any(word("gloves?", "handskar", "handske", "fingervantar", "finger\\s+mittens?"), stem("sormikka", "sormikas", "fingervant", "käsine", "hansk")) },
+    { id: "lapaset", re: any(word("mittens?", "mitts?", "vantar", "vante", "lobster\\s+gloves?"), stem("lapanen", "lapaset", "lapas", "rukkas", "tumppu", "tumvant", "vant")) },
   ],
   paita: [
     { id: "huppari", re: any(word("hoodies?", "hooded\\s+(?:sweat|top|shirt|jumper)", "zip\\s+hoodie"), stem("huppari", "huvtröj", "huvja")) },
@@ -51,6 +52,7 @@ export const SUBTYPE_RULES: Partial<Record<GarmentType, Rule[]>> = {
     { id: "farkut", re: any(word("jeans", "denim\\s+(?:pants|trousers)", "denim"), stem("farkku", "farkut", "jeanshous")) },
     { id: "shortsit", re: any(word("shorts", "short\\s+pants", "bermudas?", "swim\\s?shorts"), stem("shortsi", "shortsit", "bermuda")) },
     { id: "leggingsit", re: any(word("leggings?", "leggins", "tights\\s+(?:kids|girls)"), stem("leggingsi", "leggingsit", "leggins")) },
+    { id: "collegehousut", re: any(word("sweat\\s?pants", "joggers?", "jogger\\s+pants", "track\\s?pants", "jogging\\s+pants"), stem("collegehous", "college-hous", "mjukisbyx", "verkkari", "verryttelyhous", "collegebyx", "joggingbyx")) },
     { id: "ulkoiluhousut", re: any(word("softshell", "hiking", "trekking", "outdoor", "shell\\s+pants", "trail", "walking\\s+pants", "cargo\\s+pants"), stem("ulkoilu", "retkeily", "vaellus", "friluft", "softshell")) },
   ],
   takki: [
@@ -59,6 +61,57 @@ export const SUBTYPE_RULES: Partial<Record<GarmentType, Rule[]>> = {
     { id: "toppatakki", re: any(word("down\\s+jackets?", "down", "puffer", "puffa", "padded", "quilted", "insulated\\s+jackets?"), stem("untuva", "toppatakki", "toppa", "dunjack", "dunjacka", "vadderad", "tikkitakki")) },
   ],
 };
+
+// Vain vapaan tekstin hakuun: alatyyppejä, joita ei näytetä facetsissa (kuvakkeita ei ole), mutta joilla
+// haku voi rajata. Fleece-takit ovat kannassa osin takkeina, osin paitoina (paita.fleece).
+export const FREE_TEXT_SUBTYPE_RULES: Partial<Record<GarmentType, Rule[]>> = {
+  takki: [
+    { id: "fleece", re: any(word("fleece", "pile", "windfleece", "wind\\s+fleece"), stem("fleecetakk", "fleecejack", "fleecejakk", "mikrofleece", "pilejack", "pilejakk")) },
+  ],
+};
+
+/** Alatyyppi, jonka tuote täyttää: tallennettu/johdettu alatyyppi tai vapaan tekstin lisäsääntö. "pipo" = pipo, jolla ei ole muuta pipo-alatyyppiä. */
+export function matchesSubtype(p: Product, subtype: string): boolean {
+  const own = subtypeOf(p);
+  if (own === subtype) return true;
+  if (subtype === "pipo") return p.garment_type === "pipo" && own === null;
+  const extra = FREE_TEXT_SUBTYPE_RULES[p.garment_type]?.find((r) => r.id === subtype);
+  return Boolean(extra && extra.re.test(p.title));
+}
+
+/** Kuuluuko alatyyppi tälle vaatetyypille (hakutulkinnan eheystarkistus). */
+export function subtypeBelongsTo(garment: GarmentType | undefined, subtype: string): boolean {
+  if (!garment) return false;
+  if (subtype === "pipo") return garment === "pipo";
+  return [...(SUBTYPE_RULES[garment] ?? []), ...(FREE_TEXT_SUBTYPE_RULES[garment] ?? [])].some((r) => r.id === subtype);
+}
+
+// Alatyypit, joiden sana kertoo myös vaatetyypin (haku "neule 110" tai "kypärälakki" ilman muuta vaatesanaa).
+// Lyhyet, monitulkintaiset sanat (ulkoiluhousut: "trail", "outdoor"; pitkähihainen) jätetään pois.
+const IMPLIES_GARMENT = new Set([
+  "kypärämyssy", "sadehattu", "aurinkohattu", "lippis", "kumisaappaat", "lenkkarit", "sandaalit", "tossut",
+  "sormikkaat", "huppari", "t-paita", "neule", "fleece", "farkut", "shortsit", "leggingsit", "collegehousut", "softshell", "kuoritakki", "toppatakki",
+]);
+const PLAIN_PIPO_RE = /(?<![\p{L}\p{N}])(?:pipo|pipot|pipon|pipoa|pipoja|beanies?|mössa|mössor|myssy|myssyt|myssyn)(?![\p{L}\p{N}])/iu;
+
+export interface SubtypeHit { garment: GarmentType; subtype: string }
+
+/**
+ * Alatyyppi hakutekstistä (fi/sv/en, samat sanat kuin tuotteiden alatyyppisäännöissä).
+ * Vaatetyyppi tiedossa: vain sen tyypin säännöt. Ei tiedossa: alatyyppi, jonka sana kertoo vaatetyypin.
+ * Hakulauseen "pipo"/"beanie"/"mössa" rajaa pipot ilman erikoisalatyyppiä (ei lippiksiä, aurinkohattuja, kypärämyssyjä).
+ */
+export function findSubtype(text: string, garment?: GarmentType): SubtypeHit | undefined {
+  const garments = garment ? [garment] : (Object.keys({ ...SUBTYPE_RULES, ...FREE_TEXT_SUBTYPE_RULES }) as GarmentType[]);
+  for (const g of garments) {
+    for (const r of [...(SUBTYPE_RULES[g] ?? []), ...(FREE_TEXT_SUBTYPE_RULES[g] ?? [])]) {
+      if (!r.re.test(text)) continue;
+      if (garment || IMPLIES_GARMENT.has(r.id)) return { garment: g, subtype: r.id };
+    }
+  }
+  if ((!garment || garment === "pipo") && PLAIN_PIPO_RE.test(text)) return { garment: "pipo", subtype: "pipo" };
+  return undefined;
+}
 
 const memo = new WeakMap<Product, string | null>();
 
