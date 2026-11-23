@@ -1,0 +1,301 @@
+{
+  "kuvaus": "Vapaan tekstin haun kategoriatesti. Jokainen haku: viidestä parhaasta (bestMatch) vähintään minType on oikeaa tuotetyyppiä (otsikko osuu 'type'-lausekkeeseen eikä 'not'-lausekkeeseen) ja vähintään minSize on haetussa tai lähimmässä koossa (cm: enintään 6 cm, kenkä: enintään 1 EU-koko). Aja: node scripts/hakutesti.mjs [https://www.vaateta.com] Sukat: koko cm:nä (kaupan kenkäkoko suluissa ohitetaan).",
+  "minType": 4,
+  "minSize": 3,
+  "cases": [
+    {
+      "q": "kypärämyssy 2-vuotiaalle",
+      "lang": "fi",
+      "cm": 92,
+      "type": "kypärämyssy|kypärälakki|balaclava|balaklava|helmet",
+      "not": "lippis|lippalakki|aurinkohattu|sadehattu|\\bcap\\b"
+    },
+    {
+      "q": "kypärälakki 92 cm",
+      "lang": "fi",
+      "cm": 92,
+      "type": "kypärämyssy|kypärälakki|balaclava|balaklava|helmet",
+      "not": "lippis|lippalakki|aurinkohattu|sadehattu"
+    },
+    {
+      "q": "balaklava 2 år",
+      "lang": "sv",
+      "cm": 92,
+      "type": "kypärämyssy|balaclava|balaklava|helmet|hjälmmössa",
+      "not": "lippis|keps|solhatt|\\bcap\\b"
+    },
+    {
+      "q": "balaclava for a 2 year old",
+      "lang": "en",
+      "cm": 92,
+      "type": "kypärämyssy|balaclava|balaklava|helmet",
+      "not": "lippis|\\bcap\\b|sun ?hat|aurinkohattu"
+    },
+    {
+      "q": "pipo 110 cm",
+      "lang": "fi",
+      "cm": 110,
+      "type": "pipo|beanie|mössa|\\bhat\\b",
+      "not": "lippis|lippalakki|aurinkohattu|sadehattu|kypärä|balaclava|\\bcap\\b"
+    },
+    {
+      "q": "lippis 4-vuotiaalle",
+      "lang": "fi",
+      "cm": 104,
+      "type": "lippis|lippalakki|\\bcap\\b|keps",
+      "not": "kypärä|aurinkohattu|sadehattu|pipo"
+    },
+    {
+      "q": "aurinkohattu 98 cm",
+      "lang": "fi",
+      "cm": 98,
+      "type": "aurinkohattu|sun ?hat|solhatt|uv-hattu|bucket",
+      "not": "lippis|lippalakki|kypärä|pipo|sadehattu"
+    },
+    {
+      "q": "sadehattu 104 cm",
+      "lang": "fi",
+      "cm": 104,
+      "type": "sadehattu|sydväst|rain ?hat|regnhatt",
+      "not": "lippis|lippalakki|aurinkohattu"
+    },
+    {
+      "q": "talvikengät koko 28",
+      "lang": "fi",
+      "eu": 28,
+      "type": "talvikeng|winter|vinter|boot|saapas|känga|thermo",
+      "not": "sandaal|sandal|tossu|slide|flip ?flop|sneaker|lenkkari"
+    },
+    {
+      "q": "winter boots size 28",
+      "lang": "en",
+      "eu": 28,
+      "type": "talvikeng|winter|vinter|boot|saapas|känga|thermo",
+      "not": "sandaal|sandal|tossu|slide|flip ?flop|sneaker"
+    },
+    {
+      "q": "kumisaappaat koko 26",
+      "lang": "fi",
+      "eu": 26,
+      "type": "kumisaap|rubber|gummistövl|rain ?boot|wellies",
+      "not": "sandaal|sandal|slide|flip ?flop|sneaker|tossu"
+    },
+    {
+      "q": "gummistövlar storlek 26",
+      "lang": "sv",
+      "eu": 26,
+      "type": "kumisaap|rubber|gummistövl|rain ?boot|wellies",
+      "not": "sandaal|sandal|slide|flip ?flop|sneaker|tossu"
+    },
+    {
+      "q": "lenkkarit koko 32",
+      "lang": "fi",
+      "eu": 32,
+      "type": "lenkkar|sneaker|tennari|juoksukeng|running|trainer|urheilukeng",
+      "not": "sandaal|sandal|slide|flip ?flop|boot|saapas|swimshoe"
+    },
+    {
+      "q": "sandaalit koko 30",
+      "lang": "fi",
+      "eu": 30,
+      "type": "sandaal|sandal",
+      "not": "boot|saapas|tossu"
+    },
+    {
+      "q": "tossut koko 24",
+      "lang": "fi",
+      "eu": 24,
+      "type": "tossu|slipper|tofflor|sisäkeng|mokkasiin|indoor",
+      "not": "boot|saapas|sandal|swimshoe"
+    },
+    {
+      "q": "talvitakki 6-vuotiaalle",
+      "lang": "fi",
+      "cm": 116,
+      "type": "takki|jacket|jacka|parka|anorak",
+      "not": "haalari|overall|housut|byxor|pants|fleece|raincoat|sadetakki"
+    },
+    {
+      "q": "vinterjacka 6 år",
+      "lang": "sv",
+      "cm": 116,
+      "type": "takki|jacket|jacka|parka|anorak",
+      "not": "haalari|overall|housut|byxor|pants|fleece|raincoat|sadetakki"
+    },
+    {
+      "q": "toppatakki 128 cm",
+      "lang": "fi",
+      "cm": 128,
+      "type": "toppatakki|puffer|insulated|padded|untuva|down|täckjacka|vinterjacka|talvitakki|parka|ski ?jacket|laskettelutakki",
+      "not": "fleece|sadetakki|raincoat|softshell|haalari|windfleece"
+    },
+    {
+      "q": "sadetakki 110 cm",
+      "lang": "fi",
+      "cm": 110,
+      "type": "sadetakki|rain|regnjacka|kuoritakki|shell",
+      "not": "toppa|puffer|insulated|haalari|fleece"
+    },
+    {
+      "q": "rain jacket 110 cm",
+      "lang": "en",
+      "cm": 110,
+      "type": "sadetakki|rain|regnjacka|kuoritakki|shell",
+      "not": "toppa|puffer|insulated|haalari|fleece|pile"
+    },
+    {
+      "q": "softshelltakki 116 cm",
+      "lang": "fi",
+      "cm": 116,
+      "type": "softshell",
+      "not": "toppa|puffer|haalari"
+    },
+    {
+      "q": "fleecetakki 122 cm",
+      "lang": "fi",
+      "cm": 122,
+      "type": "fleece|pile|nalle",
+      "not": "toppa|puffer|haalari|sadetakki"
+    },
+    {
+      "q": "talvihaalari 92 cm",
+      "lang": "fi",
+      "cm": 92,
+      "type": "haalari|overall|snowsuit|suit",
+      "not": "välikausi|sade|rain|kuori|shell|sun|yöpuku|pyjama"
+    },
+    {
+      "q": "välikausihaalari 86 cm",
+      "lang": "fi",
+      "cm": 86,
+      "type": "haalari|overall|suit",
+      "not": "toppa|talvi|winter|padded|insulated|yöpuku|pyjama"
+    },
+    {
+      "q": "sadeasu 98 cm",
+      "lang": "fi",
+      "cm": 98,
+      "type": "sadeasu|regnställ|rain ?set|rain ?suit|sadehaalari|rain overall|pu|slaskeman|rain",
+      "not": "toppa|talvi|yöpuku|playsuit|sunproof"
+    },
+    {
+      "q": "regnställ 98 cm",
+      "lang": "sv",
+      "cm": 98,
+      "type": "sadeasu|regnställ|rain ?set|rain ?suit|sadehaalari|rain overall|pu|slaskeman|rain",
+      "not": "toppa|talvi|yöpuku|playsuit|sunproof"
+    },
+    {
+      "q": "kurahousut 104 cm",
+      "lang": "fi",
+      "cm": 104,
+      "type": "kurahous|sadehous|rain|regnbyx|kuorihous|shell|midjeman|plaskeman",
+      "not": "toppa|talvi|insulated|legging"
+    },
+    {
+      "q": "toppahousut 116 cm",
+      "lang": "fi",
+      "cm": 116,
+      "type": "toppahous|snow|täckbyx|insulated|ski|talvihous|padded|vinterbyx",
+      "not": "kurahous|sadehous|rain|legging|farkku|college"
+    },
+    {
+      "q": "kerrasto 110 cm",
+      "lang": "fi",
+      "cm": 110,
+      "type": "kerrasto|base ?layer|underställ|merino|aluskerrasto|ull",
+      "not": "haalari|jacket|takki|hoodie|fleece|pile"
+    },
+    {
+      "q": "villasukat 3-vuotiaalle",
+      "lang": "fi",
+      "cm": 98,
+      "type": "villasuk|wool|ull|merino",
+      "not": "lapaset|pipo"
+    },
+    {
+      "q": "lapaset 2-vuotiaalle",
+      "lang": "fi",
+      "cm": 92,
+      "type": "lapas|rukka|mitten|vant|tumppu",
+      "not": "sormikka|glove|pipo"
+    },
+    {
+      "q": "sormikkaat 6-vuotiaalle",
+      "lang": "fi",
+      "cm": 116,
+      "type": "sormikka|glove|fingervant|hanska",
+      "not": "rukka|pipo"
+    },
+    {
+      "q": "t-paita 116 cm",
+      "lang": "fi",
+      "cm": 116,
+      "type": "t-paita|t-shirt|tee\\b|t-tröja|lyhyet hihat|lyhythihainen",
+      "not": "huppari|hoodie|pitkähihainen|neule"
+    },
+    {
+      "q": "huppari 128 cm",
+      "lang": "fi",
+      "cm": 128,
+      "type": "huppari|hoodie|huvtröja|hupullinen|hood",
+      "not": "t-paita|t-shirt|tee\\b|lyhyet hihat"
+    },
+    {
+      "q": "collegehousut 110 cm",
+      "lang": "fi",
+      "cm": 110,
+      "type": "college|sweat|mjukis|joggers|verkkari",
+      "not": "shorts|farkku|jeans|legging|toppa|kura"
+    },
+    {
+      "q": "farkut 122 cm",
+      "lang": "fi",
+      "cm": 122,
+      "type": "farkku|farkut|jeans|denim",
+      "not": "shorts|legging|college"
+    },
+    {
+      "q": "leggingsit 104 cm",
+      "lang": "fi",
+      "cm": 104,
+      "type": "legging|tights|trikoohous",
+      "not": "shorts|farkku|jeans"
+    },
+    {
+      "q": "shortsit 110 cm",
+      "lang": "fi",
+      "cm": 110,
+      "type": "shorts|shortsi",
+      "not": "farkut|legging|housut"
+    },
+    {
+      "q": "mekko 110 cm",
+      "lang": "fi",
+      "cm": 110,
+      "type": "mekko|dress|klänning",
+      "not": "housut|shorts"
+    },
+    {
+      "q": "pyjama 98 cm",
+      "lang": "fi",
+      "cm": 98,
+      "type": "pyjama|yöpuku|pyjamas",
+      "not": "takki"
+    },
+    {
+      "q": "body 68 cm",
+      "lang": "fi",
+      "cm": 68,
+      "type": "body",
+      "not": "pipo"
+    },
+    {
+      "q": "uimapuku 116 cm",
+      "lang": "fi",
+      "cm": 116,
+      "type": "uimapuku|uimahousu|swim|baddräkt|trunks|beach shorts|bikini|uv-puku",
+      "not": "takki|t-shirt|t-paita|paita"
+    }
+  ]
+}
