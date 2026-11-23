@@ -98,7 +98,10 @@ test("takki-luokasta poistuvat hupparit, Half Zip -paidat ja setit", () => {
   assert.equal(refineGarmentType("takki", "Isbjörn of Sweden Teen Shaun Hoodie"), "paita");
   assert.equal(refineGarmentType("takki", "Didriksons Gosig Half Zip"), "paita");
   assert.equal(refineGarmentType("takki", "Setti, jossa neuletakki ja housut"), "muu");
-  assert.equal(refineGarmentType("housut", "Setti, jossa paita ja housut"), "muu");
+  assert.equal(refineGarmentType("takki", "Setti - Neuletakki ja housut"), "muu");
+  // Housujen ja paitojen setit säilyvät toistaiseksi (Lindex "Setti - Paita ja shortsit")
+  assert.equal(refineGarmentType("housut", "Setti - Paita ja shortsit"), "housut");
+  assert.equal(refineGarmentType("housut", "Setti, jossa paita ja housut"), "housut");
   // Oikeat takit säilyvät (myös Full Zip, huppu ja Rain Set)
   for (const t of ["Reima Toppatakki Kuusi", "Didriksons Monte Full Zip", "Hooded Jacket Kids", "Zip Hoodie Jacket", "Neuletakki lapselle"]) {
     assert.equal(refineGarmentType("takki", t), "takki", t);

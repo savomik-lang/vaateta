@@ -76,9 +76,11 @@ const UNDERWEAR_TITLE_REGEX = /(?<![\p{L}])(?:boxers?|briefs|underpants|panties|
 const HOODIE_TITLE_REGEX = /(?<![\p{L}])(?:hoodies?|hupparit?|huvtröj\p{L}*|hettetröj\p{L}*)(?![\p{L}])/iu;
 const HALF_ZIP_TITLE_REGEX = /(?<![\p{L}\p{N}])(?:half[\s-]?zip|1\/2[\s-]?zip|zip[\s-]?neck|halvzip|puolivetoketju\p{L}*)(?![\p{L}\p{N}])/iu;
 const COVER_WORD_REGEX = /(?<![\p{L}])(?:jackets?|jacka|jackor|takki|jakku|coat|parka|vest|liivi|väst)(?![\p{L}])/iu;
-// "Setti, jossa neuletakki ja housut": useamman vaatteen setti ei ole yksittäinen takki/housut/paita ("Rain Set" ei osu: setti on alussa pilkun/liitesanan kanssa).
-const MULTI_GARMENT_SET_REGEX = /^\s*(?:setti|set|sett)\s*(?:,|(?:jossa|joka|sisältää|med|with|of|som)\b)/iu;
-const SET_REFINED_TYPES = new Set<GarmentType>(["takki", "housut", "paita"]);
+// "Setti, jossa neuletakki ja housut": useamman vaatteen setti ei ole takki ("Rain Set" ei osu: setti on otsikon alussa
+// pilkun, viivan tai liitesanan kanssa). Vain takit: housut- ja paita-luokkien setit (Lindex "Setti - Paita ja shortsit")
+// jäävät toistaiseksi näkyviin, koska niitä on kymmeniä eikä setille ole omaa kategoriaa.
+const MULTI_GARMENT_SET_REGEX = /^\s*(?:setti|set|sett)\s*(?:[,\-–]|(?:jossa|joka|sisältää|med|with|of|som)\b)/iu;
+const SET_REFINED_TYPES = new Set<GarmentType>(["takki"]);
 
 export function refineGarmentType(type: GarmentType, title: string): GarmentType {
   if (SET_REFINED_TYPES.has(type) && MULTI_GARMENT_SET_REGEX.test(title)) return "muu";
