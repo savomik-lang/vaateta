@@ -238,14 +238,18 @@ export function buildNoResultsNotice(c: SearchCriteria, relax: Relaxation | null
         en: `${plural} are only available from size ${range.min}.`,
       }[lang];
     } else {
-      message = {
+      message = c.shoe_eu ? {
+        fi: `Kenkäkoolle ${c.shoe_eu} sopivia ${pluralLower} ei löytynyt, mutta muita kokoja on.`,
+        sv: `Inga ${pluralLower} i skostorlek ${c.shoe_eu} hittades, men det finns andra storlekar.`,
+        en: `No ${pluralLower} found in shoe size ${c.shoe_eu}, but other sizes are available.`,
+      }[lang] : {
         fi: `Koolle ${target} sopivia ${pluralLower} ei löytynyt, mutta muita kokoja on.`,
         sv: `Inga ${pluralLower} i storlek ${target} hittades, men det finns andra storlekar.`,
         en: `No ${pluralLower} found in size ${target}, but other sizes are available.`,
       }[lang];
     }
-    // Lähin koko, jossa tuloksia on.
-    const ladder = [...SIZE_LADDER].sort((a, b) => Math.abs(a - target) - Math.abs(b - target));
+    // Lähin koko, jossa tuloksia on (senttikoot; kenkähauissa ei ehdoteta senttikokoa).
+    const ladder = c.shoe_eu ? [] : [...SIZE_LADDER].sort((a, b) => Math.abs(a - target) - Math.abs(b - target));
     for (const cm of ladder) {
       if (cm === target) continue;
       if (relax.matches.some((p) => productSizeFit(p.size_available, cm, p.garment_type === "kengät") === "exact")) {
@@ -298,9 +302,26 @@ export function buildNoResultsNotice(c: SearchCriteria, relax: Relaxation | null
   };
 }
 
-export function buildPartialSizeNotice(c: SearchCriteria, lang: Lang = "fi"): Notice {
+/** Haettu koko sanoina: kengillä EU-kenkäkoko ("kenkäkoko 24"), muuten senttikoko ("koko 92"). */
+function sizeWord(c: SearchCriteria, lang: Lang): string {
   const cm = targetSizeCm(c);
-  const suffix = cm ? ` ${cm}` : "";
+  if (c.shoe_eu) return { fi: `kenkäkoko ${c.shoe_eu}`, sv: `skostorlek ${c.shoe_eu}`, en: `shoe size ${c.shoe_eu}` }[lang];
+  return cm ? { fi: `koko ${cm}`, sv: `storlek ${cm}`, en: `size ${cm}` }[lang] : "";
+}
+
+export function buildPartialSizeNotice(c: SearchCriteria, lang: Lang = "fi"): Notice {
+  const sz = sizeWord(c, lang);
+  const suffix = sz ? ` ${sz.replace(/^(?:koko|storlek|size) /, "")}` : "";
+  if (c.shoe_eu) {
+    return {
+      code: "partial_size",
+      message: {
+        fi: `Osa tuloksista on hieman pienempiä kuin haettu ${sz}. Tarkista koot ennen tilaamista.`,
+        sv: `Några av resultaten är något mindre än den sökta skostorleken ${c.shoe_eu}. Kontrollera storlekarna innan du beställer.`,
+        en: `Some of the results are slightly smaller than the ${sz} you searched for. Check the sizes before ordering.`,
+      }[lang],
+    };
+  }
   return {
     code: "partial_size",
     message: {
@@ -316,6 +337,17 @@ export function buildNearestSizeNotice(c: SearchCriteria, lang: Lang = "fi"): No
   const cm = targetSizeCm(c);
   const shoe = c.shoe_eu;
   const suffix = shoe ? ` ${shoe}` : cm ? ` ${cm}` : "";
+  if (shoe) {
+    const sz = sizeWord(c, lang);
+    return {
+      code: "partial_size",
+      message: {
+        fi: `Haetussa koossa (${sz}) on vain vähän tähän hakuun sopivia tuotteita, joten mukana on myös lähimpiä kokoja. Tarkista koot ennen tilaamista.`,
+        sv: `I den sökta storleken (${sz}) finns det få produkter som passar sökningen, så närmaste storlekar visas också. Kontrollera storlekarna innan du beställer.`,
+        en: `There are only a few matching products in the ${sz} you searched for, so the nearest sizes are included too. Check the sizes before ordering.`,
+      }[lang],
+    };
+  }
   return {
     code: "partial_size",
     message: {

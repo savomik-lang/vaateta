@@ -102,6 +102,14 @@ export function brandMatches(productBrand: string, wanted: string): boolean {
   return pb.length >= 3 && w.startsWith(pb);
 }
 
+// Talvikenkähaku: otsikon on oltava talvikenkä (ei kesä-/sisäkenkä eikä sadesaapas, joissa talvi on vain kuvauksessa).
+function isWinterShoeTitle(title: string): boolean {
+  if (WARM_SHOE_REGEX.test(title)) return false;
+  const byTitle = guessWinter(title);
+  if (byTitle === false) return false; // sade, fleece, shell...
+  return byTitle === true || WINTER_SHOE_HINT_REGEX.test(title);
+}
+
 export interface MatchOptions {
   // Salli myös hieman (yksi koko) haettua pienemmät koot - käytetään kun
   // täsmälleen sopivia on vähän (notice partial_size).
@@ -114,8 +122,10 @@ export interface MatchOptions {
 export const NEAREST_MAX_GAP_CM = 24;
 export const NEAREST_MAX_GAP_EU = 4;
 
-// Lämpimän sään kengät: eivät kuulu talvikenkähakuun, vaikka kuvauksessa mainittaisiin talvi.
-const WARM_SHOE_REGEX = /(?<![\p{L}])(?:sandals?|sandaal\p{L}*|sandaler|flip[\s-]?flops?|slides?|sliders?|swim\s?shoes?|water\s?shoes?|aqua\s?shoes?|beach\s?shoes?|uimakeng\p{L}*|badsko\p{L}*|varvastossu\p{L}*)(?![\p{L}])/iu;
+// Lämpimän sään ja sisäkengät: eivät kuulu talvikenkähaun tuloksiin, vaikka kuvauksessa mainittaisiin talvi.
+const WARM_SHOE_REGEX = /(?<![\p{L}])(?:sandals?|sandaal\p{L}*|sandaler|flip[\s-]?flops?|slides?|sliders?|swim\s?shoes?|water\s?shoes?|aqua\s?shoes?|beach\s?shoes?|uimakeng\p{L}*|badsko\p{L}*|varvastossu\p{L}*|birkenstock|birki|crocs|clogs?|mules?|espadrilles?|ballerinas?|ballet\s?flats?|loafers?|boat\s?shoes?|jelly|mokkasiin\p{L}*)(?![\p{L}])/iu;
+// Talvikenkä: otsikossa talvi-/saapas-vihje. Pelkkä kuvauksesta johdettu talvimerkintä ei riitä (kesäkengissä esiintyy "winter"-sanoja).
+const WINTER_SHOE_HINT_REGEX = /(?<![\p{L}])(?:\p{L}*boots?|saapa\p{L}*|saapp\p{L}*|kängor|känga|stövl\p{L}*|chelsea|nilkkur\p{L}*|talvi\p{L}*|vinter\p{L}*|winter|warm|frost|snow\p{L}*|lumi\p{L}*|kuura|pakkas\p{L}*|thermo\p{L}*|gtx|gore-?tex|insulated|vuorat\p{L}*|fur|fleece-?lined|kamik|sorel|bogs|moon\s?boots?|arctic|polar|tundra|storm|blizzard|expedition)(?![\p{L}])/iu;
 
 export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOptions = {}): boolean {
   if (!p.in_stock) return false;
@@ -161,7 +171,7 @@ export function matchesCriteria(p: Product, c: SearchCriteria, opts: MatchOption
     if (!c.material_keywords.some((kw) => productHasMaterial(p.material, p.title, kw))) return false;
   }
   if (c.season === "winter" && p.garment_type && SEASON_FILTERED_GARMENTS.has(p.garment_type)) {
-    if (p.garment_type === "kengät" && WARM_SHOE_REGEX.test(p.title)) return false;
+    if (p.garment_type === "kengät" && !isWinterShoeTitle(p.title)) return false;
     const winter = p.winter !== undefined ? p.winter : guessWinter(p.title);
     if (winter !== true) return false;
   }
@@ -218,7 +228,9 @@ export class MultiStoreAdapter {
       this.cache = allResults.flat().map((raw) => {
         // Kerrastoksi luokiteltu fleece-välikerros siirretään takiksi/paidaksi (ks. refineGarmentType).
         const type = refineGarmentType(raw.garment_type, raw.title);
-        const p = type === raw.garment_type ? raw : { ...raw, garment_type: type };
+        // "Isbjörn of Sweden" ja "Isbjörn" ovat sama merkki: yksi kirjoitusasu kaikkialla (tulokset, merkkilistat, rajaukset).
+        const brand = raw.brand.replace(/\s+of sweden$/i, "");
+        const p = type === raw.garment_type && brand === raw.brand ? raw : { ...raw, garment_type: type, brand };
         const o = p.original_price;
         if (o && o.currency === p.price.currency && o.amount <= p.price.amount) {
           return { ...p, original_price: null, discount_percent: null };

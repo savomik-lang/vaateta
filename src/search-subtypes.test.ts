@@ -7,8 +7,10 @@ import { buildQuery } from "./search-notice";
 import { mergeCriteria } from "./nlu/llm-interpret";
 import { refineGarmentType, guessGarmentType } from "./nlu/garment-keywords";
 import { brandKey, pickBrandDisplayName } from "./structured/items";
-import { findSubtype, matchesSubtype } from "./structured/subtypes";
+import { findSubtype, matchesSubtype, subtypeOf } from "./structured/subtypes";
 import { makeProduct } from "./fixtures/make-product";
+import { MultiStoreAdapter } from "./adapters/multi-store-adapter";
+import { InMemoryProductStore } from "./store/product-store";
 import type { Product } from "./types";
 
 const prod = (id: string, title: string, garment_type: Product["garment_type"], sizes: string[], extra: Partial<Product> = {}) =>
@@ -224,3 +226,82 @@ test("Isbjörn ja Isbjörn of Sweden ovat sama merkki facetsissa", () => {
   const variants = new Map([["Isbjörn of Sweden", 40], ["Isbjörn", 21]]);
   assert.equal(pickBrandDisplayName(variants), "Isbjörn");
 });
+
+// --- Hakutesti 23.11. (37/42): jäljelle jääneet viisi ------------------------------------------------------
+
+test("talvikenkähaku: sandaalit, Birkenstock ja kuvauksesta talvimerkityt kesäkengät pois; talvisaappaat jäävät", () => {
+  const c = parseCriteriaFromText("talvikengät koko 28");
+  const ok = (title: string, winter: boolean | null = true) => matchesCriteria(prod(title, title, "kengät", ["28"], { winter }), c);
+  assert.ok(!ok("Birkenstock Birki Flow Kids"));
+  assert.ok(!ok("Crocs Classic Clog Kids"));
+  assert.ok(!ok("Teva Hurricane Sandals"));
+  assert.ok(!ok("Superfit Sneaker Low"), "kuvauksesta talvimerkitty, otsikossa ei talvivihjettä");
+  assert.ok(ok("Viking Frost Fighter Warm Black"));
+  assert.ok(ok("Reima Winter Boots Lumi"));
+  assert.ok(ok("Polyver Kid's Winter Mylta Orange"));
+  assert.ok(ok("Tretorn Aktiv Chelsea Boots", true));
+  assert.ok(!ok("Tretorn Rain Boots Kids"), "sadesaapas ei ole talvikenkä");
+  // Ilman talvirajausta kaikki kelpaavat
+  assert.ok(matchesCriteria(prod("b", "Birkenstock Birki Flow", "kengät", ["28"], { winter: true }), parseCriteriaFromText("kengät koko 28")));
+});
+
+test("sadeasu = sadevaatteeksi nimetty haalari; vedenpitäväksi merkitty fleece-haalari ei ole sadeasu", () => {
+  for (const q of ["sadeasu 98 cm", "regnställ 98 cm", "rain suit 98"]) {
+    const c = parseCriteriaFromText(q);
+    assert.equal(c.garment_type, "haalari", q);
+    assert.equal(c.subtype, "sadeasu", q);
+    assert.equal(c.waterproof, true, q);
+  }
+  const c = parseCriteriaFromText("sadeasu 98 cm");
+  const wp = (title: string) => matchesCriteria(prod(title, title, "haalari", ["98"], { waterproof: true }), c);
+  assert.ok(wp("Reima Rain Outfit Tihku"));
+  assert.ok(wp("Didriksons Slaskeman Rain Set"));
+  assert.ok(wp("Polarn O. Pyret Sadeasu"));
+  assert.ok(wp("Lindberg Fagerhult Rain Set, Fleece"));
+  assert.ok(!wp("Urberg Vågstranda Overall"));
+  assert.ok(!wp("Lindberg Stormy Baby Overall Windfleece"));
+  assert.ok(!wp("Reima Talvihaalari Waterproof"));
+  assert.equal(parseCriteriaFromText("talvihaalari 92 cm").subtype, undefined);
+});
+
+test("farkut: farkkushortsit ja collegehousut denim-tyylillä eivät ole farkkuja", () => {
+  const id = (title: string) => (subtypeOfTitle(title));
+  assert.equal(id("Farkkushortsit"), "shortsit");
+  assert.equal(id("Denim Shorts Kids"), "shortsit");
+  assert.equal(id("Collegehousut jossa denim-tyyli"), "collegehousut");
+  assert.equal(id("Skinny Farkut"), "farkut");
+  assert.equal(id("Kids Jeans Slim"), "farkut");
+  const c = parseCriteriaFromText("farkut 122 cm");
+  const jeans = (t: string) => matchesCriteria(prod(t, t, "housut", ["122"]), c);
+  assert.ok(jeans("Skinny Farkut") && jeans("Kids Jeans Slim"));
+  assert.ok(!jeans("Farkkushortsit") && !jeans("Collegehousut jossa denim-tyyli"));
+});
+
+test("partial_size-ilmoitus kenkähaussa puhuu EU-kenkäkoosta, ei senttikoosta", () => {
+  const shoes = [prod("s1", "Tossut A", "kengät", ["22"]), prod("s2", "Tossut B", "kengät", ["22"])];
+  const c = parseCriteriaFromText("tossut koko 24");
+  assert.equal(c.shoe_eu, 24);
+  const r = catalogSearch(shoes, c, VIEW);
+  assert.equal(r.notice?.code, "partial_size");
+  assert.match(r.notice?.message ?? "", /kenkäkoko 24/);
+  assert.doesNotMatch(r.notice?.message ?? "", /92/);
+  const sv = catalogSearch(shoes, parseCriteriaFromText("tofflor storlek 24"), { ...VIEW, lang: "sv" });
+  assert.match(sv.notice?.message ?? "", /skostorleken 24/);
+  // Vaatehaun ilmoitus ennallaan
+  const clothes = catalogSearch([prod("j", "Farkut", "housut", ["98-104"])], parseCriteriaFromText("farkut 110 cm"), VIEW);
+  assert.match(clothes.notice?.message ?? "", /haettu koko 110/);
+});
+
+test("Isbjörn of Sweden -> Isbjörn jo tuotteen merkissä kannasta ladattaessa", async () => {
+  const adapter = new MultiStoreAdapter([new InMemoryProductStore([
+    prod("a", "Isbjörn Husky Tube", "pipo", ["One Size"], { brand: "Isbjörn of Sweden" }),
+    prod("b", "Isbjörn Winter Jacket", "takki", ["110"], { brand: "Isbjörn" }),
+    prod("c", "Sweden Kids Cap", "pipo", [], { brand: "Sweden Kids" }),
+  ])]);
+  const brands = (await adapter.loadAllProducts()).map((p) => p.brand);
+  assert.deepEqual(brands, ["Isbjörn", "Isbjörn", "Sweden Kids"]);
+});
+
+function subtypeOfTitle(title: string): string | null {
+  return subtypeOf(prod("x", title, "housut", []));
+}
