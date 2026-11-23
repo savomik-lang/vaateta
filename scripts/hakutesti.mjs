@@ -6,6 +6,7 @@
  *   - tuotetyyppi: otsikko osuu tapauksen `type`-lausekkeeseen eikä `not`-lausekkeeseen (vähintään minType/5)
  *   - koko: tuotteen size_available sisältää haetun koon tai lähes (cm ±6, EU-kenkäkoko ±1) (vähintään minSize/5)
  * Jos tuloksia on alle viisi, raja suhteutetaan tulosten määrään. Nolla tulosta on aina hylätty.
+ * Jos backend ilmoittaa lähimmistä koista (notice.code = partial_size), kokoehdoksi riittää yksi osuma.
  *
  * Käyttö: node scripts/hakutesti.mjs [perus-URL, oletus https://www.vaateta.com] [--json] [--vain=hakusana]
  * Esikatselu: node scripts/hakutesti.mjs https://vaateta-xxxx-sasmo.vercel.app (Vercel-suojaus voi estää).
@@ -22,10 +23,14 @@ export function sizeRange(s) {
   if (y) return [AGE_CM[Math.min(+y[1], 14)], AGE_CM[Math.min(+y[2], 14)]];
   const mo = String(s).match(/^\s*(\d{1,2})\s*-\s*(\d{1,2})\s*M\b/i);
   if (mo) return [Math.round(50 + +mo[1] * 2.5), Math.round(50 + +mo[2] * 2.5)];
-  const m = String(s).replace(/\([^)]*\)/g, '').match(/(\d{2,3})\s*(?:[-–\/]\s*(\d{2,3}))?/);
-  if (!m) return null;
-  const a = +m[1], b = m[2] ? +m[2] : a;
-  return [Math.min(a, b), Math.max(a, b)];
+  const plain = String(s).replace(/\([^)]*\)/g, '');
+  const m = plain.match(/(\d{2,3})\s*(?:[-–\/]\s*(\d{2,3}))?/);
+  const range = () => [Math.min(+m[1], m[2] ? +m[2] : +m[1]), Math.max(+m[1], m[2] ? +m[2] : +m[1])];
+  if (m && +m[1] >= 44) return range();                        // senttikoko
+  // Ikäväli tekstinä (Lindberg): "2/2-4 yr", "13 cm/2-5 yr", "4-6 år" → cm
+  const ag = plain.match(/(\d{1,2})\s*-\s*(\d{1,2})\s*(?:yr|år|v|y)\b/i);
+  if (ag) return [AGE_CM[Math.min(+ag[1], 14)], AGE_CM[Math.min(+ag[2], 14)]];
+  return m ? range() : null;                                   // kenkäkoko tai muu
 }
 
 // Tuotteen etäisyys haetusta koosta (0 = osuu). Kenkäkoot (alle 45) ja cm-koot (yli 45) erotellaan.
@@ -52,7 +57,9 @@ export function evaluateCase(c, response, cfg) {
     sizes: (p.size_available || []).slice(0, 5).join('|'),
   }));
   const n = rows.length;
-  const needType = Math.min(cfg.minType, n), needSize = Math.min(cfg.minSize, n);
+  // Kun backend ilmoittaa lähimmistä koista (partial_size), riittää yksi osuma haettuun tai lähimpään kokoon
+  const partial = response.notice && response.notice.code === 'partial_size';
+  const needType = Math.min(cfg.minType, n), needSize = Math.min(partial ? 1 : cfg.minSize, n);
   const typeHits = rows.filter((r) => r.typeOk).length, sizeHits = rows.filter((r) => r.sizeOk).length;
   return {
     q: c.q, lang: c.lang, parsed: response.parsed_criteria || {}, total: response.total_matches || 0, rows,
